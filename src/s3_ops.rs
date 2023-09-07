@@ -2,7 +2,10 @@ use aws_config::SdkConfig;
 use aws_sdk_s3::{
     presigning::PresigningConfig,
     primitives::ByteStream,
-    types::{BucketLocationConstraint, CreateBucketConfiguration,CompletedPart, CompletedMultipartUpload},
+    types::{
+        BucketLocationConstraint, CompletedMultipartUpload, CompletedPart,
+        CreateBucketConfiguration,
+    },
     Client as S3Client,
 };
 use colored::Colorize;
@@ -48,7 +51,7 @@ impl S3Ops {
         let region = self.config.region();
         match region {
             Some(region) => region.to_string(),
-            None => self.region.clone().unwrap(),
+            None => self.region.clone().unwrap_or("us-west-2".into()),
         }
     }
 
@@ -80,6 +83,25 @@ impl S3Ops {
             .expect(&colored_msg);
     }
 
+    /// Return the available buckets in your account as a vector of strings
+    pub async fn get_buckets(&self) -> Vec<String> {
+        let config = self.get_config();
+        let client = S3Client::new(config);
+
+        let mut bucket_lists = Vec::new();
+        let colored_msg = "Error from get_buckets function".red().bold();
+        let output = client.list_buckets().send().await.expect(&colored_msg);
+        let bucket_list = output.buckets();
+
+        if let Some(bucket_names) = bucket_list {
+            bucket_names.iter().for_each(|bucket| {
+                bucket_lists.push(bucket.name().unwrap().to_string());
+            })
+        }
+
+        bucket_lists
+    }
+
     /// Delete the bucket from your AWS services if the specified bucket is
     ///  available and the credentials have the necessary rights.
     pub async fn delete_bucket(&self, bucket_name: &str) {
@@ -88,36 +110,13 @@ impl S3Ops {
 
         let client = client.delete_bucket().bucket(bucket_name);
         let colored_msg = "Error from delete_bucket function".red().bold();
-        client
-            .send()
-            .await
-            .map(|_| {
-                let colored_bucket = bucket_name.red().bold();
-                println!("The bucket named {colored_bucket} has been deleted");
-            })
-            .expect(&colored_msg);
-    }
-    /// Return the available buckets in your account as a vector of strings
-    pub async fn get_buckets(&self) -> Vec<String> {
-        let config = self.get_config();
-        let client = S3Client::new(config);
-
-        let mut bucket_lists = Vec::new();
-        let colored_msg = "Error from get_buckets function".red().bold();
-        client
-            .list_buckets()
-            .send()
-            .await
-            .map(|lists| {
-                let bucket_list = lists.buckets();
-                bucket_list.map(|bucket_names| {
-                    bucket_names.iter().for_each(|bucket| {
-                        bucket_lists.push(bucket.name().unwrap().to_string());
-                    })
-                })
-            })
-            .expect(&colored_msg);
-        bucket_lists
+        client.send().await.expect(&colored_msg);
+        let current_buckets = self.get_buckets().await;
+        println!("Currently available buckets in your aws account\n");
+        current_buckets.into_iter().for_each(|bucket| {
+            let bucket = bucket.green().bold();
+            println!("{bucket}\n");
+        })
     }
 
     ///These methods work on Ubuntu but not on Windows due to differences in stack size. In Ubuntu, the stack size is larger than in Windows, which is why it causes a stack overflow in Windows. As a result, I tested these methods on Ubuntu successfully but encountered a stack overflow issue on Windows.
@@ -165,7 +164,9 @@ impl S3Ops {
             .build()
             .await
             .unwrap();
-        let colored_msg = "Error from upload_content_to_a_bucket function".red().bold();
+        let colored_msg = "Error from upload_content_to_a_bucket function"
+            .red()
+            .bold();
         client
             .put_object()
             .bucket(bucket_name)
@@ -173,12 +174,13 @@ impl S3Ops {
             .body(build_body_data)
             .send()
             .await
-            .map(|_| {
-                let colored_data_path = data_path.green().bold();
-                let colored_bucket_name = bucket_name.green().bold();
-                println!("The data {colored_data_path} uploaded to {colored_bucket_name} bucket");
-            })
             .expect(&colored_msg);
+        let current_objects = self.retrieve_keys_in_a_bucket(bucket_name).await;
+        println!("Currently available keys/objects in your {bucket_name} bucket\n");
+        current_objects.into_iter().for_each(|key| {
+            let key = key.green().bold();
+            println!("{key}\n");
+        });
     }
 
     ///Upload large files using chunks instead of uploading the entire file, while
@@ -200,7 +202,7 @@ impl S3Ops {
 
         let upload_id = mulit_part.upload_id().unwrap();
 
-         let upload_part_result = client
+        let upload_part_result = client
             .upload_part()
             .bucket(mulit_part.bucket().unwrap())
             .key(mulit_part.key().unwrap())
@@ -214,16 +216,17 @@ impl S3Ops {
         let mut completed_part = Vec::new();
         completed_part.push(
             CompletedPart::builder()
-            .e_tag(upload_part_result.e_tag().unwrap_or_default())
-            .part_number(30)
-            .build()
+                .e_tag(upload_part_result.e_tag().unwrap_or_default())
+                .part_number(30)
+                .build(),
         );
 
         let completed_multipart = CompletedMultipartUpload::builder()
-             .set_parts(Some(completed_part))
-             .build();
+            .set_parts(Some(completed_part))
+            .build();
 
-            client.complete_multipart_upload()
+        client
+            .complete_multipart_upload()
             .bucket(bucket_name)
             .key(object_name)
             .multipart_upload(completed_multipart)
@@ -231,8 +234,6 @@ impl S3Ops {
             .send()
             .await
             .unwrap();
-
-        
     }
     /// Download the content to the current directory, using the name of the content
     /// file being downloaded. This process accepts a bucket name and key to retrieve
@@ -241,10 +242,11 @@ impl S3Ops {
         let config = self.get_config();
         let client = S3Client::new(config);
 
-
         let client = client.get_object().bucket(bucket_name).key(object_name);
 
-        let colored_msg = "Error from download_content_from_bucket function".red().bold();
+        let colored_msg = "Error from download_content_from_bucket function"
+            .red()
+            .bold();
         let get_body_data = client.send().await.expect(&colored_msg);
 
         let content_type = get_body_data.content_type().unwrap().green().bold();
@@ -268,21 +270,21 @@ impl S3Ops {
         }
     }
 
-pub async  fn get_presigned_url_for_an_object(
+    pub async fn get_presigned_url_for_an_object(
         &self,
         bucket_name: &str,
         object_name: &str,
         end_time: u64,
     ) {
+        use chrono::prelude::*;
         use fast_qr::convert::{image::ImageBuilder, Builder, Shape};
         use fast_qr::qr::QRBuilder;
-        use chrono::prelude::*;
 
         let config = self.get_config();
         let client = S3Client::new(config);
 
         let start_time = SystemTime::now();
-        let utc: DateTime<Utc> = Utc::now();       
+        let utc: DateTime<Utc> = Utc::now();
 
         //converting to seconds from hour given by end_time
         let hour_to_secs = end_time * 60 * 60;
@@ -296,7 +298,7 @@ pub async  fn get_presigned_url_for_an_object(
 
         let expired_in = presigning_config.expires();
 
-        let get_hour = (60*60*end_time)/expired_in.as_secs();
+        let get_hour = (60 * 60 * end_time) / expired_in.as_secs();
 
         let colored_msg = "Error from get_presigned_url_for_an_object".red().bold();
         let presigned_req = client
@@ -320,35 +322,44 @@ pub async  fn get_presigned_url_for_an_object(
             colored_uri, colored_end_time
         );
         println!("{}\n","Press and hold Ctrl while clicking the link to open it, and it will automatically begin downloading".green().bold());
-        println!("{}\n","Visit https://tinyurl.com/app to shorten your URL".blue().bold());
+        println!(
+            "{}\n",
+            "Visit https://tinyurl.com/app to shorten your URL"
+                .blue()
+                .bold()
+        );
 
-     // Generating text file   
+        // Generating text file
         let mut file = File::create("./uri.txt").unwrap();
         let year = utc.year();
         let month = utc.month();
         let week_day = utc.weekday();
         let day = utc.day();
-        let minute =utc.minute();
+        let minute = utc.minute();
         let hour = utc.hour();
         let secs = utc.second();
         let format_string_to_write_into = 
         format!("The URL for the content is: {content_url}\n\n\nStarted at\nyear: {year}\nmonth: {month}\nweek_day: {week_day}\nday: {day}\nminutes: {minute}\nhours: {hour}\nseconds: {secs}\n\nExpired at: {get_hour} h");
         file.write_all(format_string_to_write_into.as_bytes())
             .unwrap();
-        println!("{}\n",r#"The content has been written to "uri.txt" in the current directory."#.green().bold());
+        println!(
+            "{}\n",
+            r#"The content has been written to "uri.txt" in the current directory."#
+                .green()
+                .bold()
+        );
 
         //generating qr image for the uri
-        let qrcode = QRBuilder::new(content_url.as_str())
-        .build()
-        .unwrap();
-         ImageBuilder::default()
-        .shape(Shape::Square)
-        .background_color([255, 255, 255, 0])
-        .fit_width(600)
-        .fit_height(600)
-        .to_file(&qrcode, "./uri_qr.png").unwrap();
+        let qrcode = QRBuilder::new(content_url.as_str()).build().unwrap();
+        ImageBuilder::default()
+            .shape(Shape::Square)
+            .background_color([255, 255, 255, 0])
+            .fit_width(600)
+            .fit_height(600)
+            .to_file(&qrcode, "./uri_qr.png")
+            .unwrap();
 
-      println!("{}\n","A QR code has been generated for the content's URL and is saved in the current directory as 'uri_qr.png'".green().bold());
+        println!("{}\n","A QR code has been generated for the content's URL and is saved in the current directory as 'uri_qr.png'".green().bold());
     }
 
     /// Delete the content or key in the provided bucket. Please be cautious, as
@@ -356,7 +367,9 @@ pub async  fn get_presigned_url_for_an_object(
     pub async fn delete_content_in_a_bucket(&self, bucket_name: &str, object_name: &str) {
         let config = self.get_config();
         let client = S3Client::new(config);
-        let colored_msg = "Error from delete_content_in_a_bucket function".red().bold();
+        let colored_msg = "Error from delete_content_in_a_bucket function"
+            .red()
+            .bold();
         client
             .delete_object()
             .bucket(bucket_name)
@@ -369,5 +382,12 @@ pub async  fn get_presigned_url_for_an_object(
             println!( "The object {colored_key_name} in bucket {colored_bucket_name} has been deleted");
             })
             .expect(&colored_msg);
+
+        let current_objects = self.retrieve_keys_in_a_bucket(bucket_name).await;
+        println!("Currently available keys/objects in your {bucket_name} bucket\n");
+        current_objects.into_iter().for_each(|key| {
+            let key = key.green().bold();
+            println!("{key}\n");
+        });
     }
 }

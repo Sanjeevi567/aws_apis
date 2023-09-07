@@ -47,7 +47,9 @@ impl SesOps {
         self.template_name.as_deref().unwrap_or("You can set the default template name by selecting the 'configure' option from the menu")
     }
     pub fn get_list_name(&self) -> &str {
-        self.list_name.as_deref().unwrap_or("You can set the default list name by selecting the 'configure' option from the menu")
+        self.list_name.as_deref().unwrap_or(
+            "You can set the default list name by selecting the 'configure' option from the menu",
+        )
     }
 
     /// If the list name does not exist, i.e., if it has not been set using the
@@ -116,9 +118,13 @@ impl SesOps {
             .contact_list_name(default_list_name)
             .email_address(email);
 
-        let colored_error_inside = "Error from create_email_identity inside of create_email_contact_with_verification".red().bold();
-        let colored_error_outside = "Error from create_email_contact_with_verification".red().bold();
-        
+        let colored_error_inside =
+            "Error from create_email_identity inside of create_email_contact_with_verification"
+                .red()
+                .bold();
+        let colored_error_outside = "Error from create_email_contact_with_verification"
+            .red()
+            .bold();
 
         client
             .send()
@@ -161,7 +167,9 @@ impl SesOps {
             .contact_list_name(default_list_name)
             .email_address(email);
 
-        let colored_error = "Error from create_email_contact_without_verification".red().bold();
+        let colored_error = "Error from create_email_contact_without_verification\n"
+            .red()
+            .bold();
 
         client
     .send()
@@ -183,7 +191,7 @@ impl SesOps {
             .email_identity(email)
             .send()
             .await
-            .unwrap();
+            .expect("Error while verifying Email Identity\n");
 
         if client.verified_for_sending_status() {
             true
@@ -201,7 +209,6 @@ impl SesOps {
 
         let default_list_name = list_name.unwrap_or(self.get_list_name());
 
-        
         let list = client
             .list_contacts()
             .contact_list_name(default_list_name)
@@ -210,7 +217,12 @@ impl SesOps {
             .map(|contacts| {
                 let colored_list_name = default_list_name.green().bold();
                 println!("List named {} is exist\n", colored_list_name);
-                println!("{}\n","Data is retrieved from the internet, a process that takes seconds.".blue().bold());
+                println!(
+                    "{}\n",
+                    "Data is retrieved from the internet, a process that takes seconds."
+                        .blue()
+                        .bold()
+                );
                 contacts
             })
             .expect(&colored_error);
@@ -223,7 +235,7 @@ impl SesOps {
 
     /// Retrieve the emails from the provided contact list name and save them to the
     /// current directory for future use.
-    pub async fn getting_email_addresses_from_provided_list(
+    pub async fn printing_email_addresses_from_provided_list(
         &self,
         list_name: Option<&str>,
         print_emails: bool,
@@ -295,7 +307,7 @@ impl SesOps {
             .template_content(email_template_builder)
             .template_name(template_name);
 
-     let colored_error = "Error from create_email_template".red().bold();
+        let colored_error = "Error from create_email_template".red().bold();
         build
             .send()
             .await
@@ -343,8 +355,8 @@ impl SesOps {
     /// A helpful utility function I've created for myself is designed to send templated
     /// emails to the addresses in a list, all without introducing any code smells on
     /// the caller's side and doesn't take any parameters. This is inlcuded for your reference
+    /// Here is the [`template`]() I've used for this operation.
     pub async fn send_emails(&self) {
-
         let colored_error = "Error from send_emails function".red().bold();
         let emails = self
             .retrieve_emails_from_provided_list(Some(self.get_list_name()))
@@ -352,7 +364,7 @@ impl SesOps {
 
         for email in emails.iter() {
             let name = email.chars().take(9).collect::<String>();
-            //Author's template variables that lack default values
+            //My template variable
             let template_data = format!(
                 "
              {{
@@ -362,7 +374,7 @@ impl SesOps {
             ",
                 name, email
             );
-            
+
             let template = TemplateMail::builder(self.get_template_name(), &template_data).build();
             self.send_mono_email(email, Template_(template), Some(&self.get_from_address()))
                 .await
@@ -376,7 +388,6 @@ impl SesOps {
                 .expect(&colored_error);
         }
     }
-    /// Here is the [`template`]() I've used for this operation.
 
     /// This method accept type of `SimpleMail` with content of [`EmailContent`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/types/struct.EmailContent.html)
     pub async fn send_multi_email_with_simple(
@@ -385,11 +396,12 @@ impl SesOps {
         from_address: Option<&str>,
         list_name: Option<&str>,
     ) {
-
-        let colored_error = "Error from send_multi_email_with_simple function".red().bold();
+        let colored_error = "Error from send_multi_email_with_simple function"
+            .red()
+            .bold();
 
         let emails = self.retrieve_emails_from_provided_list(list_name).await;
-  
+
         let email_content = data.build();
 
         for email in emails.into_iter() {
