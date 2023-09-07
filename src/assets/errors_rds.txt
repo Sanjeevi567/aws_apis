@@ -1,0 +1,5 @@
+Correct combination of parameters
+https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.DBInstanceClass.html#Concepts.DBInstanceClass.Support
+
+master password
+master username
