@@ -40,17 +40,6 @@ impl RdsOps {
         )
     }
 
-    pub async fn get_secret_password(&self,secret_id:String)->Option<String>{
-        let config = self.get_config();
-        let sec_client = SecretClient::new(config);
-
-        let ouput = sec_client.get_secret_value()
-                  .secret_id(secret_id)
-                  .send().await
-                  .unwrap();
-          ouput.secret_string
-    }
-
     pub async fn create_db_instance(
         &self,
         db_instance_identifier: &str,
@@ -389,15 +378,6 @@ impl DbInstanceInfo {
             None
         };
         endpoint
-    }
-    pub fn get_secret_arn(&self)->Option<String>{
-        let master_secret = self.master_secret.clone();
-        let mut secret_arn:Option<String> = None;
-
-        if let Some(masterusersecret) = master_secret{
-            secret_arn = masterusersecret.secret_arn;
-        }
-        secret_arn
     }
     pub fn get_username(&self)->Option<String>{
         if let Some(username) = self.master_username.clone(){
