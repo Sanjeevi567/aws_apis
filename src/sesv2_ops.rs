@@ -88,7 +88,6 @@ impl SesOps {
                 println!("The list named {colored_list} created sucessfully\n")
             })
             .expect(&colored_error);
-            //.unwrap();
     }
 
     /// The 'create email identity' helper function is isolated, so we don't have to use it unless necessary.

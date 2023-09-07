@@ -104,7 +104,6 @@ pub async fn describe_snapshots(&self,cluster_name:&str)->Vec<Snapshot>{
                     println!("The MemDB cluster named '{cluster_name}' has been deleted.");
                 })
                 .expect("Error while deleteing memdb cluster");
-             println!("Suuc");
    }
 
 }
