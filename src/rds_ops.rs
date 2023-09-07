@@ -1,9 +1,10 @@
 use aws_config::SdkConfig;
 use aws_sdk_rds::{
-    types::{DbClusterMember, Endpoint},
+    types::{DbClusterMember, Endpoint, MasterUserSecret},
     Client as RdsClient,
 };
 use colored::Colorize;
+use aws_sdk_secretsmanager::Client as SecretClient;
 
 #[derive(Debug)]
 pub struct RdsOps {
@@ -31,12 +32,23 @@ impl RdsOps {
 
     /// Operations trigger panics prematurely when default error messages are absent
     pub fn get_db_instance_id(&self) -> &str {
-        &self.db_instance_id.as_deref().unwrap_or("You can set the database instance ID by selecting the 'configure' option from the menu")
+        &self.db_instance_id.as_deref().unwrap_or("You can set the database instance ID by selecting the 'configure' option from the menu\n")
     }
     pub fn get_db_cluster_id(&self) -> &str {
         &self.db_cluster_id.as_deref().unwrap_or(
-            "You can set the database cluster ID by selecting the 'configure' option from the menu",
+            "You can set the database cluster ID by selecting the 'configure' option from the menu\n",
         )
+    }
+
+    pub async fn get_secret_password(&self,secret_id:String)->Option<String>{
+        let config = self.get_config();
+        let sec_client = SecretClient::new(config);
+
+        let ouput = sec_client.get_secret_value()
+                  .secret_id(secret_id)
+                  .send().await
+                  .unwrap();
+          ouput.secret_string
     }
 
     pub async fn create_db_instance(
@@ -66,11 +78,11 @@ impl RdsOps {
                     .send()
                     .await
                     .map(|output|{
-                        let colored = format!("DbInstance with the identifier: {} has been created successfully.\nIt will take some time to set up and become fully operational.\nYou can check the status of the database instance by using the 'describe db instance' option",db_instance_identifier).green().bold();
+                        let colored = format!("DbInstance with the identifier: {} has been created successfully.\nIt will take some time to set up and become fully operational.\nYou can check the status of the database instance by using the 'describe db instance' option\n",db_instance_identifier).green().bold();
                         println!("{colored}");
                         output
                     })
-                    .expect("Error while creating db instance");
+                    .expect("Error while creating db instance\n");
 
         let option_of_dbinstance = status.db_instance;
 
@@ -97,7 +109,7 @@ impl RdsOps {
             .db_instance_identifier(db_instance_identifier)
             .send()
             .await
-            .expect("Error while calling describe instances");
+            .expect("Error while calling describe instances\n");
         let mut db_instances = client.db_instances.unwrap();
         //Taking first DbInstance
         let mut db_instance = db_instances.drain(..1).collect::<Vec<_>>();
@@ -110,6 +122,11 @@ impl RdsOps {
             db_instance[0].db_instance_status.take(),
             db_instance[0].db_name.take(),
             db_instance[0].availability_zone.take(),
+            db_instance[0].master_user_secret.take(),
+            db_instance[0].master_username.take(),
+            db_instance[0].publicly_accessible,
+            db_instance[0].db_instance_port,
+
         )
     }
 
@@ -124,7 +141,7 @@ impl RdsOps {
             .db_instance_identifier(db_instance_identifier)
             .send()
             .await
-            .expect("Error while getting status of db instance");
+            .expect("Error while getting status of db instance\n");
         let db_instance = output.db_instances;
         if let Some(mut vec_of_db_instance) = db_instance {
             let first_instance = vec_of_db_instance.drain(..1);
@@ -151,7 +168,7 @@ impl RdsOps {
                   .send()
                   .await
                   .map(|output|{
-                   let colored_msg = format!("An instance with the ID of {} initiates the process of starting the database instance if it was stopped before",db_instance_identifier).green().bold();
+                   let colored_msg = format!("An instance with the ID of {} initiates the process of starting the database instance if it was stopped before\n",db_instance_identifier).green().bold();
                    println!("{colored_msg}");
                    let status = if let Some(dbinstance) = output.db_instance{
                              if let Some(status_) = dbinstance.db_instance_status {
@@ -184,7 +201,7 @@ impl RdsOps {
                      .send()
                      .await
                      .map(|output|{
-                        println!("The db_instance with the db_instance_id: {db_instance_identifier} is initiating the process of stopping");
+                        println!("The db_instance with the db_instance_id: {db_instance_identifier} is initiating the process of stopping\n");
                         let status = if let Some(dbinstance) = output.db_instance{
                             if let Some(status) =dbinstance.db_instance_status{
                                 Some(status)
@@ -246,7 +263,7 @@ impl RdsOps {
             .db_cluster_identifier(db_cluster_identifier)
             .send()
             .await
-            .expect("Error while describing db cluster");
+            .expect("Error while describing db cluster\n");
         let cluster_info = client.db_clusters;
 
         let mut vec_of_db_cluster_info = Vec::new();
@@ -256,7 +273,6 @@ impl RdsOps {
                 let db_cluster_status = db_cluster_info.status;
                 let availability_zones = db_cluster_info.availability_zones;
                 let db_cluster_member = db_cluster_info.db_cluster_members;
-
                 vec_of_db_cluster_info.push(DbClusterInfo::build_cluster_info(
                     db_cluster_status,
                     db_cluster_member,
@@ -282,10 +298,10 @@ impl RdsOps {
                .send()
                .await
                .map(|output|{
-                println!("The db_cluster identified by ID {} is initiating the deletion process for both the clusters and the associated DB instances",db_cluster_identifier);
+                println!("The db_cluster identified by ID {} is initiating the deletion process for both the clusters and the associated DB instances\n",db_cluster_identifier);
                 output
                })
-               .expect("Error while deleting dbcluster");
+               .expect("Error while deleting dbcluster\n");
 
         let db_cluster_info = cluster_output.db_cluster.unwrap();
         let db_cluster_status = db_cluster_info.status;
@@ -297,7 +313,7 @@ impl RdsOps {
 }
 
 ///Helper structs to get information about dbinstances and db clusters
-#[derive(Debug)]
+#[derive(Debug,Default)]
 pub struct DbInstanceInfo {
     end_point: Option<Endpoint>,
     allocated_storage: i32,
@@ -306,17 +322,25 @@ pub struct DbInstanceInfo {
     db_instance_status: Option<String>,
     db_name: Option<String>,
     availability_zones: Option<String>,
+    master_secret : Option<MasterUserSecret>,
+    master_username : Option<String>,
+    publicly_accessible : bool,
+    db_instance_port:i32,
 }
 impl DbInstanceInfo {
     //This not meant to build by ourselves rather filled using methods
     fn build_instance(
-        end_point: Option<Endpoint>,
-        allocated_storage: i32,
-        db_instance_identifier: Option<String>,
-        db_instance_class: Option<String>,
-        db_instance_status: Option<String>,
-        db_name: Option<String>,
-        availability_zones: Option<String>,
+         end_point: Option<Endpoint>,
+         allocated_storage: i32,
+         db_instance_identifier: Option<String>,
+         db_instance_class: Option<String>,
+         db_instance_status: Option<String>,
+         db_name: Option<String>,
+         availability_zones: Option<String>,
+         master_secret : Option<MasterUserSecret>,
+         master_username : Option<String>,
+         publicly_accessible : bool,
+         db_instance_port:i32,
     ) -> Self {
         Self {
             end_point,
@@ -326,6 +350,10 @@ impl DbInstanceInfo {
             db_name,
             availability_zones,
             db_instance_class,
+              master_secret,
+         master_username ,
+         publicly_accessible,
+         db_instance_port
         }
     }
     pub fn get_instance_status(&self) -> Option<&str> {
@@ -345,23 +373,41 @@ impl DbInstanceInfo {
     pub fn get_allocated_storage(&self) -> i32 {
         self.allocated_storage
     }
-    //.memorydb.us-west-2.amazonaws.com
-    pub fn get_database_url(&self) -> Option<String> {
-        let database_url = if let Some(endpoint) = self.end_point.as_ref() {
+    pub fn get_endpoint_with_port(&self) -> Option<String> {
+        let endpoint = if let Some(endpoint) = self.end_point.as_ref() {
             if let Some(databse_url) = endpoint.address() {
-                let mut url = databse_url.to_string();
+                let mut endpoint_ = databse_url.to_string();
                 if let Some(port) = self.get_port() {
                     let port_string = format!(":{port}");
-                    url.push_str(&port_string);
+                    endpoint_.push_str(&port_string);
                 }
-                Some(url)
+                Some(endpoint_)
             } else {
                 None
             }
         } else {
             None
         };
-        database_url
+        endpoint
+    }
+    pub fn get_secret_arn(&self)->Option<String>{
+        let master_secret = self.master_secret.clone();
+        let mut secret_arn:Option<String> = None;
+
+        if let Some(masterusersecret) = master_secret{
+            secret_arn = masterusersecret.secret_arn;
+        }
+        secret_arn
+    }
+    pub fn get_username(&self)->Option<String>{
+        if let Some(username) = self.master_username.clone(){
+            Some(username)
+        }else {
+            None
+        }
+    }
+    pub fn is_publicly_accessible(&self)->bool{
+        self.publicly_accessible
     }
     pub fn get_db_instance_identifier(&self) -> String {
         self.db_instance_identifier.clone().unwrap()
@@ -384,7 +430,8 @@ impl DbInstanceInfo {
 pub struct DbClusterInfo {
     availability_zones: Option<Vec<String>>,
     cluster_members: Option<Vec<DbClusterMember>>,
-    cluster_status: Option<String>,
+    cluster_status: Option<String>
+
 }
 impl DbClusterInfo {
     /// This is a private function, as we are not supposed to construct it; rather, we should only use
