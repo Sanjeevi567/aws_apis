@@ -62,6 +62,8 @@ impl RdsOps {
                     .db_instance_class(db_instance_class)
                     .publicly_accessible(true)
                     .engine(engine)
+                    .deletion_protection(false)
+                    .network_type("DUAL")
                     .master_username(username)
                     .master_user_password(password)
                     .send()
