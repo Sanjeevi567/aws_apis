@@ -121,7 +121,7 @@ impl RdsOps {
         )
     }
 
-    pub async fn status_db_instance(&self, db_instance_identifier: Option<&str>) {
+    pub async fn status_of_db_instance(&self, db_instance_identifier: Option<&str>) {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
