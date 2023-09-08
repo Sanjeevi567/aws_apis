@@ -236,7 +236,6 @@ impl RdsOps {
                 println!("The current status of the database instance is...: {}",colored_status);
             }
         }
-
     }
 
     pub async fn delete_db_instance(&self, db_instance_identifier: Option<&str>) {

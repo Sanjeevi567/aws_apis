@@ -1,6 +1,6 @@
 use aws_config::SdkConfig;
 use aws_sdk_memorydb::{
-    types::{Endpoint, Snapshot,InputAuthenticationType, AuthenticationMode},
+    types::{Endpoint, Snapshot,InputAuthenticationType, AuthenticationMode,Authentication},
     Client as MemDbClient,
 };
 use colored::Colorize;
@@ -53,10 +53,7 @@ impl MemDbOps {
                     .expect("Error while creating memory db cluster");
     }
 
-
-//Passwords are separated by space in input
-//types - iam | Iam , Password | password    
-    pub async fn create_memdb_user(&self,usrname:&str,acl_name:&str,
+    pub async fn create_memdb_user(&self,username:&str,acl_name:&str,
      authenticate_type :&str,authenticate_passwords:&str
     ) {
         let config = self.get_config();
@@ -78,7 +75,7 @@ impl MemDbOps {
 
         let create_user_output = client.create_user()
                    .set_access_string(Some(acl_name.into()))
-                   .set_user_name(Some(usrname.into()))
+                   .set_user_name(Some(username.into()))
                    .set_authentication_mode(Some(build_auth_type))
                    .send().await
                    .expect("Error while creating user in MemoryDB\n");
@@ -113,14 +110,41 @@ impl MemDbOps {
                 let cluster_end_point = cluster_info.cluster_endpoint;
                 let acl_name = cluster_info.acl_name;
                 let status = cluster_info.status;
+                let engine_version = cluster_info.engine_version;
                 let memdbinfo =
-                    MemDbClusterInfo::build_memdbclusterinfo(cluster_end_point, acl_name, status);
+                    MemDbClusterInfo::build_memdbclusterinfo(cluster_end_point, acl_name, status,engine_version);
                 vec_of_memdbclusterinfo.push(memdbinfo);
             });
         }
         vec_of_memdbclusterinfo
     }
 
+///Only returns the single insatnce of user instead of vector of user.
+    pub async fn describe_memdb_user(&self,username:&str)->Vec<MemDBUser>{
+        let config = self.get_config();
+        let client = MemDbClient::new(config);
+
+        let output = client.describe_users()
+                    .user_name(username)
+                    .send().await
+                    .expect("Error while describing memdb cluster");
+        let user = output.users; 
+        let mut single_user_info = Vec::new();
+        if let Some(mut vec_of_users) =  user{
+            let single_user_ = vec_of_users.drain(..1);
+            single_user_.into_iter()
+            .for_each(|user|{
+             let user_name = user.name; 
+             let status = user.status; 
+             let access_string = user.access_string; 
+             let authentication = user.authentication;
+            single_user_info.push(MemDBUser::build_memdbuser_info(user_name, status, access_string, authentication));
+            });
+        }      
+
+        single_user_info
+        
+    }
     pub async fn describe_snapshots(&self, cluster_name: &str) -> Vec<Snapshot> {
         let config = self.get_config();
         let client = MemDbClient::new(config);
@@ -169,6 +193,71 @@ impl MemDbOps {
                 })
                 .expect("Error while deleteing memdb cluster");
     }
+
+    pub async fn delete_memdb_user(&self,username:&str){
+        let config = self.get_config();
+        let client = MemDbClient::new(config);
+
+        let ouput = client.delete_user()
+                  .user_name(username)
+                  .send().await
+                  .expect("Error while deleting memdb user");
+        if let Some(user) = ouput.user {
+            if let (Some(status),Some(name)) = (user.status,user.name) {
+                let colored_name = name.green().bold();
+                let colored_status = status.green().bold();
+                println!("The Name of User: {colored_name}\nThe current status: {colored_status}\n")
+                
+            }
+        }
+    }
+}
+
+
+#[derive(Debug)]
+pub struct MemDBUser{
+    user_name: Option<String>,
+    status: Option<String>,
+    access_string : Option<String>,
+    authentication : Option<Authentication>,
+}
+
+impl MemDBUser {
+    fn build_memdbuser_info(
+        user_name:Option<String>,status:Option<String>,access_string:Option<String>,
+        authentication:Option<Authentication>
+    )->Self{
+        Self {
+            user_name, 
+            status, 
+            access_string, 
+            authentication }
+    }
+
+    pub fn get_username(&self)->Option<&str>{
+       self.user_name.as_deref()
+    }
+
+    pub fn print_auth_info(&self){
+      if let Some(authentication) = self.authentication.as_ref() {
+          if let Some(auth_type) = authentication.r#type() {
+              let colored_auth_type = auth_type.as_str().green().bold();
+              println!("Authentication Type: {colored_auth_type}\n");
+          }
+          if let Some(pass_count) = authentication.password_count{
+            let colored_count = pass_count.to_string().green().bold();
+            println!("Password count: {colored_count}\n");
+          }
+          
+      }
+    }
+
+    pub fn get_acess_string(&self) -> Option<&str>{
+        self.access_string.as_deref()
+    }
+    pub fn get_status(&self)->Option<&str>{
+        self.status.as_deref()
+    }
 }
 
 #[derive(Debug)]
@@ -176,17 +265,20 @@ pub struct MemDbClusterInfo {
     cluster_end_point: Option<Endpoint>,
     acl_name: Option<String>,
     status: Option<String>,
+    redis_engine_version : Option<String>
 }
 impl MemDbClusterInfo {
     fn build_memdbclusterinfo(
         cluster_end_point: Option<Endpoint>,
         acl_name: Option<String>,
         status: Option<String>,
+        redis_engine_version: Option<String>
     ) -> Self {
         Self {
             cluster_end_point,
             acl_name,
             status,
+            redis_engine_version
         }
     }
     pub fn get_status(&self) -> Option<String> {
@@ -197,8 +289,17 @@ impl MemDbClusterInfo {
             None
         }
     }
+    pub fn get_port(&self)->Option<i32>{
+      let endpoint = self.cluster_end_point.as_ref();
 
-    pub fn get_database_url(&self) -> Option<String> {
+      if let Some(endpoint) = endpoint {
+          Some(endpoint.port)
+      }else {
+          None
+      }
+    }
+
+    pub fn get_endpoint_with_port(&self) -> Option<String> {
         let status = self.get_status();
         println!("Current Status of MemDbInstance: {status:?}\n");
         let connection_url = if let Some(endpoint) = self.cluster_end_point.as_ref() {
@@ -224,5 +325,9 @@ impl MemDbClusterInfo {
         } else {
             None
         }
+    }
+
+    pub fn get_redis_version(&self)->Option<&str>{
+        self.redis_engine_version.as_deref()
     }
 }
