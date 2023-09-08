@@ -53,7 +53,7 @@ impl MemDbOps {
                     .expect("Error while creating memory db cluster");
     }
 
-    pub async fn create_memdb_user(&self,username:&str,acl_name:&str,
+    pub async fn create_memdb_user(&self,username:&str,access_string:&str,
      authenticate_type :&str,authenticate_passwords:&str
     ) {
         let config = self.get_config();
@@ -74,7 +74,7 @@ impl MemDbOps {
                            .build();
 
         let create_user_output = client.create_user()
-                   .set_access_string(Some(acl_name.into()))
+                   .set_access_string(Some(access_string.into()))
                    .set_user_name(Some(username.into()))
                    .set_authentication_mode(Some(build_auth_type))
                    .send().await
@@ -252,7 +252,7 @@ impl MemDBUser {
       }
     }
 
-    pub fn get_acess_string(&self) -> Option<&str>{
+    pub fn get_access_string(&self) -> Option<&str>{
         self.access_string.as_deref()
     }
     pub fn get_status(&self)->Option<&str>{
