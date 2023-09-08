@@ -1,10 +1,9 @@
 use aws_config::SdkConfig;
 use aws_sdk_memorydb::{
-    types::{Endpoint, Snapshot},
+    types::{Endpoint, Snapshot,InputAuthenticationType, AuthenticationMode},
     Client as MemDbClient,
 };
 use colored::Colorize;
-
 pub struct MemDbOps {
     config: SdkConfig,
 }
@@ -45,9 +44,54 @@ impl MemDbOps {
                         }else{
                             None
                         };
-                        println!("The present state of the cluster: {:?}\n",status);
+                        if let Some(status) = status {
+                            let colored_status = status.green().bold();
+                            println!("The Present State of the MemDb Cluster: {colored_status}\n");
+                          }
+                       
                     })
                     .expect("Error while creating memory db cluster");
+    }
+
+
+//Passwords are separated by space in input
+//types - iam | Iam , Password | password    
+    pub async fn create_memdb_user(&self,usrname:&str,acl_name:&str,
+     authenticate_type :&str,authenticate_passwords:&str
+    ) {
+        let config = self.get_config();
+        let client = MemDbClient::new(config);
+
+        let authenticate_type = match authenticate_type {
+            "iam" | "Iam" =>InputAuthenticationType::Iam,
+            "password" | "Password" => InputAuthenticationType::Password,
+            _ => panic!("Wrong authentication types: {}\n",authenticate_type)
+        };
+        let get_passwords = authenticate_passwords.split_whitespace()
+                        .map(|str|str.to_string())
+                        .collect::<Vec<String>>();
+
+        let build_auth_type = AuthenticationMode::builder()
+                           .set_type(Some(authenticate_type))
+                           .set_passwords(Some(get_passwords))
+                           .build();
+
+        let create_user_output = client.create_user()
+                   .set_access_string(Some(acl_name.into()))
+                   .set_user_name(Some(usrname.into()))
+                   .set_authentication_mode(Some(build_auth_type))
+                   .send().await
+                   .expect("Error while creating user in MemoryDB\n");
+       let user  = create_user_output.user;
+       if let Some(user) = user {
+          if let Some(status) = user.status{
+            let colored_status = status.green().bold();
+            println!("The status of user: {}\n",colored_status);
+          }else {
+              println!("The satus of user: None\n")
+          }
+       }
+    
     }
 
     pub async fn describe_memdb_cluster(&self, cluster_name: &str) -> Vec<MemDbClusterInfo> {
@@ -118,7 +162,10 @@ impl MemDbOps {
               }else{
                 None
               };
-               println!("The Present State of the MemDb Cluster: {status:?}\n");
+              if let Some(status) = status {
+                let colored_status = status.green().bold();
+                println!("The Present State of the MemDb Cluster: {colored_status}\n");
+              }
                 })
                 .expect("Error while deleteing memdb cluster");
     }

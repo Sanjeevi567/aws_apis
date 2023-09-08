@@ -50,7 +50,7 @@ impl RdsOps {
         password: &str,
         allocated_storage: i32,
         storage_type: &str,
-    ) -> Option<String> {
+    ){
         let config = self.get_config();
         let client = RdsClient::new(config);
 
@@ -75,13 +75,13 @@ impl RdsOps {
 
         let option_of_dbinstance = status.db_instance;
 
-        let status = if let Some(dbinstance) = option_of_dbinstance {
-            dbinstance.db_instance_status
-        } else {
-            None
-        };
-
-        status
+        if let Some(dbinstance) = option_of_dbinstance {
+            if let Some(status) = dbinstance.db_instance_status {
+                let colored_status = status.green().bold();
+                println!("The status of Db Instance: {}",colored_status);
+            }
+           
+        }
     }
 
     pub async fn describe_db_instance(
@@ -135,8 +135,11 @@ impl RdsOps {
         if let Some(mut vec_of_db_instance) = db_instance {
             let first_instance = vec_of_db_instance.drain(..1);
             first_instance.into_iter().for_each(|output| {
-                let status = output.db_instance_status;
-                println!("The current status of Db Instance: {status:?}\n");
+                let status_ = output.db_instance_status;
+                if let Some(status) =status_{
+                    let colored_status = status.green().bold();
+                    println!("The current status of Db Instance: {colored_status}\n");
+                }
             });
         }
     }
@@ -168,7 +171,11 @@ impl RdsOps {
                    }else{
                     None
                    };
-                   println!("Current Status of Db Instance: {:?}\n",status);
+                   if let Some(status_) = status {
+                    let colored_status = status_.green().bold();
+                    println!("Current Status of Db Instance: {}\n",colored_status);
+                       
+                   }
   
                   })
                   .expect(&error);
@@ -200,7 +207,11 @@ impl RdsOps {
                         }else{
                             None
                         };
-                        println!("The current status of Db Instance: {:?}\n",status)
+                        if let Some(status_) = status {
+                            let colored_status = status_.green().bold();
+                            println!("Current Status of Db Instance: {}\n",colored_status);
+                               
+                           }
                      })
                      .expect(&error);
     }
@@ -234,7 +245,10 @@ impl RdsOps {
                    }else{
                     None
                    };
-                   println!("The current status of Db Instance: {status:?}\n");
+                   if let Some(status_) = status {
+                    let colored_status = status_.green().bold();
+                    println!("Current Status of Db Instance: {}\n",colored_status); 
+                   }
                   })
                   .expect(&error);
     }
@@ -288,7 +302,14 @@ impl RdsOps {
                .await
                .map(|output|{
                 println!("The db_cluster identified by ID {} is initiating the deletion process for both the clusters and the associated DB instances\n",db_cluster_identifier);
+                if let Some(cluster) = output.db_cluster.clone() {
+                    if let Some(status) = cluster.status {
+                        let colored_status = status.green().bold();
+                        println!("Current Status of Db Instance: {}\n",colored_status);
+                    }
+                   }
                 output
+
                })
                .expect("Error while deleting dbcluster\n");
 
@@ -311,10 +332,10 @@ pub struct DbInstanceInfo {
     db_instance_status: Option<String>,
     db_name: Option<String>,
     availability_zones: Option<String>,
-    master_secret : Option<MasterUserSecret>,
+    _master_secret : Option<MasterUserSecret>,
     master_username : Option<String>,
     publicly_accessible : bool,
-    db_instance_port:i32,
+    _db_instance_port:i32,
 }
 impl DbInstanceInfo {
     //This not meant to build by ourselves rather filled using methods
@@ -326,10 +347,10 @@ impl DbInstanceInfo {
          db_instance_status: Option<String>,
          db_name: Option<String>,
          availability_zones: Option<String>,
-         master_secret : Option<MasterUserSecret>,
+         _master_secret : Option<MasterUserSecret>,
          master_username : Option<String>,
          publicly_accessible : bool,
-         db_instance_port:i32,
+         _db_instance_port:i32,
     ) -> Self {
         Self {
             end_point,
@@ -339,10 +360,10 @@ impl DbInstanceInfo {
             db_name,
             availability_zones,
             db_instance_class,
-              master_secret,
+              _master_secret,
          master_username ,
          publicly_accessible,
-         db_instance_port
+         _db_instance_port
         }
     }
     pub fn get_instance_status(&self) -> Option<&str> {
