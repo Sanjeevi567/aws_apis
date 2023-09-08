@@ -231,10 +231,8 @@ impl RdsOps {
                 .expect("Error while modifying the db instance settings\n");
 
         if let Some(dbinstance) = ouput.db_instance {
-            if let (Some(status),Some(identifier)) = (dbinstance.db_instance_status,dbinstance.db_cluster_identifier){
+            if let Some(status) = dbinstance.db_instance_status{
                 let colored_status = status.green().bold();
-                let colored_identifier = identifier.green().bold();
-                println!("The current database instance ID is: {}",colored_identifier);
                 println!("The current status of the database instance is...: {}",colored_status);
             }
         }
