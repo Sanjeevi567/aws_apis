@@ -215,17 +215,17 @@ impl RdsOps {
                      .expect(&error);
     }
 
-  //  Some modifications result in downtime because Amazon RDS must reboot your DB instance for the change to take effect
+/// Some modifications result in downtime because Amazon RDS must reboot your DB instance for the change to take effect.
+///However, in this case, I'm only changing the master password
     pub async fn modify_db_instance(&self,
     db_instance_identifier: &str,
-    master_password:&str ,db_instance_identifier_update: &str,apply_immediately:bool
+    master_password_to_replace:&str,apply_immediately:bool
     ) {
         let config = self.get_config();
         let client =RdsClient::new(config);
         let ouput = client.modify_db_instance()
-                .db_instance_identifier(db_instance_identifier)
-                .set_master_user_password(Some(master_password.into()))
-                .set_db_instance_identifier(Some(db_instance_identifier_update.into()))
+                .set_master_user_password(Some(master_password_to_replace.into()))
+                .set_db_instance_identifier(Some(db_instance_identifier.into()))
                 .set_apply_immediately(Some(apply_immediately))
                 .send().await
                 .expect("Error while modifying the db instance settings\n");
