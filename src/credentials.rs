@@ -100,13 +100,13 @@ pub async fn load_credential_from_env() -> (Credentials, String) {
     let credentials = shared_credential.provide_credentials().await.unwrap();
     println!(
         "{}\n",
-        r#"The region is set to "us-west-2" if it is not provided in the credential file"#
+        r#"The region is set to "ap-south-1" if it is not provided in the credential file"#
             .blue()
             .bold()
     );
     let region = config
         .region()
-        .unwrap_or(&Region::new("us-west-2"))
+        .unwrap_or(&Region::new("ap-south-1"))
         .to_string();
 
     (credentials, region)
