@@ -4,8 +4,6 @@ use aws_sdk_rds::{
     Client as RdsClient,
 };
 use colored::Colorize;
-use aws_sdk_secretsmanager::Client as SecretClient;
-
 #[derive(Debug)]
 pub struct RdsOps {
     config: SdkConfig,
@@ -79,7 +77,7 @@ impl RdsOps {
         if let Some(dbinstance) = option_of_dbinstance {
             if let Some(status) = dbinstance.db_instance_status {
                 let colored_status = status.green().bold();
-                println!("The status of Db Instance: {}",colored_status);
+                println!("The current status of the database instance is...: {}",colored_status);
             }
            
         }
@@ -174,7 +172,7 @@ impl RdsOps {
                    };
                    if let Some(status_) = status {
                     let colored_status = status_.green().bold();
-                    println!("Current Status of Db Instance: {}\n",colored_status);
+                    println!("The current status of the database instance is...: {}\n",colored_status);
                        
                    }
   
@@ -210,11 +208,37 @@ impl RdsOps {
                         };
                         if let Some(status_) = status {
                             let colored_status = status_.green().bold();
-                            println!("Current Status of Db Instance: {}\n",colored_status);
+                            println!("The current status of the database instance is...: {}\n",colored_status);
                                
                            }
                      })
                      .expect(&error);
+    }
+
+  //  Some modifications result in downtime because Amazon RDS must reboot your DB instance for the change to take effect
+    pub async fn modify_db_instance(&self,
+    db_instance_identifier: &str,
+    master_password:&str ,db_instance_identifier_update: &str,apply_immediately:bool
+    ) {
+        let config = self.get_config();
+        let client =RdsClient::new(config);
+        let ouput = client.modify_db_instance()
+                .db_instance_identifier(db_instance_identifier)
+                .set_master_user_password(Some(master_password.into()))
+                .set_db_instance_identifier(Some(db_instance_identifier_update.into()))
+                .set_apply_immediately(Some(apply_immediately))
+                .send().await
+                .expect("Error while modifying the db instance settings\n");
+
+        if let Some(dbinstance) = ouput.db_instance {
+            if let (Some(status),Some(identifier)) = (dbinstance.db_instance_status,dbinstance.db_cluster_identifier){
+                let colored_status = status.green().bold();
+                let colored_identifier = identifier.green().bold();
+                println!("The current database instance ID is: {}",colored_identifier);
+                println!("The current status of the database instance is...: {}",colored_status);
+            }
+        }
+
     }
 
     pub async fn delete_db_instance(&self, db_instance_identifier: Option<&str>) {
@@ -248,7 +272,7 @@ impl RdsOps {
                    };
                    if let Some(status_) = status {
                     let colored_status = status_.green().bold();
-                    println!("Current Status of Db Instance: {}\n",colored_status); 
+                    println!("The current status of the database instance is...: {}\n",colored_status); 
                    }
                   })
                   .expect(&error);
@@ -306,7 +330,7 @@ impl RdsOps {
                 if let Some(cluster) = output.db_cluster.clone() {
                     if let Some(status) = cluster.status {
                         let colored_status = status.green().bold();
-                        println!("Current Status of Db Instance: {}\n",colored_status);
+                        println!("The current status of the database instance is...: {}\n",colored_status);
                     }
                    }
                 output
