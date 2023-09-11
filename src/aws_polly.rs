@@ -13,6 +13,12 @@ pub struct PollyOps {
     config: SdkConfig,
 }
 impl PollyOps {
+
+    pub fn build(config:SdkConfig)->Self{
+        Self{
+            config
+        }
+    }
     fn get_config(&self) -> &SdkConfig {
         &self.config
     }
