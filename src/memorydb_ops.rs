@@ -185,7 +185,7 @@ impl MemDbOps {
        }
        acl_info
     }
-    
+
     pub async fn describe_acls(&self)->Vec<AclInfo>{
         let config = self.get_config();
         let client = MemDbClient::new(config);
@@ -445,7 +445,7 @@ Self{
     pub fn get_user_names(&self)->Option<Vec<String>>{
         self.user_names.clone()
     }
-    pub fn get_cluster(&self)->Option<Vec<String>>{
+    pub fn get_clusters(&self)->Option<Vec<String>>{
         self.clusters.clone()
     }
     
