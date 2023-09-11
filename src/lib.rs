@@ -18,4 +18,4 @@ pub use sesv2_ops::{
 };
 
 mod aws_polly;
-pub use aws_polly::{PollyOps, SpeechOuputInfo};
+pub use aws_polly::PollyOps;
