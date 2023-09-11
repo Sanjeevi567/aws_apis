@@ -3,7 +3,7 @@ use std::{fs::OpenOptions, io::Write};
 use aws_config::SdkConfig;
 use aws_sdk_polly::{
     primitives::ByteStream,
-    types::{Engine, OutputFormat, VoiceId},
+    types::{Engine, OutputFormat, VoiceId, TextType},
     Client as PollyClient,
 };
 
@@ -44,12 +44,18 @@ impl PollyOps {
         };
 
         let default_voice_id = VoiceId::Aditi;
+        let extension = text_to_synthesize.split('.').last().unwrap();
+        let text_type = match extension {
+            "ssml" | "Ssml" => TextType::Ssml,
+             _ => TextType::Text
+        };
 
         let output = client
             .synthesize_speech()
             .engine(engine_builder)
             .output_format(ouput_format_builder)
             .text(text_to_synthesize)
+            .text_type(text_type)
             .voice_id(default_voice_id)
             .send()
             .await
