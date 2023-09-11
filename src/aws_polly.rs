@@ -3,7 +3,7 @@ use std::{fs::OpenOptions, io::Write};
 use aws_config::SdkConfig;
 use aws_sdk_polly::{
     primitives::ByteStream,
-    types::{Engine, OutputFormat, VoiceId, TextType},
+    types::{Engine, OutputFormat, VoiceId, TextType, LanguageCode},
     Client as PollyClient,
 };
 
@@ -55,7 +55,8 @@ impl PollyOps {
             "ssml" | "Ssml" => TextType::Ssml,
              _ => TextType::Text
         };
-
+     
+        let language = LanguageCode::EnUs;
         let output = client
             .synthesize_speech()
             .engine(engine_builder)
@@ -63,6 +64,7 @@ impl PollyOps {
             .text(text_to_synthesize)
             .text_type(text_type)
             .voice_id(default_voice_id)
+            .language_code(language)
             .send()
             .await
             .expect("Error while synthesizing speech\n");
