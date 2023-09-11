@@ -1,6 +1,6 @@
 use aws_config::SdkConfig;
 use aws_sdk_memorydb::{
-    types::{Endpoint, Snapshot,InputAuthenticationType, AuthenticationMode,Authentication},
+    types::{Endpoint, Snapshot,InputAuthenticationType, AuthenticationMode,Authentication, Acl},
     Client as MemDbClient,
 };
 use colored::Colorize;
@@ -164,6 +164,28 @@ impl MemDbOps {
         
     }
 
+    pub async fn describe_acl(&self,acl_name:&str)->AclInfo{
+        let config = self.get_config();
+        let client = MemDbClient::new(config);
+
+        let output = client.describe_ac_ls()
+                         .acl_name(acl_name)
+                         .send().await
+                         .expect("Error while describing the acl\n");
+       let mut acl_info = AclInfo::default();
+       if let Some(aclinfos) = output.ac_ls {
+           aclinfos.into_iter()
+           .for_each(|aclinfo|{
+            let acl_name = aclinfo.name;
+            let status = aclinfo.status;
+            let user_names = aclinfo.user_names;
+            let clusters = aclinfo.clusters;
+            acl_info = AclInfo::build_aclinfo(acl_name, status, user_names, clusters);
+           });
+       }
+       acl_info
+    }
+    
     pub async fn describe_acls(&self)->Vec<AclInfo>{
         let config = self.get_config();
         let client = MemDbClient::new(config);
@@ -184,7 +206,6 @@ impl MemDbOps {
             
         }
         vec_of_acl
-
     }
 
     pub async fn describe_snapshots(&self, cluster_name: &str) -> Vec<Snapshot> {
