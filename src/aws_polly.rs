@@ -49,7 +49,7 @@ impl PollyOps {
             ),
         };
 
-        let default_voice_id = VoiceId::Aditi;
+        let default_voice_id = VoiceId::Bianca;
         let extension = text_to_synthesize.split('.').last().unwrap();
         let text_type = match extension {
             "ssml" | "Ssml" => TextType::Ssml,
