@@ -91,6 +91,24 @@ impl MemDbOps {
     
     }
 
+    pub async fn create_acl(&self,acl_name:&str){
+        let config = self.get_config();
+        let client = MemDbClient::new(config);
+        let output = client.create_acl()
+                         .acl_name(acl_name)
+                         .send().await
+                         .expect("Error while creating Access Control List\n");
+        println!("The Access Control List name {acl_name} has been created..");
+
+        if let Some(aclinfo) = output.acl  {
+            if let Some(status) = aclinfo.status{
+                let colored_status = status.green().bold();
+                println!("The current Status of ACL Name {acl_name} is: {colored_status}\n");
+            }
+
+        }
+    }
+
     pub async fn describe_memdb_cluster(&self, cluster_name: &str) -> Vec<MemDbClusterInfo> {
         let config = self.get_config();
         let client = MemDbClient::new(config);
@@ -145,6 +163,30 @@ impl MemDbOps {
         single_user_info
         
     }
+
+    pub async fn describe_acls(&self)->Vec<AclInfo>{
+        let config = self.get_config();
+        let client = MemDbClient::new(config);
+        let ouput = client.describe_ac_ls()
+                    .send().await
+                    .expect("Error while describing the ACL\n");
+        let mut vec_of_acl = Vec::new();
+
+        if let Some(vecofacl) = ouput.ac_ls {
+         vecofacl.into_iter()
+         .for_each(|acl_infos|{
+            let acl_name = acl_infos.name;
+            let status = acl_infos.status;
+            let user_names  = acl_infos.user_names;
+            let clusters = acl_infos.clusters;
+            vec_of_acl.push(AclInfo::build_aclinfo(acl_name, status, user_names, clusters))
+         }); 
+            
+        }
+        vec_of_acl
+
+    }
+
     pub async fn describe_snapshots(&self, cluster_name: &str) -> Vec<Snapshot> {
         let config = self.get_config();
         let client = MemDbClient::new(config);
@@ -210,6 +252,27 @@ impl MemDbOps {
                 
             }
         }
+    }
+
+    pub async fn delete_acl(&self,acl_name:&str)->AclInfo{
+        let config = self.get_config();
+        let client = MemDbClient::new(config);
+
+        let delete_acl = client.delete_acl()
+                         .acl_name(acl_name)
+                         .send().await
+                         .expect("Error while deleting acl name\n");
+      let mut acl_info = AclInfo::default();
+
+      if let Some(aclinfo) = delete_acl.acl {
+        let acl_name = acl_info.acl_name;
+        let status = aclinfo.status;
+        let user_names = aclinfo.user_names;
+        let clusters = aclinfo.clusters; 
+ 
+          acl_info = AclInfo::build_aclinfo(acl_name, status, user_names, clusters);
+      }
+      acl_info
     }
 }
 
@@ -330,4 +393,39 @@ impl MemDbClusterInfo {
     pub fn get_redis_version(&self)->Option<&str>{
         self.redis_engine_version.as_deref()
     }
+}
+
+
+/// Go here to learn more [`ACL`](https://docs.rs/aws-sdk-memorydb/latest/aws_sdk_memorydb/types/struct.Acl.html)
+#[derive(Debug,Default)]
+pub struct AclInfo{
+    acl_name: Option<String>,
+    status : Option<String>,
+    user_names : Option<Vec<String>>,
+    clusters : Option<Vec<String>>,
+}
+impl AclInfo {
+    fn build_aclinfo(acl_name:Option<String>,status:Option<String>,
+    user_names: Option<Vec<String>>,clusters:Option<Vec<String>>
+    )->Self{
+Self{
+    acl_name,
+    user_names,
+    status,
+    clusters
+}
+    }
+    pub fn get_status_of_acl(&self)->Option<String>{
+        self.status.clone()
+    }
+    pub fn get_acl_name(&self)->Option<String>{
+        self.acl_name.clone()
+    }
+    pub fn get_user_names(&self)->Option<Vec<String>>{
+        self.user_names.clone()
+    }
+    pub fn get_cluster(&self)->Option<Vec<String>>{
+        self.clusters.clone()
+    }
+    
 }
