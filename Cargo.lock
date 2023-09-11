@@ -169,6 +169,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-polly"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e6aa775c549a6f713df04ea00b8152091fc8dac2d69490f8c29896a257a5b40e"
+dependencies = [
+ "aws-credential-types",
+ "aws-http",
+ "aws-runtime",
+ "aws-sigv4",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-json",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "http",
+ "regex",
+ "tokio-stream",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-rds"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -223,31 +248,6 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
-]
-
-[[package]]
-name = "aws-sdk-secretsmanager"
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03b17dbefaa95312dc4691402cac16099091c08e997cb99cff5be02e51164c48"
-dependencies = [
- "aws-credential-types",
- "aws-http",
- "aws-runtime",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-http",
- "aws-smithy-json",
- "aws-smithy-runtime",
- "aws-smithy-runtime-api",
- "aws-smithy-types",
- "aws-types",
- "bytes",
- "fastrand",
- "http",
- "regex",
- "tokio-stream",
- "tracing",
 ]
 
 [[package]]
@@ -552,9 +552,9 @@ dependencies = [
  "aws-config",
  "aws-credential-types",
  "aws-sdk-memorydb",
+ "aws-sdk-polly",
  "aws-sdk-rds",
  "aws-sdk-s3",
- "aws-sdk-secretsmanager",
  "aws-sdk-sesv2",
  "aws-types",
  "chrono",

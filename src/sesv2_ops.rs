@@ -142,7 +142,8 @@ impl SesOps {
                     .await
                     .map(|_| {
                     let colored_email = email.green().bold();
-                    println!("The email verfication send to: {} if exist\n", colored_email)
+                    println!("The email verfication send to: {} if exist\n", colored_email);
+                
                      })
                     .expect(&colored_error_inside);
             })
@@ -171,15 +172,21 @@ impl SesOps {
             .red()
             .bold();
 
-        client
-    .send()
-    .await
-    .map(|_|{
+        client.send().await.expect(&colored_error);
+
         let colored_email = email.green().bold();
         let colored_list_name = default_list_name.green().bold();
-        println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n")
-    })
-    .expect(&colored_error);
+        println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n");
+        let colored_status = self
+            .is_email_verfied(email)
+            .await
+            .to_string()
+            .green()
+            .bold();
+        println!(
+            "The current status of email verification is as follows: {}\n",
+            colored_status
+        );
     }
     /// Returns true if the email is verified; otherwise, returns false.
     pub async fn is_email_verfied(&self, email: &str) -> bool {
@@ -270,15 +277,14 @@ impl SesOps {
     }
 
     /// This only works when production access is enabled, i.e., in a paid AWS service, instead of a trial version that has not been tested.
-
-    pub async fn send_custom_verification(&self, email: &str) {
+    pub async fn send_custom_verification(&self, email: &str, template_name: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
 
         let send = client
             .send_custom_verification_email()
             .email_address(email)
-            .template_name("Verification");
+            .template_name(template_name);
         match send.send().await {
             Ok(_) => {
                 let colored_email = email.green().bold();

@@ -48,7 +48,7 @@ impl RdsOps {
         password: &str,
         allocated_storage: i32,
         storage_type: &str,
-    ){
+    ) {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
@@ -77,9 +77,11 @@ impl RdsOps {
         if let Some(dbinstance) = option_of_dbinstance {
             if let Some(status) = dbinstance.db_instance_status {
                 let colored_status = status.green().bold();
-                println!("The current status of the database instance is...: {}",colored_status);
+                println!(
+                    "The current status of the database instance is...: {}",
+                    colored_status
+                );
             }
-           
         }
     }
 
@@ -114,7 +116,6 @@ impl RdsOps {
             db_instance[0].master_username.take(),
             db_instance[0].publicly_accessible,
             db_instance[0].db_instance_port,
-
         )
     }
 
@@ -135,7 +136,7 @@ impl RdsOps {
             let first_instance = vec_of_db_instance.drain(..1);
             first_instance.into_iter().for_each(|output| {
                 let status_ = output.db_instance_status;
-                if let Some(status) =status_{
+                if let Some(status) = status_ {
                     let colored_status = status.green().bold();
                     println!("The current status of Db Instance: {colored_status}\n");
                 }
@@ -215,25 +216,32 @@ impl RdsOps {
                      .expect(&error);
     }
 
-/// Some modifications result in downtime because Amazon RDS must reboot your DB instance for the change to take effect.
-///However, in this case, I'm only changing the master password
-    pub async fn modify_db_instance(&self,
-    db_instance_identifier: &str,
-    master_password_to_replace:&str,apply_immediately:bool
+    /// Some modifications result in downtime because Amazon RDS must reboot your DB instance for the change to take effect.
+    ///However, in this case, I'm only changing the master password
+    pub async fn modify_db_instance(
+        &self,
+        db_instance_identifier: &str,
+        master_password_to_replace: &str,
+        apply_immediately: bool,
     ) {
         let config = self.get_config();
-        let client =RdsClient::new(config);
-        let ouput = client.modify_db_instance()
-                .set_master_user_password(Some(master_password_to_replace.into()))
-                .set_db_instance_identifier(Some(db_instance_identifier.into()))
-                .set_apply_immediately(Some(apply_immediately))
-                .send().await
-                .expect("Error while modifying the db instance settings\n");
+        let client = RdsClient::new(config);
+        let ouput = client
+            .modify_db_instance()
+            .set_master_user_password(Some(master_password_to_replace.into()))
+            .set_db_instance_identifier(Some(db_instance_identifier.into()))
+            .set_apply_immediately(Some(apply_immediately))
+            .send()
+            .await
+            .expect("Error while modifying the db instance settings\n");
 
         if let Some(dbinstance) = ouput.db_instance {
-            if let Some(status) = dbinstance.db_instance_status{
+            if let Some(status) = dbinstance.db_instance_status {
                 let colored_status = status.green().bold();
-                println!("The current status of the database instance is...: {}",colored_status);
+                println!(
+                    "The current status of the database instance is...: {}",
+                    colored_status
+                );
             }
         }
     }
@@ -345,7 +353,7 @@ impl RdsOps {
 }
 
 ///Helper structs to get information about dbinstances and db clusters
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub struct DbInstanceInfo {
     end_point: Option<Endpoint>,
     allocated_storage: i32,
@@ -354,25 +362,25 @@ pub struct DbInstanceInfo {
     db_instance_status: Option<String>,
     db_name: Option<String>,
     availability_zones: Option<String>,
-    _master_secret : Option<MasterUserSecret>,
-    master_username : Option<String>,
-    publicly_accessible : bool,
-    _db_instance_port:i32,
+    _master_secret: Option<MasterUserSecret>,
+    master_username: Option<String>,
+    publicly_accessible: bool,
+    _db_instance_port: i32,
 }
 impl DbInstanceInfo {
     //This not meant to build by ourselves rather filled using methods
     fn build_instance(
-         end_point: Option<Endpoint>,
-         allocated_storage: i32,
-         db_instance_identifier: Option<String>,
-         db_instance_class: Option<String>,
-         db_instance_status: Option<String>,
-         db_name: Option<String>,
-         availability_zones: Option<String>,
-         _master_secret : Option<MasterUserSecret>,
-         master_username : Option<String>,
-         publicly_accessible : bool,
-         _db_instance_port:i32,
+        end_point: Option<Endpoint>,
+        allocated_storage: i32,
+        db_instance_identifier: Option<String>,
+        db_instance_class: Option<String>,
+        db_instance_status: Option<String>,
+        db_name: Option<String>,
+        availability_zones: Option<String>,
+        _master_secret: Option<MasterUserSecret>,
+        master_username: Option<String>,
+        publicly_accessible: bool,
+        _db_instance_port: i32,
     ) -> Self {
         Self {
             end_point,
@@ -382,10 +390,10 @@ impl DbInstanceInfo {
             db_name,
             availability_zones,
             db_instance_class,
-              _master_secret,
-         master_username ,
-         publicly_accessible,
-         _db_instance_port
+            _master_secret,
+            master_username,
+            publicly_accessible,
+            _db_instance_port,
         }
     }
     pub fn get_instance_status(&self) -> Option<&str> {
@@ -422,14 +430,14 @@ impl DbInstanceInfo {
         };
         endpoint
     }
-    pub fn get_username(&self)->Option<String>{
-        if let Some(username) = self.master_username.clone(){
+    pub fn get_username(&self) -> Option<String> {
+        if let Some(username) = self.master_username.clone() {
             Some(username)
-        }else {
+        } else {
             None
         }
     }
-    pub fn is_publicly_accessible(&self)->bool{
+    pub fn is_publicly_accessible(&self) -> bool {
         self.publicly_accessible
     }
     pub fn get_db_instance_identifier(&self) -> String {
@@ -453,8 +461,7 @@ impl DbInstanceInfo {
 pub struct DbClusterInfo {
     availability_zones: Option<Vec<String>>,
     cluster_members: Option<Vec<DbClusterMember>>,
-    cluster_status: Option<String>
-
+    cluster_status: Option<String>,
 }
 impl DbClusterInfo {
     /// This is a private function, as we are not supposed to construct it; rather, we should only use

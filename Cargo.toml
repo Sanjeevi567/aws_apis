@@ -2,6 +2,10 @@
 name = "aws_apis"
 version = "0.1.0"
 edition = "2021"
+authors = ["Sanjeevi M <sanjeevimani567@gmail.com>"]
+keywords = ["sesv2", "aws","memorydb","Rds","s3","polly","High level"]
+repository = "https://github.com/Sanjuvi/aws_apis"
+rust-version = "1.71.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -9,20 +13,20 @@ edition = "2021"
 name ="testing_apis"
 path="./main.rs"
 
-
 [dependencies]
+colored={version = "2.0.4"}
+aws-credential-types = {version = "0.56.1"}
+aws-config = {version ="0.56.0"}
+aws-types = {version ="0.56.1"}
+tokio = {package = "tokio",version ="1.32.0",features = ["macros","rt-multi-thread"]}
+tokio-stream = {version = "0.1.14"}
 
-colored="2.0.4"
-chrono ="0.4.28"
+chrono ={version = "0.4.28"}
 fast_qr = {version = "0.10.2",features = ["image"]}
 
-tokio = {version ="1.32.0",features = ["macros","rt-multi-thread"]}
-tokio-stream = "0.1.14"
-aws-config = "0.56.0"
-aws-sdk-s3 = "0.30.0"
-aws-sdk-sesv2 = "0.30.0"
-aws-sdk-rds ="0.30.0"
-aws-sdk-memorydb ="0.30.0"
-aws-credential-types = "0.56.1"
-aws-types = "0.56.1"
-aws-sdk-secretsmanager ="0.30.0"
+aws-sdk-s3 = {version ="0.30.0"}
+aws-sdk-sesv2 = {version = "0.30.0"}
+aws-sdk-rds ={version ="0.30.0"}
+aws-sdk-memorydb ={version = "0.30.0"}
+aws-sdk-polly ="0.30.0"
+
