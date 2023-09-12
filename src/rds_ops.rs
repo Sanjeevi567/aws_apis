@@ -309,13 +309,15 @@ impl RdsOps {
                 let database_name = db_cluster_info.database_name;
                 let cluster_endpoint = db_cluster_info.endpoint;
                 let master_username = db_cluster_info.master_username;
+                let port = db_cluster_info.port;
                 vec_of_db_cluster_info.push(DbClusterInfo::build_cluster_info(
                     db_cluster_status,
                     db_cluster_member,
                     availability_zones,
                     database_name,
                     cluster_endpoint,
-                    master_username
+                    master_username,
+                    port
                 ));
             });
         }
@@ -356,9 +358,10 @@ impl RdsOps {
         let database_name = db_cluster_info.database_name;
         let cluster_endpoint = db_cluster_info.endpoint;
         let master_username = db_cluster_info.master_username;
+        let port = db_cluster_info.port;
 
         DbClusterInfo::build_cluster_info(db_cluster_status, db_cluster_member, 
-             availability_zones,database_name,cluster_endpoint,master_username)
+             availability_zones,database_name,cluster_endpoint,master_username,port)
     }
 }
 
@@ -476,6 +479,7 @@ pub struct DbClusterInfo {
     database_name : Option<String>,
     cluster_endpoint : Option<String>,
     master_username : Option<String>,
+    port : Option<i32>,
 }
 impl DbClusterInfo {
     /// This is a private function, as we are not supposed to construct it; rather, we should only use
@@ -486,7 +490,8 @@ impl DbClusterInfo {
         availability_zones: Option<Vec<String>>,
         database_name : Option<String>,
         cluster_endpoint : Option<String>,
-        master_username : Option<String>
+        master_username : Option<String>,
+        port : Option<i32>
     ) -> Self {
         Self {
             availability_zones,
@@ -494,7 +499,8 @@ impl DbClusterInfo {
             cluster_status,
             database_name,
             cluster_endpoint,
-            master_username
+            master_username,
+            port
         }
     }
 
@@ -534,8 +540,18 @@ impl DbClusterInfo {
         }
         vec_of_zones
     }
-    pub fn get_cluster_endpoint(&self)->Option<&str>{
-        self.cluster_endpoint.as_deref()
+    pub fn get_cluster_endpoint_with_port(&self)->Option<String>{
+        let endpoint_with_port = if let (Some(endpoint),Some(port)) = 
+        (self.cluster_endpoint.as_deref(),self.port)
+         {
+            let endpoint_with_port_ = format!("{endpoint}:{port}");
+            Some(endpoint_with_port_)
+            
+        }else{
+             None
+        };
+        endpoint_with_port
+        
     }
     pub fn get_db_name(&self)->Option<&str>{
         self.database_name.as_deref()
