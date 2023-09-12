@@ -3,7 +3,7 @@ use std::{fs::OpenOptions, io::Write};
 use aws_config::SdkConfig;
 use aws_sdk_polly::{
     primitives::ByteStream,
-    types::{Engine, OutputFormat, VoiceId, TextType, LanguageCode},
+    types::{Engine, OutputFormat, VoiceId, TextType, LanguageCode,Gender,},
     Client as PollyClient,
 };
 
@@ -79,7 +79,114 @@ impl PollyOps {
             content_type,
         )
     }
+
+    pub async fn describe_voices(&self)->Vec<DescribeVoices>{
+    let config = self.get_config();
+    let client = PollyClient::new(config);
+
+    let output = client.describe_voices()
+               .send().await
+               .expect("Error while describing voices\n");
+     let mut vec_of_voices = Vec::new();
+
+     if let Some(voices) = output.voices {
+        voices.into_iter()
+        .for_each(|voice|{
+            let gender = voice.gender;
+            let voice_id = voice.id;
+            let language_code = voice.language_code;
+            let language_name = voice.language_name;
+            let voice_name = voice.name;
+            let supported_engines = voice.supported_engines;
+           vec_of_voices.push(DescribeVoices::build_describe_voices(gender, voice_id, language_code, 
+            language_name, voice_name, supported_engines));
+        });
+         
+     }  
+      vec_of_voices     
+    
+    
+    }
 }
+
+pub struct DescribeVoices{
+    gender : Option<Gender>,
+    voice_id : Option<VoiceId>,
+    language_code : Option<LanguageCode>,
+    language_name : Option<String>,
+    voice_name : Option<String>,
+    supported_engines : Option<Vec<Engine>>,
+}
+impl DescribeVoices{
+    fn build_describe_voices(gender: Option<Gender>,voice_id:Option<VoiceId>,
+    language_code : Option<LanguageCode>,language_name : Option<String>,
+    voice_name : Option<String>,supported_engines : Option<Vec<Engine>>
+    ) -> Self{
+        Self { gender,
+             voice_id,
+            language_code,
+            language_name, 
+            voice_name,
+            supported_engines
+         }
+    }
+    pub fn get_gender(&self)->Option<&str>{
+        let gender = if let Some(gender) = self.gender.as_ref(){
+                 Some(gender.as_str())
+        }else{
+                  None
+        };
+        gender
+    }
+    pub fn get_voiceid(&self)->Option<&str>{
+        let voice_id = if let Some(voiceid) = self.voice_id.as_ref() {
+            Some(voiceid.as_str())
+        }else{
+            None
+        };
+
+        voice_id
+    }
+
+    pub fn get_language_code(&self)->Option<&str>{
+        let language_code = if let Some(lang_code) = self.language_code.as_ref() {
+            Some(lang_code.as_str())
+        }else{
+            None
+        };
+        language_code
+    }
+    pub fn get_language_name(&self)->Option<&str>{
+        let language_name = if let Some(lang_name) = self.language_name.as_ref()  {
+            Some(lang_name.as_str())
+        }else{
+            None
+        };
+        language_name
+    }
+    pub fn get_voice_name(&self)->Option<&str>{
+        let voice_name = if let Some(voicename) = self.voice_name.as_ref() {
+            Some(voicename.as_str())
+        }else{
+            None
+        };
+        voice_name
+    }
+    pub fn get_supported_engines(&self)->Option<Vec<&str>>{
+        let vec_of_engines = if let Some(engines) = self.supported_engines.as_ref() {
+           let mut vec_of_engine = Vec::new();  
+           engines.iter()
+           .for_each(|engines|{
+            vec_of_engine.push(engines.as_str());
+           });
+           Some(vec_of_engine)
+        }else{
+            None
+        };
+        vec_of_engines
+    }
+}
+
 pub struct SpeechOuputInfo {
     speech_bytes: Option<ByteStream>,
     character_synthesized: i32,
