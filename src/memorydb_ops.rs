@@ -319,6 +319,7 @@ impl MemDbOps {
     }
 }
 
+/// A struct for storing information of type [`User`](https://docs.rs/aws-sdk-memorydb/latest/aws_sdk_memorydb/types/struct.User.html) which is returned from the [`describe_users`](https://docs.rs/aws-sdk-memorydb/latest/aws_sdk_memorydb/struct.Client.html#method.describe_users) REST API.
 #[derive(Debug)]
 pub struct MemDBUser {
     user_name: Option<String>,
@@ -366,6 +367,7 @@ impl MemDBUser {
         self.status.as_deref()
     }
 }
+/// A struct for storing information of type [`Cluster`](https://docs.rs/aws-sdk-memorydb/latest/aws_sdk_memorydb/types/struct.Cluster.html) which is returned from the [`describe_clusters`](https://docs.rs/aws-sdk-memorydb/latest/aws_sdk_memorydb/struct.Client.html#method.describe_clusters) REST API.
 
 #[derive(Debug)]
 pub struct MemDbClusterInfo {

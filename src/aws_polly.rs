@@ -109,6 +109,7 @@ impl PollyOps {
     }
 }
 
+/// A struct for storing information of type [`Voice`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/struct.Voice.html) which is returned from the [`describe_voices`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/operation/describe_voices/builders/struct.DescribeVoicesFluentBuilder.html) REST API
 pub struct DescribeVoices{
     gender : Option<Gender>,
     voice_id : Option<VoiceId>,
@@ -186,7 +187,7 @@ impl DescribeVoices{
         vec_of_engines
     }
 }
-
+/// A struct for storing information of type [`SynthesizeSpeechOutput`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/operation/synthesize_speech/struct.SynthesizeSpeechOutput.html) which is returned from the [`synthesize_speech`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/struct.Client.html#method.synthesize_speech) REST API.
 pub struct SpeechOuputInfo {
     speech_bytes: Option<ByteStream>,
     character_synthesized: i32,

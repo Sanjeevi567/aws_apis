@@ -306,10 +306,16 @@ impl RdsOps {
                 let db_cluster_status = db_cluster_info.status;
                 let availability_zones = db_cluster_info.availability_zones;
                 let db_cluster_member = db_cluster_info.db_cluster_members;
+                let database_name = db_cluster_info.database_name;
+                let cluster_endpoint = db_cluster_info.endpoint;
+                let master_username = db_cluster_info.master_username;
                 vec_of_db_cluster_info.push(DbClusterInfo::build_cluster_info(
                     db_cluster_status,
                     db_cluster_member,
                     availability_zones,
+                    database_name,
+                    cluster_endpoint,
+                    master_username
                 ));
             });
         }
@@ -347,12 +353,16 @@ impl RdsOps {
         let db_cluster_status = db_cluster_info.status;
         let availability_zones = db_cluster_info.availability_zones;
         let db_cluster_member = db_cluster_info.db_cluster_members;
+        let database_name = db_cluster_info.database_name;
+        let cluster_endpoint = db_cluster_info.endpoint;
+        let master_username = db_cluster_info.master_username;
 
-        DbClusterInfo::build_cluster_info(db_cluster_status, db_cluster_member, availability_zones)
+        DbClusterInfo::build_cluster_info(db_cluster_status, db_cluster_member, 
+             availability_zones,database_name,cluster_endpoint,master_username)
     }
 }
 
-///Helper structs to get information about dbinstances and db clusters
+/// A struct for storing information of type [`DbInstance`](https://docs.rs/aws-sdk-rds/latest/aws_sdk_rds/types/struct.DbInstance.html#) which is returned from the [`describe_db_instances`](https://docs.rs/aws-sdk-rds/latest/aws_sdk_rds/struct.Client.html#method.describe_db_instances) REST API.
 #[derive(Debug, Default)]
 pub struct DbInstanceInfo {
     end_point: Option<Endpoint>,
@@ -457,11 +467,15 @@ impl DbInstanceInfo {
     }
 }
 
+/// A struct for storing information of type [`DbCluster`](https://docs.rs/aws-sdk-rds/latest/aws_sdk_rds/types/struct.DbCluster.html) which is returned from the [`describe_db_clusters`](https://docs.rs/aws-sdk-rds/latest/aws_sdk_rds/struct.Client.html#method.describe_db_clusters) REST API.
 #[derive(Debug)]
 pub struct DbClusterInfo {
     availability_zones: Option<Vec<String>>,
     cluster_members: Option<Vec<DbClusterMember>>,
     cluster_status: Option<String>,
+    database_name : Option<String>,
+    cluster_endpoint : Option<String>,
+    master_username : Option<String>,
 }
 impl DbClusterInfo {
     /// This is a private function, as we are not supposed to construct it; rather, we should only use
@@ -470,11 +484,17 @@ impl DbClusterInfo {
         cluster_status: Option<String>,
         cluster_members: Option<Vec<DbClusterMember>>,
         availability_zones: Option<Vec<String>>,
+        database_name : Option<String>,
+        cluster_endpoint : Option<String>,
+        master_username : Option<String>
     ) -> Self {
         Self {
             availability_zones,
             cluster_members,
             cluster_status,
+            database_name,
+            cluster_endpoint,
+            master_username
         }
     }
 
@@ -513,5 +533,14 @@ impl DbClusterInfo {
             })
         }
         vec_of_zones
+    }
+    pub fn get_cluster_endpoint(&self)->Option<&str>{
+        self.cluster_endpoint.as_deref()
+    }
+    pub fn get_db_name(&self)->Option<&str>{
+        self.database_name.as_deref()
+    }
+    pub fn get_master_username(&self)->Option<&str>{
+        self.master_username.as_deref()
     }
 }
