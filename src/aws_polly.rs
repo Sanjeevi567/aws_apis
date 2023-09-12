@@ -122,11 +122,11 @@ impl PollyOps {
         synthesizetask
     }
 
-    /// Returns a tuple consisting of two vectors: one containing options for [`voice ID`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/struct.Voice.html#method.id) and the other containing options for [`language names`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/struct.Voice.html#method.language_name), based on the engine name provided
+    /// Returns a tuple consisting of two vectors: one containing options for [`voice ID`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/struct.Voice.html#method.id) and the other containing options for [`language code`](https://docs.aws.amazon.com/polly/latest/dg/API_StartSpeechSynthesisTask.html#polly-StartSpeechSynthesisTask-request-LanguageCode), based on the engine name provided
     pub async fn get_info_given_engine(
         &self,
         engine_name: &str,
-    ) -> (Vec<Option<VoiceId>>, Vec<Option<String>>) {
+    ) -> (Vec<Option<VoiceId>>, Vec<Option<LanguageCode>>) {
         let config = self.get_config();
         let client = PollyClient::new(config);
 
@@ -143,7 +143,7 @@ impl PollyOps {
         if let Some(voices_) = voices {
             voices_.into_iter().for_each(|voice| {
                 supported_voice_id.push(voice.id);
-                supported_langauge_name.push(voice.language_name);
+                supported_langauge_name.push(voice.language_code);
             });
         }
         (supported_voice_id, supported_langauge_name)
