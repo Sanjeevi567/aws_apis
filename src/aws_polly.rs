@@ -123,7 +123,7 @@ impl PollyOps {
         synthesizetask
     }
 
-    /// Returns a tuple consisting of two vectors: one containing options for [`voice ID`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/struct.Voice.html#method.id) and the other containing options for [`language code`](https://docs.aws.amazon.com/polly/latest/dg/API_StartSpeechSynthesisTask.html#polly-StartSpeechSynthesisTask-request-LanguageCode), based on the engine name provided
+/// Returns a tuple consisting of two vectors: one containing options for [`voice ID`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/struct.Voice.html#method.id) and the other containing options for [`language code`](https://docs.aws.amazon.com/polly/latest/dg/API_StartSpeechSynthesisTask.html#polly-StartSpeechSynthesisTask-request-LanguageCode), based on the engine name provided
     pub async fn get_voice_info_given_engine(
         &self,
         engine_name: &str,
@@ -149,7 +149,7 @@ impl PollyOps {
         }
         (supported_voice_id, supported_langauge_name)
     }
-
+/// List the synthesis tasks. The status is hardcoded as 'Completed,' meaning it only returns tasks that are in the 'Completed' state. However, for other states, you need to obtain input from the caller and construct the [`TaskStatus`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/enum.TaskStatus.html) using the [`from`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/enum.TaskStatus.html#impl-From%3C%26str%3E-for-TaskStatus) method
     pub async fn list_synthesise_speech(&self) {
         let config = self.get_config();
         let client = PollyClient::new(config);
