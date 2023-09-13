@@ -9,14 +9,14 @@ use aws_sdk_s3::{
     Client as S3Client,
 };
 use colored::Colorize;
+use dotenv::dotenv;
 use std::{
+    env::var,
     fs::File,
     io::Write,
     time::{Duration, SystemTime},
-    env::var
 };
 use tokio_stream::StreamExt;
-use dotenv::dotenv;
 
 /// The core structure for performing operations on the [`S3 client`](https://docs.rs/aws-sdk-s3/latest/aws_sdk_s3/struct.Client.html) eliminates the need for
 /// API users to provide credentials each time they use the service. Instead,
@@ -37,28 +37,19 @@ impl S3Ops {
     /// This function accepts an [`SdkConfig`](https://docs.rs/aws-config/latest/aws_config/struct.SdkConfig.html), retrieves the region name from it if
     /// available; otherwise, it sets it to an empty string and then constructs a S3Ops instance   
     pub fn build(config: SdkConfig) -> Self {
-        Self {
-            config: config,
-        }
-    }
-
-    /// The region is obtained from the [`SdkConfig`](https://docs.rs/aws-config/latest/aws_config/struct.SdkConfig.html#method.region) if available; otherwise, it is
-    /// obtained from the struct variable "region" provided during initialization
-    pub fn get_region_name(&self) -> String {
-        dotenv().ok();
-        let region = self.config.region();
-        match region {
-            Some(region) => region.to_string(),
-            None => var("REGION").unwrap_or("Configure the region name in the configuration menu".into()),
-        }
+        Self { config: config }
     }
 
     ///Create a new bucket in your AWS account and ensure you specify the region
     /// name; otherwise, you may receive a panic message from AWS APIs
     pub async fn create_bucket(&self, bucket_name: &str) {
+        dotenv().ok();
         let config = self.get_config();
         let client = S3Client::new(config);
-        let region_name = self.get_region_name();
+        let region_name = match self.get_config().region(){
+             Some(region) => region.to_string(),
+             None => var("REGION").unwrap_or("The region value is read from the .env file in the current directory if it is not provided in the credential file".into())
+        };
         let constraint = BucketLocationConstraint::from(region_name.as_str());
         let location = CreateBucketConfiguration::builder()
             .location_constraint(constraint)

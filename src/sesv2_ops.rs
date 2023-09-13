@@ -2,6 +2,7 @@ use self::SimpleOrTemplate::{Simple_, Template_};
 use aws_config::SdkConfig;
 use aws_sdk_sesv2 as sesv2;
 use colored::Colorize;
+use dotenv::dotenv;
 use sesv2::{
     operation::{
         create_email_identity::builders::CreateEmailIdentityFluentBuilder,
@@ -10,8 +11,7 @@ use sesv2::{
     types::{Body, Content, Destination, EmailContent, EmailTemplateContent, Message, Template},
     Client as SesClient,
 };
-use std::{fs::OpenOptions, io::Write, thread::sleep, time::Duration,env::var};
-use dotenv::dotenv;
+use std::{env::var, fs::OpenOptions, io::Write, thread::sleep, time::Duration};
 
 /// The core structure for performing operations on [`SESv2`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/struct.Client.html) (Simple Email Service Version 2)
 /// clients eliminates the need for users of the API to provide credentials each
@@ -25,18 +25,16 @@ pub struct SesOps {
 impl SesOps {
     ///When calling this function, it builds the credentials and the SesOps struct.
     pub fn build(config: SdkConfig) -> Self {
-        Self {
-            config: config,
-        }
+        Self { config: config }
     }
 
-/// These are not retrieved from an AWS service. In other words, these values act as proxies for the actual data if you're familiar with these details
-    
-/// The 'from' address has to be verified since this is the base email used to send mail to others 
+    /// These are not retrieved from an AWS service. In other words, these values act as proxies for the actual data if you're familiar with these details
+
+    /// The 'from' address has to be verified since this is the base email used to send mail to others
     pub fn get_from_address(&self) -> String {
-    dotenv().ok();
-    var("FROM_ADDRESS").unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu".into())
-    } 
+        dotenv().ok();
+        var("FROM_ADDRESS").unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu".into())
+    }
     /// The template name must correspond to the credentials you used, and the
     /// template data must accurately match the template employed by those services
     pub fn get_template_name(&self) -> String {
@@ -49,7 +47,7 @@ impl SesOps {
         dotenv().ok();
         var("LIST_NAME").unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu".into())
     }
- 
+
     /// This is a private function used internally to verify service credentials.
     /// By doing so, users of the API are spared from having to repeatedly specify
     /// their credentials whenever they use the service
@@ -97,7 +95,7 @@ impl SesOps {
         let client = SesClient::new(config);
         let default_list_name = match list_name {
             Some(list_name) => list_name.to_string(),
-            None => self.get_list_name()
+            None => self.get_list_name(),
         };
         let client = client
             .create_contact()
@@ -150,7 +148,7 @@ impl SesOps {
 
         let default_list_name = match list_name {
             Some(list_name) => list_name.to_string(),
-            None => self.get_list_name()
+            None => self.get_list_name(),
         };
         let client = client
             .create_contact()
@@ -205,7 +203,7 @@ impl SesOps {
 
         let default_list_name = match list_name {
             Some(list_name) => list_name.to_string(),
-            None => self.get_list_name()
+            None => self.get_list_name(),
         };
 
         let list = client
@@ -373,7 +371,8 @@ impl SesOps {
             ",
                 name, email
             );
-            let template = TemplateMail::builder(self.get_template_name().as_str(), &template_data).build();
+            let template =
+                TemplateMail::builder(self.get_template_name().as_str(), &template_data).build();
             self.send_mono_email(email, Template_(template), Some(&self.get_from_address()))
                 .await
                 .send()

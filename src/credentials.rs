@@ -6,6 +6,8 @@ use aws_credential_types::{
 use aws_types::region::Region;
 
 use colored::Colorize;
+use dotenv::dotenv;
+use std::env::var;
 
 #[derive(Debug, Default)]
 pub struct CredentInitialize {
@@ -18,10 +20,13 @@ pub struct CredentInitialize {
 /// them later.
 impl CredentInitialize {
     pub fn update(&mut self, access_id: &str, secret_key: &str, region: Option<&str>) {
-        //Hardcoding the credential information or empty string
+        //Hardcoding the credential information
         self.access_id = Some(access_id.into());
         self.secret_key = Some(secret_key.into());
-        self.region = Some(region.unwrap().into());
+        self.region = match region {
+            Some(region) => Some(region.to_string()),
+            None => Some(self.get_region_name()),
+        };
         self.provider_name = Some("aws".into());
     }
 
@@ -80,6 +85,10 @@ impl CredentInitialize {
         vec![access_key, secret_key, region]
     }
 
+    pub fn get_region_name(&self) -> String {
+        dotenv().ok();
+        var("REGION").unwrap_or("The region value is read from the .env file in the current directory if it is not provided in the credential file.".into())
+    }
     pub fn empty(&mut self) {
         self.access_id = None;
         self.secret_key = None;
@@ -89,8 +98,8 @@ impl CredentInitialize {
 }
 
 /// Returns the [`Credentials`](https://docs.rs/aws-credential-types/0.56.1/aws_credential_types/struct.Credentials.html?search=sdkconfig#) types to retrieve access_id and secret_key, as well as
-/// the region name, from the configuration. Defaults are set for these values if none are found in the configuration file.
-pub async fn load_credential_from_env() -> (Credentials, String) {
+/// the region name, from the configuration.
+pub async fn load_credential_from_env() -> (Credentials, Option<String>) {
     println!("{}\n",r#"The configuration path is "$HOME/.aws/credentials" on Linux and macOS, and "%USER_PROFILE%/.aws/credentials" on Windows"#.green().bold());
 
     println!("Attempting to retrieve credentials from the configuration file\n");
@@ -99,16 +108,12 @@ pub async fn load_credential_from_env() -> (Credentials, String) {
     let shared_credential = config.credentials_provider().unwrap();
     let credentials = shared_credential.provide_credentials().await.unwrap();
     println!(
-        "{}\n",
-        r#"The region is set to "ap-south-1" if it is not provided in the credential file"#
-            .blue()
-            .bold()
-    );
-    let region = std::env::var("REGION");
-    let region = config
-        .region()
-        .unwrap_or(&Region::new("ap-south-1"))
-        .to_string();
+    "{}\n",
+    "The region value is read from the .env file in the current directory if it is not provided in the credential file".blue().bold());
+    let region = match config.region() {
+        Some(region) => Some(region.to_string()),
+        None => None,
+    };
 
     (credentials, region)
 }

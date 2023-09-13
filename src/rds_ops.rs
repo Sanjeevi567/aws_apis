@@ -4,18 +4,15 @@ use aws_sdk_rds::{
     Client as RdsClient,
 };
 use colored::Colorize;
-use std::env::var;
 use dotenv::dotenv;
+use std::env::var;
 #[derive(Debug)]
 pub struct RdsOps {
     config: SdkConfig,
 }
 impl RdsOps {
     pub fn build(config: SdkConfig) -> Self {
-        Self {
-            config: config,
-
-        }
+        Self { config: config }
     }
     fn get_config(&self) -> &SdkConfig {
         &self.config
@@ -28,7 +25,7 @@ impl RdsOps {
     }
     pub fn get_db_cluster_id(&self) -> String {
         dotenv().ok();
-    var("DB_CLUSTER_ID").unwrap_or("You can set the database cluster ID by selecting the 'configure' option from the menu\n".into())
+        var("DB_CLUSTER_ID").unwrap_or("You can set the database cluster ID by selecting the 'configure' option from the menu\n".into())
     }
 
     pub async fn create_db_instance(
@@ -87,9 +84,8 @@ impl RdsOps {
 
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
-            None => self.get_db_instance_id()
+            None => self.get_db_instance_id(),
         };
-
 
         let client = client
             .describe_db_instances()
@@ -120,10 +116,9 @@ impl RdsOps {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
-       
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
-            None => self.get_db_instance_id()
+            None => self.get_db_instance_id(),
         };
 
         let output = client
@@ -149,17 +144,16 @@ impl RdsOps {
     pub async fn start_db_instance(&self, db_instance_identifier: Option<&str>) {
         let config = self.get_config();
         let client = RdsClient::new(config);
-        
+
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
-            None => self.get_db_instance_id()
+            None => self.get_db_instance_id(),
         };
 
         let error = format!(
             "Error while starting db instance: {}\n",
-            default_db_instance_id);
-
-        
+            default_db_instance_id
+        );
 
         client.start_db_instance()
                   .db_instance_identifier(&default_db_instance_id)
@@ -190,17 +184,16 @@ impl RdsOps {
     pub async fn stop_db_instance(&self, db_instance_identifier: Option<&str>) {
         let config = self.get_config();
         let client = RdsClient::new(config);
-        
+
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
-            None => self.get_db_instance_id()
+            None => self.get_db_instance_id(),
         };
 
         let error = format!(
             "Error while stopping db instance: {}\n",
             default_db_instance_id
         );
-
 
         client.stop_db_instance()
                      .db_instance_identifier(&default_db_instance_id)
@@ -259,17 +252,16 @@ impl RdsOps {
     pub async fn delete_db_instance(&self, db_instance_identifier: Option<&str>) {
         let config = self.get_config();
         let client = RdsClient::new(config);
-        
+
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
-            None => self.get_db_instance_id()
+            None => self.get_db_instance_id(),
         };
 
         let error = format!(
             "Error While deleting db instance:{}\n",
             default_db_instance_id
         );
-
 
         client.delete_db_instance()
                   .db_instance_identifier(&default_db_instance_id)
@@ -304,10 +296,9 @@ impl RdsOps {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
-        
         let default_cluster_id = match db_cluster_identifier {
             Some(id) => id.to_string(),
-            None => self.get_db_instance_id()
+            None => self.get_db_instance_id(),
         };
         let client = client
             .describe_db_clusters()
@@ -351,7 +342,7 @@ impl RdsOps {
 
         let default_cluster_id = match db_cluster_identifier {
             Some(id) => id.to_string(),
-            None => self.get_db_instance_id()
+            None => self.get_db_instance_id(),
         };
 
         let cluster_output= client.delete_db_cluster()

@@ -24,7 +24,29 @@ impl SnsOps {
             .send()
             .await
             .expect("Error while sending Message\n");
-        println!("{}\n", "SMS send successfully".green().bold());
+        println!("{}\n", "Email has been added".green().bold());
+    }
+    pub async fn list_sms_sandbox_numbers(&self) -> String {
+        let config = self.get_config();
+        let client = SnsClient::new(config);
+
+        let output = client
+            .list_sms_sandbox_phone_numbers()
+            .send()
+            .await
+            .expect("Error while listing sms sanbox numbers\n");
+        let mut phonenumber_with_status = Vec::new();
+        if let Some(phone_numbers_info) = output.phone_numbers {
+            phone_numbers_info.into_iter().for_each(|info| {
+                if let (Some(phone_number), Some(status)) = (info.phone_number, info.status) {
+                    let mut number_with_status = phone_number;
+                    number_with_status.push_str("    ");
+                    number_with_status.push_str(status.as_str());
+                    phonenumber_with_status.push(number_with_status);
+                }
+            });
+        }
+        phonenumber_with_status.join("\n")
     }
     pub async fn verify_phone_number(&self, phone_number: &str, otp: &str) {
         let config = self.get_config();
@@ -37,7 +59,7 @@ impl SnsOps {
             .send()
             .await
             .expect("Error while verifying Phone Number");
-        println!("{}\n", "SMS is verified Successfully".green().bold());
+        println!("{}\n", "SMS has been verified successfully".green().bold());
     }
     pub async fn create_topic(&self, topic_name: &str) {
         let config = self.get_config();
@@ -49,21 +71,21 @@ impl SnsOps {
             .send()
             .await
             .expect("Error while creating topic\n");
-        println!("{}\n", "Topic created successfully".green().bold());
+        println!("{}\n", "The topic was created successfully".green().bold());
         if let Some(output_) = output.topic_arn {
             let arn = output_.green().bold();
-            println!("The Amazon Resource Name for the SNS topic is: {arn}\n");
+            println!("The Amazon Resource Name (ARN) for the SNS topic is: {arn}\n");
             let mut file = OpenOptions::new()
                 .create(true)
                 .read(true)
                 .write(true)
                 .open("sns_topic_arn.txt")
                 .expect("Error while creating file");
-            let buf = format!("The Amazon Resource Name for the SNS topic is: {arn}\n");
+            let buf = format!("The Amazon Resource Name (ARN) for the SNS topic is: {arn}\n");
             match file.write_all(buf.as_bytes()) {
                 Ok(_) => println!(
                     "{}\n",
-                    "The ARN is written to the current directory."
+                    "The ARN has been written to the current directory."
                         .green()
                         .bold()
                 ),
@@ -71,7 +93,7 @@ impl SnsOps {
             };
         }
     }
-    pub async fn subscription(&self, topic_arn: &str, protocol: &str,phone_number: &str) {
+    pub async fn subscription(&self, topic_arn: &str, protocol: &str, phone_number: &str) {
         let config = self.get_config();
         let client = SnsClient::new(config);
 
@@ -92,7 +114,8 @@ impl SnsOps {
                 .write(true)
                 .open("sns_topic_arn.txt")
                 .expect("Error while creating file");
-            let buf = format!("The Amazon Resource Name for the Subscription is: {subscription_arn}\n");
+            let buf =
+                format!("The Amazon Resource Name for the Subscription is: {subscription_arn}\n");
             match file.write_all(buf.as_bytes()) {
                 Ok(_) => println!(
                     "{}\n",
@@ -116,6 +139,9 @@ impl SnsOps {
             .send()
             .await
             .expect("Error while sending messages to topic");
-        println!("{}\n", "Messages are send successfully...".green().bold());
+        println!(
+            "{}\n",
+            "Messages have been sent successfully....".green().bold()
+        );
     }
 }
