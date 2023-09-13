@@ -11,6 +11,7 @@ use sesv2::{
     Client as SesClient,
 };
 use std::{fs::OpenOptions, io::Write, thread::sleep, time::Duration,env::var};
+use dotenv::dotenv;
 
 /// The core structure for performing operations on [`SESv2`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/struct.Client.html) (Simple Email Service Version 2)
 /// clients eliminates the need for users of the API to provide credentials each
@@ -33,16 +34,19 @@ impl SesOps {
     
 /// The 'from' address has to be verified since this is the base email used to send mail to others 
     pub fn get_from_address(&self) -> String {
+    dotenv().ok();
     var("FROM_ADDRESS").unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu".into())
     } 
     /// The template name must correspond to the credentials you used, and the
     /// template data must accurately match the template employed by those services
     pub fn get_template_name(&self) -> String {
+        dotenv().ok();
         var("TEMPLATE_NAME").unwrap_or("You can set the default template name by selecting the 'configure' option from the menu".into())
     }
     /// If the list name does not exist, i.e., if it has not been set using the
     /// appropriate methods, an error will occur when attempting to use it.
     pub fn get_list_name(&self) -> String {
+        dotenv().ok();
         var("LIST_NAME").unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu".into())
     }
  

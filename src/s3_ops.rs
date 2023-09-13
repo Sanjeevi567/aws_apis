@@ -16,6 +16,7 @@ use std::{
     env::var
 };
 use tokio_stream::StreamExt;
+use dotenv::dotenv;
 
 /// The core structure for performing operations on the [`S3 client`](https://docs.rs/aws-sdk-s3/latest/aws_sdk_s3/struct.Client.html) eliminates the need for
 /// API users to provide credentials each time they use the service. Instead,
@@ -44,6 +45,7 @@ impl S3Ops {
     /// The region is obtained from the [`SdkConfig`](https://docs.rs/aws-config/latest/aws_config/struct.SdkConfig.html#method.region) if available; otherwise, it is
     /// obtained from the struct variable "region" provided during initialization
     pub fn get_region_name(&self) -> String {
+        dotenv().ok();
         let region = self.config.region();
         match region {
             Some(region) => region.to_string(),

@@ -5,6 +5,7 @@ use aws_sdk_rds::{
 };
 use colored::Colorize;
 use std::env::var;
+use dotenv::dotenv;
 #[derive(Debug)]
 pub struct RdsOps {
     config: SdkConfig,
@@ -22,9 +23,11 @@ impl RdsOps {
 
     /// Operations trigger panics prematurely when default error messages are absent
     pub fn get_db_instance_id(&self) -> String {
+        dotenv().ok();
         var("DB_INSTANCE_ID").unwrap_or("You can set the database instance ID by selecting the 'configure' option from the menu\n".into())
     }
     pub fn get_db_cluster_id(&self) -> String {
+        dotenv().ok();
     var("DB_CLUSTER_ID").unwrap_or("You can set the database cluster ID by selecting the 'configure' option from the menu\n".into())
     }
 

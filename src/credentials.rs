@@ -104,6 +104,7 @@ pub async fn load_credential_from_env() -> (Credentials, String) {
             .blue()
             .bold()
     );
+    let region = std::env::var("REGION");
     let region = config
         .region()
         .unwrap_or(&Region::new("ap-south-1"))
