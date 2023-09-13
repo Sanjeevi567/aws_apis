@@ -4,38 +4,28 @@ use aws_sdk_rds::{
     Client as RdsClient,
 };
 use colored::Colorize;
+use std::env::var;
 #[derive(Debug)]
 pub struct RdsOps {
     config: SdkConfig,
-    db_instance_id: Option<String>,
-    db_cluster_id: Option<String>,
 }
 impl RdsOps {
     pub fn build(config: SdkConfig) -> Self {
         Self {
             config: config,
-            db_instance_id: None,
-            db_cluster_id: None,
+
         }
     }
     fn get_config(&self) -> &SdkConfig {
         &self.config
     }
-    pub fn set_db_instance_id(&mut self, id: &str) {
-        self.db_instance_id = Some(id.into());
-    }
-    pub fn set_db_cluster_id(&mut self, id: &str) {
-        self.db_cluster_id = Some(id.into());
-    }
 
     /// Operations trigger panics prematurely when default error messages are absent
-    pub fn get_db_instance_id(&self) -> &str {
-        &self.db_instance_id.as_deref().unwrap_or("You can set the database instance ID by selecting the 'configure' option from the menu\n")
+    pub fn get_db_instance_id(&self) -> String {
+        var("DB_INSTANCE_ID").unwrap_or("You can set the database instance ID by selecting the 'configure' option from the menu\n".into())
     }
-    pub fn get_db_cluster_id(&self) -> &str {
-        &self.db_cluster_id.as_deref().unwrap_or(
-            "You can set the database cluster ID by selecting the 'configure' option from the menu\n",
-        )
+    pub fn get_db_cluster_id(&self) -> String {
+    var("DB_CLUSTER_ID").unwrap_or("You can set the database cluster ID by selecting the 'configure' option from the menu\n".into())
     }
 
     pub async fn create_db_instance(
@@ -92,11 +82,15 @@ impl RdsOps {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
-        let db_instance_identifier = db_instance_identifier.unwrap_or(self.get_db_instance_id());
+        let default_db_instance_id = match db_instance_identifier {
+            Some(id) => id.to_string(),
+            None => self.get_db_instance_id()
+        };
+
 
         let client = client
             .describe_db_instances()
-            .db_instance_identifier(db_instance_identifier)
+            .db_instance_identifier(default_db_instance_id)
             .send()
             .await
             .expect("Error while calling describe instances\n");
@@ -123,11 +117,15 @@ impl RdsOps {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
-        let db_instance_identifier = db_instance_identifier.unwrap_or(self.get_db_instance_id());
+       
+        let default_db_instance_id = match db_instance_identifier {
+            Some(id) => id.to_string(),
+            None => self.get_db_instance_id()
+        };
 
         let output = client
             .describe_db_instances()
-            .db_instance_identifier(db_instance_identifier)
+            .db_instance_identifier(default_db_instance_id)
             .send()
             .await
             .expect("Error while getting status of db instance\n");
@@ -148,19 +146,24 @@ impl RdsOps {
     pub async fn start_db_instance(&self, db_instance_identifier: Option<&str>) {
         let config = self.get_config();
         let client = RdsClient::new(config);
+        
+        let default_db_instance_id = match db_instance_identifier {
+            Some(id) => id.to_string(),
+            None => self.get_db_instance_id()
+        };
+
         let error = format!(
             "Error while starting db instance: {}\n",
-            db_instance_identifier.unwrap_or(self.get_db_instance_id())
-        );
+            default_db_instance_id);
 
-        let db_instance_identifier = db_instance_identifier.unwrap_or(self.get_db_instance_id());
+        
 
         client.start_db_instance()
-                  .db_instance_identifier(db_instance_identifier)
+                  .db_instance_identifier(&default_db_instance_id)
                   .send()
                   .await
                   .map(|output|{
-                   let colored_msg = format!("An instance with the ID of {} initiates the process of starting the database instance if it was stopped before\n",db_instance_identifier).green().bold();
+                   let colored_msg = format!("An instance with the ID of {} initiates the process of starting the database instance if it was stopped before\n",default_db_instance_id).green().bold();
                    println!("{colored_msg}");
                    let status = if let Some(dbinstance) = output.db_instance{
                              if let Some(status_) = dbinstance.db_instance_status {
@@ -184,20 +187,24 @@ impl RdsOps {
     pub async fn stop_db_instance(&self, db_instance_identifier: Option<&str>) {
         let config = self.get_config();
         let client = RdsClient::new(config);
+        
+        let default_db_instance_id = match db_instance_identifier {
+            Some(id) => id.to_string(),
+            None => self.get_db_instance_id()
+        };
 
         let error = format!(
             "Error while stopping db instance: {}\n",
-            db_instance_identifier.unwrap_or(self.get_db_instance_id())
+            default_db_instance_id
         );
 
-        let db_instance_identifier = db_instance_identifier.unwrap_or(self.get_db_instance_id());
 
         client.stop_db_instance()
-                     .db_instance_identifier(db_instance_identifier)
+                     .db_instance_identifier(&default_db_instance_id)
                      .send()
                      .await
                      .map(|output|{
-                        println!("The db_instance with the db_instance_id: {db_instance_identifier} is initiating the process of stopping\n");
+                        println!("The db_instance with the db_instance_id: {default_db_instance_id} is initiating the process of stopping\n");
                         let status = if let Some(dbinstance) = output.db_instance{
                             if let Some(status) =dbinstance.db_instance_status{
                                 Some(status)
@@ -249,21 +256,25 @@ impl RdsOps {
     pub async fn delete_db_instance(&self, db_instance_identifier: Option<&str>) {
         let config = self.get_config();
         let client = RdsClient::new(config);
+        
+        let default_db_instance_id = match db_instance_identifier {
+            Some(id) => id.to_string(),
+            None => self.get_db_instance_id()
+        };
 
         let error = format!(
             "Error While deleting db instance:{}\n",
-            db_instance_identifier.unwrap_or(self.get_db_instance_id())
+            default_db_instance_id
         );
 
-        let db_instance_identifier = db_instance_identifier.unwrap_or(self.get_db_instance_id());
 
         client.delete_db_instance()
-                  .db_instance_identifier(db_instance_identifier)
+                  .db_instance_identifier(&default_db_instance_id)
                   .skip_final_snapshot(true)
                   .send()
                   .await
                   .map(|output|{
-                   let colored_msg = format!("The database instance with the ID {db_instance_identifier} has initiated the deletion process.").green().bold();
+                   let colored_msg = format!("The database instance with the ID {default_db_instance_id} has initiated the deletion process.").green().bold();
                    println!("{}\n",colored_msg);
                    let status = if let Some(dbinstance) = output.db_instance{
                         if let Some(status) = dbinstance.db_instance_status {
@@ -290,10 +301,14 @@ impl RdsOps {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
-        let db_cluster_identifier = db_cluster_identifier.unwrap_or(self.get_db_cluster_id());
+        
+        let default_cluster_id = match db_cluster_identifier {
+            Some(id) => id.to_string(),
+            None => self.get_db_instance_id()
+        };
         let client = client
             .describe_db_clusters()
-            .db_cluster_identifier(db_cluster_identifier)
+            .db_cluster_identifier(default_cluster_id)
             .send()
             .await
             .expect("Error while describing db cluster\n");
@@ -331,15 +346,18 @@ impl RdsOps {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
-        let db_cluster_identifier = db_cluster_identifier.unwrap_or(self.get_db_cluster_id());
+        let default_cluster_id = match db_cluster_identifier {
+            Some(id) => id.to_string(),
+            None => self.get_db_instance_id()
+        };
 
         let cluster_output= client.delete_db_cluster()
-               .db_cluster_identifier(db_cluster_identifier)
+               .db_cluster_identifier(&default_cluster_id)
                .skip_final_snapshot(true)
                .send()
                .await
                .map(|output|{
-                println!("The db_cluster identified by ID {} is initiating the deletion process for both the clusters and the associated DB instances\n",db_cluster_identifier);
+                println!("The db_cluster identified by ID {} is initiating the deletion process for both the clusters and the associated DB instances\n",default_cluster_id);
                 if let Some(cluster) = output.db_cluster.clone() {
                     if let Some(status) = cluster.status {
                         let colored_status = status.green().bold();

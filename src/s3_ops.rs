@@ -13,6 +13,7 @@ use std::{
     fs::File,
     io::Write,
     time::{Duration, SystemTime},
+    env::var
 };
 use tokio_stream::StreamExt;
 
@@ -23,7 +24,6 @@ use tokio_stream::StreamExt;
 #[derive(Debug)]
 pub struct S3Ops {
     config: SdkConfig,
-    region: Option<String>,
 }
 impl S3Ops {
     /// This is a private function used internally to verify service credentials.
@@ -37,10 +37,6 @@ impl S3Ops {
     /// available; otherwise, it sets it to an empty string and then constructs a S3Ops instance   
     pub fn build(config: SdkConfig) -> Self {
         Self {
-            region: match &config.region() {
-                Some(region) => Some(region.to_string()),
-                None => Some("".into()),
-            },
             config: config,
         }
     }
@@ -51,7 +47,7 @@ impl S3Ops {
         let region = self.config.region();
         match region {
             Some(region) => region.to_string(),
-            None => self.region.clone().unwrap_or("us-west-2".into()),
+            None => var("REGION").unwrap_or("Configure the region name in the configuration menu".into()),
         }
     }
 
