@@ -154,9 +154,12 @@ impl PollyOps {
         let config = self.get_config();
         let client = PollyClient::new(config);
 
+        let status_builder = TaskStatus::Completed;
+
         let output = client
             .list_speech_synthesis_tasks()
             .max_results(5)
+            .status(status_builder)
             .send()
             .await
             .expect("Error while listing synthesise tasks");
