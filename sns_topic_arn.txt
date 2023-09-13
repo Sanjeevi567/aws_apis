@@ -1,0 +1,1 @@
+The Amazon Resource Name for the Subscription is: [1;32marn:aws:sns:ap-south-1:108394706369:Demo:0972e371-38d1-4009-8b28-18cd5d9bf13c[0m

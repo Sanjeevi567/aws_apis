@@ -19,3 +19,9 @@ pub use sesv2_ops::{
 
 mod aws_polly;
 pub use aws_polly::PollyOps;
+
+mod pinpoint_ops;
+pub use pinpoint_ops::PinPointOps;
+
+mod sns_ops;
+pub use sns_ops::SnsOps;

@@ -29,4 +29,5 @@ aws-sdk-sesv2 = {version = "0.30.0"}
 aws-sdk-rds ={version ="0.30.0"}
 aws-sdk-memorydb ={version = "0.30.0"}
 aws-sdk-polly ="0.30.0"
-
+aws-sdk-pinpoint ="0.30.0"
+aws-sdk-sns ="0.30.0"
