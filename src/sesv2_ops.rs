@@ -10,7 +10,7 @@ use sesv2::{
     types::{Body, Content, Destination, EmailContent, EmailTemplateContent, Message, Template},
     Client as SesClient,
 };
-use std::{fs::OpenOptions, io::Write, thread::sleep, time::Duration};
+use std::{fs::OpenOptions, io::Write, thread::sleep, time::Duration,env::var};
 
 /// The core structure for performing operations on [`SESv2`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/struct.Client.html) (Simple Email Service Version 2)
 /// clients eliminates the need for users of the API to provide credentials each
@@ -19,53 +19,33 @@ use std::{fs::OpenOptions, io::Write, thread::sleep, time::Duration};
 #[derive(Debug)]
 pub struct SesOps {
     config: SdkConfig,
-    list_name: Option<String>,
-    template_name: Option<String>,
-    from_address: Option<String>,
 }
 
 impl SesOps {
-    ///When calling this function, it builds the credentials and includes default values such as
-    /// 'from_address' and 'list_name' for use in other services. This means you don't have to pass
-    /// them explicitly every time, but you can modify them through methods like 'set_
+    ///When calling this function, it builds the credentials and the SesOps struct.
     pub fn build(config: SdkConfig) -> Self {
         Self {
             config: config,
-            //list name must be exist
-            list_name: Some("".into()),
-            //Template name must exist
-            template_name: Some("".into()),
-            from_address: Some("".into()),
         }
     }
-    ///Getting default values directly from the struct itself, not as actual data
-    /// retrieved from an AWS service. In other words, these values act as proxies for the actual data if you're familiar with these details
-    pub fn get_from_address(&self) -> String {
-        self.from_address.as_deref().unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu").into()
-    }
-    pub fn get_template_name(&self) -> &str {
-        self.template_name.as_deref().unwrap_or("You can set the default template name by selecting the 'configure' option from the menu")
-    }
-    pub fn get_list_name(&self) -> &str {
-        self.list_name.as_deref().unwrap_or(
-            "You can set the default list name by selecting the 'configure' option from the menu",
-        )
-    }
 
-    /// If the list name does not exist, i.e., if it has not been set using the
-    /// appropriate methods, an error will occur when attempting to use it.
-    pub fn set_list_name(&mut self, list_name: &str) {
-        self.list_name = Some(list_name.into());
-    }
+/// These are not retrieved from an AWS service. In other words, these values act as proxies for the actual data if you're familiar with these details
+    
+/// The 'from' address has to be verified since this is the base email used to send mail to others 
+    pub fn get_from_address(&self) -> String {
+    var("FROM_ADDRESS").unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu".into())
+    } 
     /// The template name must correspond to the credentials you used, and the
     /// template data must accurately match the template employed by those services
-    pub fn set_template_name(&mut self, template_name: &str) {
-        self.template_name = Some(template_name.into());
+    pub fn get_template_name(&self) -> String {
+        var("TEMPLATE_NAME").unwrap_or("You can set the default template name by selecting the 'configure' option from the menu".into())
     }
-    /// The 'from' address has to be verified since this is the base email used to send mail to others
-    pub fn set_from_address(&mut self, from_address: &str) {
-        self.from_address = Some(from_address.into());
+    /// If the list name does not exist, i.e., if it has not been set using the
+    /// appropriate methods, an error will occur when attempting to use it.
+    pub fn get_list_name(&self) -> String {
+        var("LIST_NAME").unwrap_or("You can set the default from_address by selecting the 'configure' option from the menu".into())
     }
+ 
     /// This is a private function used internally to verify service credentials.
     /// By doing so, users of the API are spared from having to repeatedly specify
     /// their credentials whenever they use the service
@@ -111,11 +91,13 @@ impl SesOps {
     ) {
         let config = self.get_config();
         let client = SesClient::new(config);
-
-        let default_list_name = list_name.unwrap_or(self.get_list_name());
+        let default_list_name = match list_name {
+            Some(list_name) => list_name.to_string(),
+            None => self.get_list_name()
+        };
         let client = client
             .create_contact()
-            .contact_list_name(default_list_name)
+            .contact_list_name(&default_list_name)
             .email_address(email);
 
         let colored_error_inside =
@@ -162,10 +144,13 @@ impl SesOps {
         let config = self.get_config();
         let client = SesClient::new(config);
 
-        let default_list_name = list_name.unwrap_or(self.get_list_name());
+        let default_list_name = match list_name {
+            Some(list_name) => list_name.to_string(),
+            None => self.get_list_name()
+        };
         let client = client
             .create_contact()
-            .contact_list_name(default_list_name)
+            .contact_list_name(&default_list_name)
             .email_address(email);
 
         let colored_error = "Error from create_email_contact_without_verification\n"
@@ -214,11 +199,14 @@ impl SesOps {
 
         let colored_error = "Error from retrieve_emails_from_provided_list".red().bold();
 
-        let default_list_name = list_name.unwrap_or(self.get_list_name());
+        let default_list_name = match list_name {
+            Some(list_name) => list_name.to_string(),
+            None => self.get_list_name()
+        };
 
         let list = client
             .list_contacts()
-            .contact_list_name(default_list_name)
+            .contact_list_name(&default_list_name)
             .send()
             .await
             .map(|contacts| {
@@ -364,8 +352,9 @@ impl SesOps {
     /// Here is the [`template`]() I've used for this operation.
     pub async fn send_emails(&self) {
         let colored_error = "Error from send_emails function".red().bold();
+
         let emails = self
-            .retrieve_emails_from_provided_list(Some(self.get_list_name()))
+            .retrieve_emails_from_provided_list(Some(&self.get_list_name()))
             .await;
 
         for email in emails.iter() {
@@ -380,8 +369,7 @@ impl SesOps {
             ",
                 name, email
             );
-
-            let template = TemplateMail::builder(self.get_template_name(), &template_data).build();
+            let template = TemplateMail::builder(self.get_template_name().as_str(), &template_data).build();
             self.send_mono_email(email, Template_(template), Some(&self.get_from_address()))
                 .await
                 .send()
@@ -513,7 +501,6 @@ impl<'a> TemplateMail<'a> {
             .template_name(self.template_name)
             .template_data(self.template_data)
             //.template_arn("your_template_arn")
-            .template_arn("arn:aws:mobiletargeting:ap-south-1:108394706369:templates/newsletter/EMAIL")
             .build();
 
         EmailContent::builder().template(template).build()
