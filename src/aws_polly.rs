@@ -1,6 +1,7 @@
 use std::{fs::OpenOptions, io::Write};
 
 use aws_config::SdkConfig;
+use aws_sdk_memorydb::primitives::DateTimeFormat;
 use aws_sdk_polly::{
     primitives::ByteStream,
     types::{Engine, Gender, LanguageCode, OutputFormat, TaskStatus, TextType, VoiceId},
@@ -147,6 +148,48 @@ impl PollyOps {
             });
         }
         (supported_voice_id, supported_langauge_name)
+    }
+
+    pub async fn list_synthesise_speech(&self) {
+        let config = self.get_config();
+        let client = PollyClient::new(config);
+
+        let output = client
+            .list_speech_synthesis_tasks()
+            .send()
+            .await
+            .expect("Error while listing synthesise tasks");
+        let info = output.synthesis_tasks;
+        let format = DateTimeFormat::HttpDate;
+        if let Some(vec_of_tasks) = info {
+            println!("Synthesize Task Details\n\n");
+            vec_of_tasks.into_iter().for_each(|task| {
+                let creation_time = task.creation_time;
+                let task_id = task.task_id;
+                let status_reason = task.task_status_reason;
+                let task_status = task.task_status;
+                let output_uri = task.output_uri;
+                if let (Some(time), Some(id), Some(status), Some(uri), Some(reason)) = (
+                    creation_time,
+                    task_id,
+                    task_status,
+                    output_uri,
+                    status_reason,
+                ) {
+                    let time_format = time.fmt(format).expect("Error while getting time");
+                    let colored_time = time_format.green().bold();
+                    let colored_id = id.green().bold();
+                    let colored_status = status.as_str().green().bold();
+                    let colored_reason = reason.green().bold();
+                    let colored_url = uri.green().bold();
+                    println!("Creation Time: {colored_time}\n");
+                    println!("Task ID: {colored_id}\n");
+                    println!("Task Status: {colored_status}\n");
+                    println!("Task Status Reason: {colored_reason}\n");
+                    println!("Output URL: {colored_url}\n");
+                }
+            });
+        }
     }
     pub async fn describe_voices(&self) -> Vec<DescribeVoices> {
         let config = self.get_config();
