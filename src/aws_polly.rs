@@ -150,7 +150,7 @@ impl PollyOps {
         (supported_voice_id, supported_langauge_name)
     }
 
-    pub async fn get_synthesise_tasks(&self) {
+    pub async fn list_synthesise_speech(&self) {
         let config = self.get_config();
         let client = PollyClient::new(config);
 
