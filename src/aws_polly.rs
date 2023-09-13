@@ -124,7 +124,7 @@ impl PollyOps {
     }
 
     /// Returns a tuple consisting of two vectors: one containing options for [`voice ID`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/struct.Voice.html#method.id) and the other containing options for [`language code`](https://docs.aws.amazon.com/polly/latest/dg/API_StartSpeechSynthesisTask.html#polly-StartSpeechSynthesisTask-request-LanguageCode), based on the engine name provided
-    pub async fn get_info_given_engine(
+    pub async fn get_voice_info_given_engine(
         &self,
         engine_name: &str,
     ) -> (Vec<Option<VoiceId>>, Vec<Option<LanguageCode>>) {
