@@ -44,7 +44,7 @@ impl PinPointOps {
         &self,
         template_name: &str,
         template_data: &str,
-        default_valuse: &str,
+        default_values: &str,
         subject: &str,
         template_description: &str,
     ) -> (Option<String>, Option<String>) {
@@ -52,7 +52,7 @@ impl PinPointOps {
         let client = PinPointClient::new(config);
 
         let email_template_builder = EmailTemplateRequest::builder()
-            .default_substitutions(default_valuse)
+            .default_substitutions(default_values)
             .html_part(template_data)
             .subject(subject)
             .template_description(template_description)

@@ -513,6 +513,7 @@ impl<'a> TemplateMail<'a> {
             .template_name(self.template_name)
             .template_data(self.template_data)
             //.template_arn("your_template_arn")
+            .template_arn("arn:aws:mobiletargeting:ap-south-1:108394706369:templates/newsletter/EMAIL")
             .build();
 
         EmailContent::builder().template(template).build()

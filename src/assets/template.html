@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Newsletter: Exploring Tech Topics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            margin: 20px auto;
+        }
+        .header {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .post {
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 18px;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        .description {
+            font-size: 14px;
+            color: #666;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .cta-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <h3>Hi {{Name}} and the email is {{Email}}</h3>
+        <div class="header">Stay Updated with Tech Insights!</div>
+        
+        <div class="post">
+            <div class="title">Exploring Rust Programming Language</div>
+            <div class="description">Discover the power and elegance of Rust programming language. Dive into its unique features and how it's transforming modern software development.</div>
+            <a class="cta-button" href="https://sanjuvi.github.io/Blog/posts/String%20and%20Rust/">Read More</a>
+        </div>
+
+        <div class="post">
+            <div class="title">Mastering Concurrency: Techniques and Best Practices</div>
+            <div class="description">Learn the art of managing concurrent processes effectively. Explore various concurrency patterns and best practices to build robust and responsive applications.</div>
+            <a class="cta-button" href="https://sanjuvi.github.io/Blog/posts/Concurrency-In-Rust/">Read More</a>
+        </div>
+
+        <div class="post">
+            <div class="title">Demystifying Static Type Systems</div>
+            <div class="description">Unravel the mysteries of static type systems in programming languages. Understand the benefits they bring to code reliability and maintainability.</div>
+            <a class="cta-button" href="https://sanjuvi.github.io/Blog/posts/Rust-Type-System-Part-2/">Read More</a>
+        </div>
+
+        <div class="post">
+            <div class="title">WebAssembly: Unlocking the Power of Web Performance</div>
+            <div class="description">Delve into the world of WebAssembly and see how it's revolutionizing web application performance. Explore its applications and integration with modern web technologies.</div>
+            <a class="cta-button" href="https://sanjuvi.github.io/Blog/posts/Webassembly/">Read More</a>
+        </div>
+
+        <div class="post">
+            <div class="title">Harnessing SIMD for High-Performance Computing</div>
+            <div class="description">Learn how Single Instruction Multiple Data (SIMD) instructions can supercharge your computation-intensive tasks. Discover practical examples and use cases.</div>
+            <a class="cta-button" href="#">Yet to Publish</a>
+        </div>
+
+        <div class="footer">
+            <p>If you're interested in more insightful tech content, make sure to follow my blog for regular updates!<br>  
+            Sent with ❤️ from Sanjeevi
+            <br>
+            Visit my blog: {{Blog}}</p>
+        </div>
+    </div>
+</body>
+</html>
