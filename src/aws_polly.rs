@@ -150,12 +150,13 @@ impl PollyOps {
         (supported_voice_id, supported_langauge_name)
     }
 
-    pub async fn list_synthesise_speech(&self) {
+    pub async fn get_synthesise_tasks(&self) {
         let config = self.get_config();
         let client = PollyClient::new(config);
 
         let output = client
             .list_speech_synthesis_tasks()
+            .max_results(5)
             .send()
             .await
             .expect("Error while listing synthesise tasks");
