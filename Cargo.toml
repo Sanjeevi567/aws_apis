@@ -24,6 +24,9 @@ tokio-stream = {version = "0.1.14"}
 chrono ={version = "0.4.28"}
 fast_qr = {version = "0.10.2",features = ["image"]}
 dotenv = "0.15.0"
+image ="0.24.7"
+imageproc ="0.23.0"
+rusttype ="0.9.3"
 
 aws-sdk-s3 = {version ="0.30.0"}
 aws-sdk-sesv2 = {version = "0.30.0"}
@@ -32,3 +35,4 @@ aws-sdk-memorydb ={version = "0.30.0"}
 aws-sdk-polly ="0.30.0"
 aws-sdk-pinpoint ="0.30.0"
 aws-sdk-sns ="0.30.0"
+aws-sdk-rekognition="0.30.0"
