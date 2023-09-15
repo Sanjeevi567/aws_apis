@@ -27,5 +27,5 @@ mod sns_ops;
 pub use sns_ops::SnsOps;
 
 mod rekognition_ops;
-pub use rekognition_ops::RekognitionOps;
+pub use rekognition_ops::{RekognitionOps,RefImageType,FaceDetails,TextDetect};
 
