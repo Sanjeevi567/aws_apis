@@ -57,7 +57,7 @@ impl RekognitionOps {
         vec_of_facedetails
     }
 
-    pub async fn detect_text(&self, bucket_name: &str, key_name: &str) -> Vec<TextDetect> {
+    pub async fn detect_texts(&self, bucket_name: &str, key_name: &str) -> Vec<TextDetect> {
         let config = self.get_config();
         let client = RekogClient::new(config);
 
@@ -83,7 +83,7 @@ impl RekognitionOps {
         }
         vec_of_text_detect
     }
-    pub async fn start_text_detection(
+    pub async fn start_text_detection_task(
         &self,
         bucket_name: &str,
         key_video_name: &str,
@@ -127,7 +127,7 @@ impl RekognitionOps {
 
         job_id
     }
-    pub async fn get_text_detection(&self, text_job_id: &str) -> GetTextInfo {
+    pub async fn get_text_detection_results(&self, text_job_id: &str) -> GetTextInfo {
         let config = self.get_config();
         let client = RekogClient::new(config);
         let get_text_detection_ouput = client
@@ -138,7 +138,7 @@ impl RekognitionOps {
             .expect("Error while getting text detection\n");
         GetTextInfo(get_text_detection_ouput)
     }
-    pub async fn start_face_detection(
+    pub async fn start_face_detection_task(
         &self,
         bucket_name: &str,
         key_video_name: &str,
@@ -185,7 +185,7 @@ impl RekognitionOps {
         job_id
     }
 
-    pub async fn get_face_detection(&self, face_job_id: &str) -> GetFaceInfo {
+    pub async fn get_face_detection_results(&self, face_job_id: &str) -> GetFaceInfo {
         let config = self.get_config();
         let client = RekogClient::new(config);
 
