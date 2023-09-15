@@ -82,7 +82,7 @@ impl PinPointOps {
             .iso_country_code(iso_code)
             .build();
 
-        let output = client
+        client
             .phone_number_validate()
             .number_validate_request(phone_number_builder)
             .send()

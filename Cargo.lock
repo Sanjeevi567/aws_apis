@@ -160,6 +160,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-amplify"
+version = "0.30.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ba3efa428823d10c5dedbe958353b09c342d280d2c334e38ddcb07095ec424c"
+dependencies = [
+ "aws-credential-types",
+ "aws-http",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-json",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-types",
+ "bytes",
+ "http",
+ "regex",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-memorydb"
 version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -639,6 +662,7 @@ version = "0.1.0"
 dependencies = [
  "aws-config",
  "aws-credential-types",
+ "aws-sdk-amplify",
  "aws-sdk-memorydb",
  "aws-sdk-pinpoint",
  "aws-sdk-polly",

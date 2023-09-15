@@ -28,3 +28,6 @@ pub use sns_ops::SnsOps;
 
 mod rekognition_ops;
 pub use rekognition_ops::RekognitionOps;
+
+mod amplify;
+pub use amplify::AmplifyOps;
