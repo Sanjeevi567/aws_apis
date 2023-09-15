@@ -130,7 +130,7 @@ impl PollyOps {
             }
         }
     }
-    pub async fn get_speech_sythesis_result(&self, task_id: &str) -> Option<SynthesizeTask> {
+    pub async fn get_speech_synthesis_result(&self, task_id: &str) -> Option<SynthesizeTask> {
         let config = self.get_config();
         let client = PollyClient::new(config);
         let output = client
