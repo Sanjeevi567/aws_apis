@@ -102,8 +102,9 @@ impl PollyOps {
             .send()
             .await
             .expect("Error while start synthesize task\n");
+        let key_prefix ="'speech_synthesis_task_outputs/'".green().bold();
         println!(
-            "The key prefix in the provided bucket is set to 'speech_synthesis_task_outputs/'.
+            "The key prefix in the provided bucket is set to: {key_prefix}\n.
         "
         );
 
