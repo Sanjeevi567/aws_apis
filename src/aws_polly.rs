@@ -124,7 +124,7 @@ impl PollyOps {
                     .expect("Error while creating file\n");
                 let buf = format!("The speech synthesis task with ID {task_id} has been initiated for the bucket named {bucket_name}");
                 match file.write_all(buf.as_bytes()) {
-                    Ok(_) => println!("The Task ID for the speech synthesis task has been successfully written to the current directory\n"),
+                    Ok(_) => println!("{}\n","The Task ID for the speech synthesis task has been successfully written to the current directory".green().bold()),
                     Err(_) => println!("Error while writing data\n")
                 }
             }
