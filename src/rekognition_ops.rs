@@ -301,6 +301,9 @@ impl RefImageType {
 /// [`TextDetection`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.TextDetection.html)
 pub struct TextDetect(TextDetection);
 impl TextDetect {
+    pub fn build(type_: TextDetection) -> Self {
+        Self(type_)
+    }
     pub fn get_detected_text(&self) -> Option<&str> {
         self.0.detected_text()
     }
@@ -364,6 +367,9 @@ impl Deref for GetTextInfo {
 
 pub struct FaceDetails(FaceDetail);
 impl FaceDetails {
+    pub fn build(type_: FaceDetail) -> Self {
+        Self(type_)
+    }
     /// [`BoundingBox`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.BoundingBox.html)
     pub fn get_bounding_box(&self) -> (Option<f32>, Option<f32>, Option<f32>, Option<f32>) {
         let bounding_box = if let Some(bbox) = self.0.bounding_box.as_ref() {
