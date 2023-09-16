@@ -3,17 +3,19 @@ use aws_sdk_s3::{
     presigning::PresigningConfig,
     primitives::ByteStream,
     types::{
-        BucketLocationConstraint, CompletedMultipartUpload, CompletedPart,
+        BucketCannedAcl, BucketLocationConstraint, CompletedMultipartUpload, CompletedPart,
         CreateBucketConfiguration,
     },
     Client as S3Client,
 };
 use colored::Colorize;
 use dotenv::dotenv;
+use image::EncodableLayout;
 use std::{
     env::var,
-    fs::File,
+    fs::{File, OpenOptions},
     io::Write,
+    str::FromStr,
     time::{Duration, SystemTime},
 };
 use tokio_stream::StreamExt;
@@ -170,6 +172,45 @@ impl S3Ops {
             let key = key.green().bold();
             println!("{key}\n");
         });
+    }
+    pub async fn get_object_torrent(&self, bucket_name: &str, key_name: &str) {
+        let config = self.get_config();
+        let client = S3Client::new(config);
+
+        let output = client
+            .get_object_torrent()
+            .bucket(bucket_name)
+            .key(key_name)
+            .send()
+            .await
+            .expect("Error while getting torrent file\n");
+        let bytes_stream = output.body.collect().await.unwrap();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .open("object_torrent")
+            .expect("Error while creating file");
+        file.write_all(bytes_stream.into_bytes().as_bytes())
+            .unwrap();
+    }
+    pub async fn put_object_acl(&self, bucket_name: &str, acl_permission: &str) {
+        let config = self.get_config();
+        let client = S3Client::new(config);
+        let acl_permission_build = BucketCannedAcl::from(acl_permission);
+        let acl_permission_str = acl_permission_build.as_str().to_owned();
+        client
+            .put_bucket_acl()
+            .bucket(bucket_name)
+            .acl(acl_permission_build)
+            .send()
+            .await
+            .expect("Error while putting ACL on bucket\n");
+        println!(
+            "The ACL permission for {} has been successfully set to the bucket name {}",
+            acl_permission_str.green().bold(),
+            bucket_name.green().bold()
+        );
     }
 
     ///Upload large files using chunks instead of uploading the entire file, while
