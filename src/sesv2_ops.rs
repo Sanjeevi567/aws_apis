@@ -288,7 +288,6 @@ impl SesOps {
     }
     /// Store the template in a separate HTML file with template variables formatted as {{variable_name}}, and retrieve them using the include_str! macro.
     /// The number of template variables used is also passed when sending templated emails unless all the variables have default values.
-
     pub async fn create_email_template(&self, template_name: &str, template: &str, subject: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
@@ -317,7 +316,24 @@ impl SesOps {
             })
             .expect(&colored_error);
     }
-
+    pub async fn list_email_templates(&self) -> Vec<String> {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let outputs = client
+            .list_email_templates()
+            .send()
+            .await
+            .expect("Error while getting Email Templates\n");
+        let mut templates_names = Vec::new();
+        if let Some(template_meta_data) = outputs.templates_metadata {
+            template_meta_data.into_iter().for_each(|template_detail| {
+                if let Some(temp_name) = template_detail.template_name {
+                    templates_names.push(temp_name);
+                }
+            });
+        }
+        templates_names
+    }
     /// Create a helper function for sending single emails, allowing other parts of the code or users to customize it for sending bulk emails
     pub async fn send_mono_email(
         &self,
