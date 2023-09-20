@@ -307,10 +307,9 @@ impl SesOps {
             .await
             .map(|_| {
                 let colored_tempname = template_name.green().bold();
-                let colored_template = template.green().bold();
                 println!(
-                    "Email Template named {} and the template data {} is created\n",
-                    colored_tempname, colored_template
+                    "The email template named '{}' has been created\n",
+                    colored_tempname,
                 )
             })
             .expect(&colored_error);
