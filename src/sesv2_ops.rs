@@ -73,6 +73,20 @@ impl SesOps {
             })
             .expect(&colored_error);
     }
+    pub async fn delete_contact_list_name(&self, contact_list_name: &str) {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        client
+            .delete_contact_list()
+            .contact_list_name(contact_list_name)
+            .send()
+            .await
+            .expect("Error while deleting contact list name\n");
+        println!(
+            "The specified contact list name '{}' has been deleted successfully",
+            contact_list_name.green().bold()
+        );
+    }
 
     /// The 'create email identity' helper function is isolated, so we don't have to use it unless necessary.
     async fn create_email_identity(&self, email: &str) -> CreateEmailIdentityFluentBuilder {
@@ -286,8 +300,6 @@ impl SesOps {
             }
         }
     }
-    /// Store the template in a separate HTML file with template variables formatted as {{variable_name}}, and retrieve them using the include_str! macro.
-    /// The number of template variables used is also passed when sending templated emails unless all the variables have default values.
     pub async fn create_email_template(&self, template_name: &str, template: &str, subject: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
@@ -331,6 +343,17 @@ impl SesOps {
             });
         }
         templates_names
+    }
+    pub async fn delete_template(&self, template_name: &str) {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        client
+            .delete_email_template()
+            .template_name(template_name)
+            .send()
+            .await
+            .expect("Error While deleting Template\n");
+        println!("The template associated with the specified template name '{}' has been deleted successfully",template_name.green().bold());
     }
     /// Create a helper function for sending single emails, allowing other parts of the code or users to customize it for sending bulk emails
     pub async fn send_mono_email(
@@ -380,7 +403,8 @@ impl SesOps {
                 "
              {{
               \"Name\": \"{}\",
-              \"Email\" : \"{}\"
+              \"Email\" : \"{}\",
+              \"Blog\" : \"https://sanjuvi.github.io/Blog/\"
              }}
             ",
                 name, email
@@ -391,12 +415,10 @@ impl SesOps {
                 .await
                 .send()
                 .await
-                .map(|_|{
-                    let colored_email = email.green().bold();
-                    let colored_template_data = template_data.green().bold();
-     println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n")
-        })
                 .expect(&colored_error);
+            let colored_email = email.green().bold();
+            let colored_template_data = template_data.green().bold();
+            println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n")
         }
     }
 
