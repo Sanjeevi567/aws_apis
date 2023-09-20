@@ -73,6 +73,24 @@ impl SesOps {
             })
             .expect(&colored_error);
     }
+    pub async fn list_contact_lists(&self) -> Vec<String> {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let outputs = client
+            .list_contact_lists()
+            .send()
+            .await
+            .expect("Error while listing contact lists\n");
+        let mut list_names = Vec::new();
+        if let Some(lists) = outputs.contact_lists {
+            lists.into_iter().for_each(|contact_list| {
+                if let Some(name) = contact_list.contact_list_name {
+                    list_names.push(name);
+                }
+            })
+        }
+        list_names
+    }
     pub async fn delete_contact_list_name(&self, contact_list_name: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
