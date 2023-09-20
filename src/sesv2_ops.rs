@@ -294,7 +294,6 @@ impl SesOps {
 
         let email_template_builder = EmailTemplateContent::builder()
             .subject(subject)
-            .set_text(None)
             .html(template)
             .build();
         let build = client
