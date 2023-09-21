@@ -160,33 +160,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-sdk-amplify"
-version = "0.30.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ba3efa428823d10c5dedbe958353b09c342d280d2c334e38ddcb07095ec424c"
-dependencies = [
- "aws-credential-types",
- "aws-http",
- "aws-runtime",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-http",
- "aws-smithy-json",
- "aws-smithy-runtime",
- "aws-smithy-runtime-api",
- "aws-smithy-types",
- "aws-types",
- "bytes",
- "http",
- "regex",
- "tracing",
-]
-
-[[package]]
 name = "aws-sdk-memorydb"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30e7d6a3c67e3792bd391581dc0aa4939e3ba928c9e80991a5d62d1ee9ba1c43"
+checksum = "9395154c6b8321a3418de85bdd575d7e0475ae20eca3f992d0e39922b3cde0a5"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -208,9 +185,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-pinpoint"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "077e5e261b286215ca18097db60d1fab9342734667b39effc7b228b5967b3a05"
+checksum = "db032a9793089c90b34bc949887b8a9a7255f5bd663ae96339482526287ab87c"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -231,9 +208,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-polly"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6aa775c549a6f713df04ea00b8152091fc8dac2d69490f8c29896a257a5b40e"
+checksum = "968640419c6ce2f115715b94ad86c8e0c03e7ef160125a694a10be83780c1bcd"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -256,9 +233,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-rds"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48a13b63840b86244f1049b76270f23e1649a1756ab43ba53d23c62e721b9d5b"
+checksum = "f44af3afa4bc9a4b19e57ad521e98cc4829533f45bc2599becd33821355f03b5"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -281,9 +258,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-rekognition"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4df03593631a822ff85b15bc10237e5464dbb7e2708e350619f998880a8528e0"
+checksum = "3f4f94685d3fa6c5c364a05fb481eaf15b31625322dd6cdafe5edad9420426de"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -306,9 +283,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-s3"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a531d010f9f556bf65eb3bcd8d24f1937600ab6940fede4d454cd9b1f031fb34"
+checksum = "45030d64c20774ea450ee605e731b4a00fafb28730a56441c674ba156f213e72"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -338,9 +315,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-sesv2"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f26f8671007413ef3ebad5d915504cd7c1b1d4195c1583aafbd6c6d4b35710f"
+checksum = "3a639c7e86623edb8573203a87939fae2e4903503f7306454efac4e8a579a3ac"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -362,9 +339,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-sns"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0279f51da1a84996515caf4882040ff77982929c688b09e4cf4d943e39e652f1"
+checksum = "ef17647a808c209a668525c394920be25cae1b0e5120bc5f320a6685b46ba693"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -435,9 +412,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-transcribe"
-version = "0.30.0"
+version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c2cbf354be66085a8a7f69836aeaef0dbcef860417cf1d5def8810defc41be0"
+checksum = "176961526882553cb71eb3808dc3ce52fc3dab506743cc7195b7bf07a6ad8d15"
 dependencies = [
  "aws-credential-types",
  "aws-http",
@@ -686,7 +663,6 @@ version = "0.1.0"
 dependencies = [
  "aws-config",
  "aws-credential-types",
- "aws-sdk-amplify",
  "aws-sdk-memorydb",
  "aws-sdk-pinpoint",
  "aws-sdk-polly",

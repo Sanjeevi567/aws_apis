@@ -30,13 +30,12 @@ image ="0.24.7"
 imageproc ="0.23.0"
 rusttype ="0.9.3"
 
-aws-sdk-s3 = {version ="0.30.0"}
-aws-sdk-sesv2 = {version = "0.30.0"}
-aws-sdk-rds ={version ="0.30.0"}
-aws-sdk-memorydb ={version = "0.30.0"}
-aws-sdk-polly ="0.30.0"
-aws-sdk-pinpoint ="0.30.0"
-aws-sdk-sns ="0.30.0"
-aws-sdk-rekognition="0.30.0"
-aws-sdk-amplify ="0.30.0"
-aws-sdk-transcribe ="0.30.0"
+aws-sdk-s3 = {version ="0.31.1"}
+aws-sdk-sesv2 = {version = "0.31.1"}
+aws-sdk-rds ={version ="0.31.1"}
+aws-sdk-memorydb ={version = "0.31.1"}
+aws-sdk-polly ="0.31.1"
+aws-sdk-pinpoint ="0.31.1"
+aws-sdk-sns ="0.31.1"
+aws-sdk-rekognition="0.31.1"
+aws-sdk-transcribe ="0.31.1"

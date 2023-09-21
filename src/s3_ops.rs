@@ -173,27 +173,6 @@ impl S3Ops {
             println!("{key}\n");
         });
     }
-    pub async fn get_object_torrent(&self, bucket_name: &str, key_name: &str) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
-
-        let output = client
-            .get_object_torrent()
-            .bucket(bucket_name)
-            .key(key_name)
-            .send()
-            .await
-            .expect("Error while getting torrent file\n");
-        let bytes_stream = output.body.collect().await.unwrap();
-        let mut file = OpenOptions::new()
-            .create(true)
-            .read(true)
-            .write(true)
-            .open("object_torrent")
-            .expect("Error while creating file");
-        file.write_all(bytes_stream.into_bytes().as_bytes())
-            .unwrap();
-    }
     pub async fn put_object_acl(&self, bucket_name: &str, acl_permission: &str) {
         let config = self.get_config();
         let client = S3Client::new(config);

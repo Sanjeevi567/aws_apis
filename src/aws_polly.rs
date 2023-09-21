@@ -1,4 +1,10 @@
-use std::{fs::OpenOptions, io::Write, time::SystemTime};
+use std::{
+    fs::{self, OpenOptions},
+    io::Write,
+    path,
+    str::FromStr,
+    time::SystemTime,
+};
 
 use aws_config::SdkConfig;
 use aws_sdk_memorydb::primitives::DateTimeFormat;
@@ -29,6 +35,7 @@ impl PollyOps {
         output_format: &str,
         text_to_synthesize: &str,
         voice_id: &str,
+        language_code: &str,
         text_type: &str,
     ) -> SpeechOuputInfo {
         let config = self.get_config();
@@ -42,6 +49,8 @@ impl PollyOps {
 
         let text_type_builder = TextType::from(text_type);
 
+        let language_code_builder = LanguageCode::from(language_code);
+
         let language = LanguageCode::EnUs;
         let output = client
             .synthesize_speech()
@@ -49,6 +58,7 @@ impl PollyOps {
             .output_format(ouput_format_builder)
             .text(text_to_synthesize)
             .text_type(text_type_builder)
+            .language_code(language_code_builder)
             .voice_id(voice_id_builder)
             .language_code(language)
             .send()
@@ -174,6 +184,33 @@ impl PollyOps {
             });
         }
         (supported_voice_id, supported_langauge_name)
+    }
+    pub async fn generate_all_available_voices_in_mp3(
+        &self,
+        text_to_synthesize: &str,
+        language_code: &str,
+        engine_name: &str,
+        path_prefix: &str,
+    ) {
+        let (voices, _) = self.get_voice_info_given_engine(engine_name).await;
+        for voice_name in voices.into_iter() {
+            if let Some(voice_name) = voice_name {
+                let voice_id_str = voice_name.as_str().to_string();
+                let mut output = self
+                    .synthesize_speech(
+                        engine_name,
+                        "mp3",
+                        text_to_synthesize,
+                        &voice_id_str,
+                        language_code,
+                        "ssml",
+                    )
+                    .await;
+                output
+                    .generate_audio_with_path_name(path_prefix, &voice_id_str)
+                    .await;
+            }
+        }
     }
     /// List the synthesis tasks. The status is hardcoded as 'Completed,' meaning it only returns tasks that are in the 'Completed' state. However, for other states, you need to obtain input from the caller and construct the [`TaskStatus`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/enum.TaskStatus.html) using the [`from`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/enum.TaskStatus.html#impl-From%3C%26str%3E-for-TaskStatus) method
     pub async fn list_synthesise_speech(&self) {
@@ -377,6 +414,36 @@ impl SpeechOuputInfo {
             speech_bytes,
             character_synthesized,
             content_type,
+        }
+    }
+    pub async fn generate_audio_with_path_name(&mut self, path_prefix: &str, path_alias: &str) {
+        let bytestream = self.speech_bytes.take().unwrap();
+        let extenstion = if let Some(content_type) = self.content_type.as_deref() {
+            Some(content_type.split('/').skip(1).collect::<String>())
+        } else {
+            None
+        };
+        if let Some(extension_) = extenstion {
+            let path_name = format!("{path_prefix}{path_alias}_voice_audio.{}", extension_);
+            let mut file = OpenOptions::new()
+                .create(true)
+                .write(true)
+                .read(true)
+                .open(&path_name)
+                .expect("Error while creating file in the current directory");
+            let bytes = bytestream
+                .collect()
+                .await
+                .expect("Error while converting to bytes")
+                .into_bytes();
+            match file.write_all(&bytes) {
+                Ok(_) => {
+                    let colored_msg =format!("An audio file with the name {path_alias}_voice_audio.{extension_} has been successfully created in the current directory\n")
+                        .green().bold();
+                    println!("{colored_msg}");
+                }
+                Err(_) => println!("Error while writing data.."),
+            }
         }
     }
 
