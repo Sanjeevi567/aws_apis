@@ -504,8 +504,13 @@ impl SesOps {
 
         for email in emails.iter() {
             let name = email.chars().take(9).collect::<String>();
+            let load_json =include_str!("./assets/template_data.json").to_string();
+            let data = load_json.replace("SubjectName", "Demo");
+            let data = data.replace("SubjectDescription", "Tesing The variables");
+            let data = data.replace("email", email);
+            let data = data.replace("name",&name);
             //My template variable
-            let template_data = format!(
+            /*let template_data = format!(
                 "
              {{
               \"Name\": \"{}\",
@@ -514,16 +519,16 @@ impl SesOps {
              }}
             ",
                 name, email
-            );
+            ); */
             let template =
-                TemplateMail::builder(self.get_template_name().as_str(), &template_data).build();
+                TemplateMail::builder(self.get_template_name().as_str(), &data).build();
             self.send_mono_email(email, Template_(template), Some(&self.get_from_address()))
                 .await
                 .send()
                 .await
                 .expect(&colored_error);
             let colored_email = email.green().bold();
-            let colored_template_data = template_data.green().bold();
+            let colored_template_data = data.green().bold();
             println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n")
         }
     }
