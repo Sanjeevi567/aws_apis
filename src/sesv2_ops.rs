@@ -384,22 +384,18 @@ impl SesOps {
     pub async fn update_template(
         &self,
         template_name: &str,
-        subject: Option<String>,
+        subject: &str,
         html: &str,
         text: Option<String>,
     ) {
         let config = self.get_config();
         let client = SesClient::new(config);
-        let subject_str = subject
-            .as_ref()
-            .map(|to_string| to_string.to_string())
-            .unwrap_or("".into());
         let text_str = text
             .as_ref()
             .map(|to_string| to_string.to_string())
             .unwrap_or("".into());
         let template_builder = EmailTemplateContent::builder()
-            .set_subject(subject)
+            .subject(subject)
             .set_text(text)
             .html(html)
             .build();
@@ -410,7 +406,7 @@ impl SesOps {
             .send()
             .await
             .expect("Error while Updating Template\n");
-        match (subject_str.is_empty(),text_str.is_empty()) {
+        match (subject.is_empty(),text_str.is_empty()) {
             (false,false) => println!("{}\n","The template has been successfully updated with the provided subject, HTML body, and text body".green().bold()),
             (true,false) => println!("{}\n","The template has been successfully updated with the provided HTML body, and text body".green().bold()),
             (false,true) => println!("{}\n","The template has been successfully updated with the provided subject, HTML body".green().bold()),
