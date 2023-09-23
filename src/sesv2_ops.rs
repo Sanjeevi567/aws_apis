@@ -417,7 +417,10 @@ impl SesOps {
             (true,true) => println!("{}\n","The template has been successfully updated with the provided HTML body".green().bold())
         }
     }
-    pub async fn get_template(&self, template_name: &str) -> (String, String, String) {
+    pub async fn get_template_subject_html_and_text(
+        &self,
+        template_name: &str,
+    ) -> (String, String, String) {
         let config = self.get_config();
         let client = SesClient::new(config);
         let outputs = client
@@ -440,13 +443,24 @@ impl SesOps {
         }
         (subject, html, text)
     }
-    pub fn get_template_variables(&self, template: &str) -> Vec<String> {
+    pub fn get_template_variables_of_subject_and_html_body(
+        &self,
+        subject: &str,
+        template: &str,
+    ) -> (Vec<String>, Vec<String>) {
         let pattern = r#"\{\{.*?\}\}"#;
-        let regex_pattern = Regex::new(pattern).unwrap();
-        regex_pattern
-            .find_iter(template)
-            .map(|data| data.as_str().to_string())
-            .collect()
+        let html_variables = Regex::new(pattern).expect("Error while parsing Regex Syntax\n");
+        let subject_variables = Regex::new(pattern).expect("Error while parsing Regex Syntax\n");
+        (
+            subject_variables
+                .find_iter(subject)
+                .map(|data| data.as_str().to_string())
+                .collect(),
+            html_variables
+                .find_iter(template)
+                .map(|data| data.as_str().to_string())
+                .collect(),
+        )
     }
     /// Create a helper function for sending single emails, allowing other parts of the code or users to customize it for sending bulk emails
     pub async fn send_mono_email(
