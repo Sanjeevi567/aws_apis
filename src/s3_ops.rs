@@ -3,19 +3,17 @@ use aws_sdk_s3::{
     presigning::PresigningConfig,
     primitives::ByteStream,
     types::{
-        BucketCannedAcl, BucketLocationConstraint, CompletedMultipartUpload, CompletedPart,
+        BucketLocationConstraint, CompletedMultipartUpload, CompletedPart,
         CreateBucketConfiguration, ObjectCannedAcl,
     },
     Client as S3Client,
 };
 use colored::Colorize;
 use dotenv::dotenv;
-use image::EncodableLayout;
 use std::{
     env::var,
-    fs::{File, OpenOptions},
+    fs::File,
     io::Write,
-    str::FromStr,
     time::{Duration, SystemTime},
 };
 use tokio_stream::StreamExt;

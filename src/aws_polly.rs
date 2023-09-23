@@ -1,10 +1,4 @@
-use std::{
-    fs::{self, OpenOptions},
-    io::Write,
-    path,
-    str::FromStr,
-    time::SystemTime,
-};
+use std::{fs::OpenOptions, io::Write};
 
 use aws_config::SdkConfig;
 use aws_sdk_memorydb::primitives::DateTimeFormat;

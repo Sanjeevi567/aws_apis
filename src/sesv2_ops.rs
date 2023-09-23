@@ -3,6 +3,7 @@ use aws_config::SdkConfig;
 use aws_sdk_sesv2 as sesv2;
 use colored::Colorize;
 use dotenv::dotenv;
+use regex::Regex;
 use sesv2::{
     operation::{
         create_email_identity::builders::CreateEmailIdentityFluentBuilder,
@@ -318,12 +319,19 @@ impl SesOps {
             }
         }
     }
-    pub async fn create_email_template(&self, template_name: &str, template: &str, subject: &str) {
+    pub async fn create_email_template(
+        &self,
+        template_name: &str,
+        subject: &str,
+        template: &str,
+        text: Option<String>,
+    ) {
         let config = self.get_config();
         let client = SesClient::new(config);
 
         let email_template_builder = EmailTemplateContent::builder()
             .subject(subject)
+            .set_text(text)
             .html(template)
             .build();
         let build = client
@@ -372,6 +380,59 @@ impl SesOps {
             .await
             .expect("Error While deleting Template\n");
         println!("The template associated with the specified template name '{}' has been deleted successfully",template_name.green().bold());
+    }
+    pub async fn update_template(
+        &self,
+        template_name: &str,
+        subject: Option<String>,
+        html: &str,
+        text: Option<String>,
+    ) {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let template_builder = EmailTemplateContent::builder()
+            .set_subject(subject)
+            .set_text(text)
+            .html(html)
+            .build();
+        client
+            .update_email_template()
+            .template_name(template_name)
+            .template_content(template_builder)
+            .send()
+            .await
+            .expect("Error while Updating Template\n");
+    }
+    pub async fn get_template(&self, template_name: &str) -> (String, String, String) {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let outputs = client
+            .get_email_template()
+            .template_name(template_name)
+            .send()
+            .await
+            .expect("Error While Getting Template\n");
+        let mut subject = String::new();
+        let mut html = String::new();
+        let mut text = String::new();
+        if let Some(content) = outputs.template_content {
+            if let (Some(subject_), Some(html_), Some(text_)) =
+                (content.subject, content.html, content.text)
+            {
+                subject.push_str(&subject_);
+                html.push_str(&html_);
+                text.push_str(&text_);
+            }
+        }
+        (subject, html, text)
+    }
+    pub async fn get_template_variables(&self, template: &str) -> Vec<String> {
+        let pattern = r#"\{\{.*?\}\}"#;
+        let regex_pattern = Regex::new(pattern).unwrap();
+        regex_pattern
+            .find_iter(template)
+            .map(|data| data.as_str().to_string())
+            .collect()
     }
     /// Create a helper function for sending single emails, allowing other parts of the code or users to customize it for sending bulk emails
     pub async fn send_mono_email(

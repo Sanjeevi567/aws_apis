@@ -40,3 +40,8 @@ aws-sdk-sns ="0.31.1"
 aws-sdk-rekognition="0.31.1"
 aws-sdk-transcribe ="0.31.1"
 aws-sdk-route53 ="0.31.1"
+
+#Regex is employed for locating template variables within the provided data, especially when updating a template. 
+# This is particularly useful for providing information about the template during updates. It is also utilized in 
+#the utility function called get_template_variables within S3 operations
+regex ="1.9.5"
