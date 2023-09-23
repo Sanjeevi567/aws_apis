@@ -426,7 +426,7 @@ impl SesOps {
         }
         (subject, html, text)
     }
-    pub async fn get_template_variables(&self, template: &str) -> Vec<String> {
+    pub fn get_template_variables(&self, template: &str) -> Vec<String> {
         let pattern = r#"\{\{.*?\}\}"#;
         let regex_pattern = Regex::new(pattern).unwrap();
         regex_pattern
