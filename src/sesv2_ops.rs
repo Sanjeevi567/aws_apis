@@ -433,13 +433,16 @@ impl SesOps {
         let mut html = String::new();
         let mut text = String::new();
         if let Some(content) = outputs.template_content {
-            if let (Some(subject_), Some(html_), Some(text_)) =
-                (content.subject, content.html, content.text)
-            {
+            if let Some(subject_) = content.subject {
                 subject.push_str(&subject_);
+            }
+            if let Some(html_) =content.html  {
                 html.push_str(&html_);
+            }
+            if let Some(text_) = content.text {
                 text.push_str(&text_);
             }
+
         }
         (subject, html, text)
     }
