@@ -282,6 +282,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "aws-sdk-route53"
+version = "0.31.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05d43e3ea6d46505bea857b8d1724637ce2754f85776d1317169aee007175186"
+dependencies = [
+ "aws-credential-types",
+ "aws-http",
+ "aws-runtime",
+ "aws-smithy-async",
+ "aws-smithy-client",
+ "aws-smithy-http",
+ "aws-smithy-json",
+ "aws-smithy-runtime",
+ "aws-smithy-runtime-api",
+ "aws-smithy-types",
+ "aws-smithy-xml",
+ "aws-types",
+ "http",
+ "regex",
+ "tokio-stream",
+ "tracing",
+]
+
+[[package]]
 name = "aws-sdk-s3"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -668,6 +692,7 @@ dependencies = [
  "aws-sdk-polly",
  "aws-sdk-rds",
  "aws-sdk-rekognition",
+ "aws-sdk-route53",
  "aws-sdk-s3",
  "aws-sdk-sesv2",
  "aws-sdk-sns",

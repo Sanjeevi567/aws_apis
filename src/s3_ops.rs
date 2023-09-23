@@ -4,7 +4,7 @@ use aws_sdk_s3::{
     primitives::ByteStream,
     types::{
         BucketCannedAcl, BucketLocationConstraint, CompletedMultipartUpload, CompletedPart,
-        CreateBucketConfiguration,
+        CreateBucketConfiguration, ObjectCannedAcl,
     },
     Client as S3Client,
 };
@@ -173,23 +173,41 @@ impl S3Ops {
             println!("{key}\n");
         });
     }
-    pub async fn put_object_acl(&self, bucket_name: &str, acl_permission: &str) {
+    pub async fn put_object_acl(
+        &self,
+        bucket_name: &str,
+        name_of_object: &str,
+        acl_permission: &str,
+    ) {
         let config = self.get_config();
         let client = S3Client::new(config);
-        let acl_permission_build = BucketCannedAcl::from(acl_permission);
+        let acl_permission_build = ObjectCannedAcl::from(acl_permission);
         let acl_permission_str = acl_permission_build.as_str().to_owned();
         client
-            .put_bucket_acl()
+            .put_object_acl()
+            .key(name_of_object)
             .bucket(bucket_name)
             .acl(acl_permission_build)
             .send()
             .await
             .expect("Error while putting ACL on bucket\n");
         println!(
-            "The ACL permission for {} has been successfully set to the bucket name {}",
+            "The ACL permission '{}' has been successfully applied to the object key '{}' within the '{}' bucket",
             acl_permission_str.green().bold(),
+            name_of_object.green().bold(),
             bucket_name.green().bold()
         );
+        match acl_permission {
+            "public-read" => {
+                let msg =format!("The permission is set to '{}' making the object accessible to anyone who has the object's URL",acl_permission_str);
+                println!("{}\n", msg.green().bold());
+            }
+            "public-read-write" => {
+                let msg = format!("The permission is configured as '{}' granting read and write access to anyone who accesses the object's URL",acl_permission_str);
+                println!("{}\n", msg.green().bold());
+            }
+            _ => {}
+        }
     }
 
     ///Upload large files using chunks instead of uploading the entire file, while

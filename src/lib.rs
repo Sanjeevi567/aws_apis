@@ -30,3 +30,6 @@ mod rekognition_ops;
 pub use rekognition_ops::{FaceDetails, RekognitionOps, TextDetect};
 
 mod transcribe_ops;
+
+mod route53;
+pub use route53::Route53Ops;
