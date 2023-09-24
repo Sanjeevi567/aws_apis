@@ -349,7 +349,7 @@ impl TextDetect {
 }
 pub struct GetTextInfo(GetTextDetectionOutput);
 impl GetTextInfo {
-    fn job_status(&mut self) -> Option<String> {
+    pub fn job_status(&mut self) -> Option<String> {
         let job_status = if let Some(status) = self.0.job_status.take() {
             Some(status.as_str().to_string())
         } else {
@@ -357,7 +357,7 @@ impl GetTextInfo {
         };
         job_status
     }
-    fn status_message(&mut self) -> Option<String> {
+    pub fn status_message(&mut self) -> Option<String> {
         self.0.status_message.take()
     }
     fn s3_details(&mut self) -> (String, String) {
