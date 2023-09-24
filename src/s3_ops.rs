@@ -120,20 +120,19 @@ impl S3Ops {
         let client = S3Client::new(config);
 
         let mut objects_in_bucket = Vec::new();
-        let mut client = client
+        let outputs = client
             .list_objects_v2()
             .bucket(bucket_name)
-            .into_paginator()
-            .send();
-        while let Some(objects) = client.next().await {
-            match objects {
-                Ok(object_output) => {
-                    for object in object_output.contents().unwrap_or_default() {
-                        objects_in_bucket.push(object.key().unwrap().to_string());
-                    }
+            .send()
+            .await
+            .expect("Error While Retrieving keys in a Bucket\n");
+
+        if let Some(keys) = outputs.contents {
+            keys.into_iter().for_each(|object| {
+                if let Some(key) = object.key {
+                    objects_in_bucket.push(key);
                 }
-                Err(err) => println!("The error is: {}\n", err.to_string()),
-            }
+            })
         }
         objects_in_bucket
     }

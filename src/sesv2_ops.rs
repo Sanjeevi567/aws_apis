@@ -432,13 +432,12 @@ impl SesOps {
             if let Some(subject_) = content.subject {
                 subject.push_str(&subject_);
             }
-            if let Some(html_) =content.html  {
+            if let Some(html_) = content.html {
                 html.push_str(&html_);
             }
             if let Some(text_) = content.text {
                 text.push_str(&text_);
             }
-
         }
         (subject, html, text)
     }
@@ -504,24 +503,12 @@ impl SesOps {
 
         for email in emails.iter() {
             let name = email.chars().take(9).collect::<String>();
-            let load_json =include_str!("./assets/template_data.json").to_string();
+            let load_json = include_str!("./assets/template_data.json").to_string();
             let data = load_json.replace("SubjectName", "Demo");
             let data = data.replace("SubjectDescription", "Tesing The variables");
             let data = data.replace("email", email);
-            let data = data.replace("name",&name);
-            //My template variable
-            /*let template_data = format!(
-                "
-             {{
-              \"Name\": \"{}\",
-              \"Email\" : \"{}\",
-              \"Blog\" : \"https://sanjuvi.github.io/Blog/\"
-             }}
-            ",
-                name, email
-            ); */
-            let template =
-                TemplateMail::builder(self.get_template_name().as_str(), &data).build();
+            let data = data.replace("name", &name);
+            let template = TemplateMail::builder(self.get_template_name().as_str(), &data).build();
             self.send_mono_email(email, Template_(template), Some(&self.get_from_address()))
                 .await
                 .send()
