@@ -10,6 +10,7 @@ use aws_sdk_s3::{
 };
 use colored::Colorize;
 use dotenv::dotenv;
+use regex::Regex;
 use std::{
     env::var,
     fs::File,
@@ -279,9 +280,36 @@ impl S3Ops {
         let content_length = get_body_data.content_length() as f64 * 0.000001;
         let content_length_colored = content_length.to_string().green().bold();
         println!("The content length/size of data in MB: {content_length_colored:.3}mb\n");
-
-        let mut file = File::create(object_name).unwrap();
-
+        //The regex engine doesn't support look-arounds, including look-aheads and look-behinds. Therefore,
+        //this option is used as a secondary condition. This ensures that even if it matches the dot, it won't
+        // have a chance to retrieve values with dots, as the first match takes precedence.
+        let have_slash_and_dot_pattern =
+            Regex::new(r#"([^./]+)\.([^/]+)"#).expect("Error while parsing Regex Syntax\n");
+        let have_slash_but_no_extension_pattern =
+            Regex::new(r#"/([^/]+)$"#).expect("Error while parsing regex syntax");
+        let no_slash_no_dot_pattern =
+            Regex::new(r#"^[^./]*$"#).expect("Error while parsing Regex syntax");
+        let file_name: Vec<String> = if have_slash_and_dot_pattern.is_match(object_name) {
+            have_slash_and_dot_pattern
+                .find_iter(object_name)
+                .map(|string| string.as_str().to_string())
+                .collect()
+        } else if have_slash_but_no_extension_pattern.is_match(object_name) {
+            have_slash_but_no_extension_pattern
+                .find_iter(object_name)
+                .map(|string| string.as_str().to_string())
+                .collect()
+        } else {
+            no_slash_no_dot_pattern
+                .find_iter(object_name)
+                .map(|string| string.as_str().to_string())
+                .collect()
+        };
+        let mut file_name = file_name.join("");
+        if file_name.starts_with("/") {
+            file_name.remove(0);
+        };
+        let mut file = File::create(file_name).unwrap();
         let bytes = get_body_data.body.collect().await.unwrap();
         let bytes = bytes.into_bytes();
         println!("{}\n", "Writing data...".bright_green().bold());
