@@ -315,16 +315,16 @@ impl TextDetect {
     pub fn build(type_: TextDetection) -> Self {
         Self(type_)
     }
-    fn detected_text(&mut self) -> Option<String> {
+    pub fn detected_text(&mut self) -> Option<String> {
         self.0.detected_text.take()
     }
     /// [`TextType`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/enum.TextTypes.html)
-    fn text_type(&self) -> Option<String> {
+    pub fn text_type(&self) -> Option<String> {
         self.0
             .r#type()
             .map(|text_type| text_type.as_str().to_string())
     }
-    fn confidence(&self) -> Option<f32> {
+    pub fn confidence(&self) -> Option<f32> {
         self.0.confidence
     }
     ///[`Geometry`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.Geometry.html)
@@ -461,7 +461,7 @@ impl FaceDetails {
         Self(type_)
     }
     /// [`BoundingBox`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.BoundingBox.html)
-    fn bounding_box(&mut self) -> (Option<f32>, Option<f32>, Option<f32>, Option<f32>) {
+    pub fn bounding_box(&mut self) -> (Option<f32>, Option<f32>, Option<f32>, Option<f32>) {
         let bounding_box = if let Some(bbox) = self.0.bounding_box.take() {
             (bbox.width(), bbox.height(), bbox.left(), bbox.top())
         } else {
@@ -470,7 +470,7 @@ impl FaceDetails {
         bounding_box
     }
     /// [`AgeRange`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.AgeRange.html)
-    fn age_range(&mut self) -> (Option<i32>, Option<i32>) {
+    pub fn age_range(&mut self) -> (Option<i32>, Option<i32>) {
         let age_range = if let Some(age) = self.0.age_range.as_ref() {
             (age.low(), age.high())
         } else {
@@ -479,7 +479,7 @@ impl FaceDetails {
         age_range
     }
     /// [`Smile'](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.Smile.html)
-    fn smile(&mut self) -> (Option<bool>, Option<f32>) {
+    pub fn smile(&mut self) -> (Option<bool>, Option<f32>) {
         let smile = if let Some(smile_) = self.0.smile.take() {
             (Some(smile_.value), smile_.confidence)
         } else {
@@ -488,7 +488,7 @@ impl FaceDetails {
         smile
     }
     /// [`Eyeglasses`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.Eyeglasses.html)
-    fn eyeglasses(&mut self) -> (Option<bool>, Option<f32>) {
+    pub fn eyeglasses(&mut self) -> (Option<bool>, Option<f32>) {
         let eyeglass = if let Some(glass) = self.0.eyeglasses.take() {
             (Some(glass.value), glass.confidence)
         } else {
@@ -497,7 +497,7 @@ impl FaceDetails {
         eyeglass
     }
     /// [`Sunglasses`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.Sunglasses.html)
-    fn sunglasses(&mut self) -> (Option<bool>, Option<f32>) {
+    pub fn sunglasses(&mut self) -> (Option<bool>, Option<f32>) {
         let sun_glass = if let Some(sun) = self.0.sunglasses.take() {
             (Some(sun.value), sun.confidence)
         } else {
@@ -506,7 +506,7 @@ impl FaceDetails {
         sun_glass
     }
     /// [`Gender`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.Gender.html)
-    fn gender(&mut self) -> (Option<String>, Option<f32>) {
+    pub fn gender(&mut self) -> (Option<String>, Option<f32>) {
         let gender = if let Some(gender_) = self.0.gender.take() {
             if let (Some(r#type), Some(confidence)) = (gender_.value(), gender_.confidence()) {
                 (Some(r#type.as_str().to_string()), Some(confidence))
@@ -519,7 +519,7 @@ impl FaceDetails {
         gender
     }
     ///[`Beard`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.Beard.html)
-    fn beard(&mut self) -> (Option<bool>, Option<f32>) {
+    pub fn beard(&mut self) -> (Option<bool>, Option<f32>) {
         let beard = if let Some(beard_) = self.0.beard.take() {
             (Some(beard_.value), beard_.confidence)
         } else {
@@ -528,7 +528,7 @@ impl FaceDetails {
         beard
     }
     /// [`Mustache`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.Mustache.html)
-    fn mustache(&mut self) -> (Option<bool>, Option<f32>) {
+    pub fn mustache(&mut self) -> (Option<bool>, Option<f32>) {
         let mustache = if let Some(mustache_) = self.0.mustache.take() {
             (Some(mustache_.value), mustache_.confidence)
         } else {
