@@ -24,7 +24,7 @@ impl SnsOps {
             .send()
             .await
             .expect("Error while sending Message\n");
-        println!("{}\n", "Email has been added".green().bold());
+        println!("{}\n", "Phone Number has been added".green().bold());
     }
     pub async fn list_sms_sandbox_numbers(&self) -> String {
         let config = self.get_config();

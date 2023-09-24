@@ -164,6 +164,7 @@ impl S3Ops {
             .send()
             .await
             .expect(&colored_msg);
+        println!("The provided object {} has been successfully updated in the bucket {}\n",data_path,bucket_name);
         let current_objects = self.retrieve_keys_in_a_bucket(bucket_name).await;
         println!("Currently available keys/objects in your {bucket_name} bucket\n");
         current_objects.into_iter().for_each(|key| {
@@ -316,9 +317,11 @@ impl S3Ops {
         match file.write_all(&*bytes) {
             Ok(_) => {
                 let colored_key_name = object_name.green().bold();
-                println!("The content of the {colored_key_name} is saved in the current directory")
+                println!(
+                    "The content of the {colored_key_name} is saved in the current directory\n"
+                )
             }
-            Err(_) => println!("{}\n", "Error while writting".red().bold()),
+            Err(_) => println!("{}\n", "Error while writting\n".red().bold()),
         }
     }
 
