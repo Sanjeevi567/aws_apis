@@ -8,7 +8,6 @@ use dotenv::dotenv;
 use regex::Regex;
 use sesv2::{
     operation::{
-        create_email_identity::builders::CreateEmailIdentityFluentBuilder,
         send_email::builders::SendEmailFluentBuilder,
     },
     types::{Body, Content, Destination, EmailContent, EmailTemplateContent, Message, Template},
@@ -18,8 +17,6 @@ use std::{
     env::var,
     fs::{File, OpenOptions},
     io::Write,
-    thread::sleep,
-    time::Duration,
 };
 
 /// The core structure for performing operations on [`SESv2`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/struct.Client.html) (Simple Email Service Version 2)
@@ -116,11 +113,21 @@ impl SesOps {
     }
 
     /// The 'create email identity' helper function is isolated, so we don't have to use it unless necessary.
-    async fn create_email_identity(&self, email: &str) -> CreateEmailIdentityFluentBuilder {
+    async fn create_email_identity(&self, email: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
 
-        client.create_email_identity().email_identity(email)
+        client
+            .create_email_identity()
+            .email_identity(email)
+            .send()
+            .await
+            .expect("Error while creating Email Identity\n");
+        let colored_email = email.green().bold();
+        println!(
+            "The email verfication send to: {} if exist\n",
+            colored_email
+        )
     }
 
     /// This function utilizes a default list name if 'None' is passed as a parameter.
@@ -142,11 +149,6 @@ impl SesOps {
             .create_contact()
             .contact_list_name(&default_list_name)
             .email_address(email);
-
-        let colored_error_inside =
-            "Error from create_email_identity inside of create_email_contact_with_verification"
-                .red()
-                .bold();
         let colored_error_outside = "Error from create_email_contact_with_verification"
             .red()
             .bold();
@@ -161,16 +163,7 @@ impl SesOps {
                     "The email address {colored_email} has been added to the contact list named: {}\n",
                     colored_list_name
                 );
-                self.create_email_identity(email)
-                    .await
-                    .send()
-                    .await
-                    .map(|_| {
-                    let colored_email = email.green().bold();
-                    println!("The email verfication send to: {} if exist\n", colored_email);
-                
-                     })
-                    .expect(&colored_error_inside);
+                self.create_email_identity(email).await;
             })
             .expect(&colored_error_outside)
             .await;
