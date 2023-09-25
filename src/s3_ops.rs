@@ -282,11 +282,22 @@ impl S3Ops {
         let get_body_data = client.send().await.expect(&colored_msg);
 
         let content_type = get_body_data.content_type().unwrap().green().bold();
-        println!("Content type of response body: {}\n", content_type);
+        println!("Content type of response body: {}", content_type);
 
         let content_length = get_body_data.content_length() as f64 * 0.000001;
         let content_length_colored = content_length.to_string().green().bold();
-        println!("The content length/size of data in MB: {content_length_colored:.3}mb\n");
+        println!("The content length/size of data in MB: {content_length_colored:.3}mb");
+        let last_modified = get_body_data
+            .last_modified
+            .map(|format| {
+                format
+                    .fmt(aws_sdk_memorydb::primitives::DateTimeFormat::HttpDate)
+                    .ok()
+            })
+            .flatten();
+        if let Some(time) = last_modified {
+            println!("Last Modified: {}\n", time.green().bold());
+        }
         //The regex engine doesn't support look-arounds, including look-aheads and look-behinds. Therefore,
         //this option is used as a secondary condition. This ensures that even if it matches the dot, it won't
         // have a chance to retrieve values with dots, as the first match takes precedence.

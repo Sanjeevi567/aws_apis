@@ -649,7 +649,7 @@ impl SimpleMail {
 
         let body_content = Content::builder().charset("UTF-8").data(self.body).build();
 
-        let body = Body::builder().text(body_content).build();
+        let body = Body::builder().html(body_content).build();
         let message = Message::builder()
             .body(body)
             .subject(subject_content)
