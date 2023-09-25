@@ -6,7 +6,6 @@ use aws_sdk_transcribe::{
 };
 use colored::Colorize;
 
-use crate::create_transcription_pdf;
 pub struct TranscribeOps {
     config: SdkConfig,
 }
@@ -35,7 +34,7 @@ impl TranscribeOps {
             .set_formats(Some(vec_of_formats))
             .output_start_index(1)
             .build();
-        let output = client
+        client
             .start_transcription_job()
             .output_bucket_name(bucket_name)
             .output_key("transcribe_outputs/")
@@ -47,15 +46,6 @@ impl TranscribeOps {
             .send()
             .await
             .expect("Error while starting transcribing task\n");
-        if let Some(job) = output.transcription_job {
-            let status = job.transcription_job_status();
-            if let Some(status) = status {
-                print!(
-                    "The job status is as follows: {}",
-                    status.as_str().green().bold()
-                );
-            }
-        }
         println!(
             "The key prefix is configured as {} for the bucket name: {}\n",
             "'transcribe_outputs/'".green().bold(),
@@ -67,7 +57,7 @@ impl TranscribeOps {
                 .yellow()
                 .bold()
         );
-        print!("The job name {},is used to retrieve the transcribed results in the GetTranscriptionJob API\n",job_name.green().bold());
+        print!("The job name {},is used to retrieve the transcribed results in the 'Get Transcription Job'\n",job_name.green().bold());
     }
     pub async fn get_transcribe_results(&self, job_name: &str) -> Option<TranscriptionOutput> {
         let config = self.get_config();
@@ -151,116 +141,69 @@ impl TranscriptionOutput {
     pub fn failure_reason(&mut self) -> Option<String> {
         self.0.failure_reason.take()
     }
-    pub fn write_transcription_info_as_text_and_pdf(&mut self) {
-        let headers = vec![
-            "Transcription Job Name",
-            "Transcription Job Status",
-            "language_code",
-            "Media Format",
-            "Media",
-            "Transcript Info",
-            "Start Time",
-            "Creation Time",
-            "Completion Time",
-            "Failure Reason",
-            "Subtitles",
-        ];
-        let mut vec_of_values = Vec::new();
-        let mut job_name = String::new();
+    //Help message in the bucket url : get the bukcket name then put s3://bucket_name/paste key name
+    pub fn print_transcription_info_as_text(&mut self) {
         if let Some(name) = self.0.transcription_job_name.take() {
-            job_name.push_str(&name);
+            println!("Transcription Job Name: {}", name.green().bold());
         }
-        let mut job_status = String::new();
         if let Some(status) = self.job_status() {
-            job_status.push_str(&status);
+            println!("Transcription Job Status: {}", status.green().bold());
         }
-        let mut language_code = String::new();
+
         if let Some(code) = self.lang_code() {
-            language_code.push_str(&code);
+            println!("Language_code: {}", code.green().bold());
         }
-        let mut media_format = String::new();
         if let Some(media_format_) = self.media_format() {
-            media_format.push_str(&media_format_);
+            println!("Media Format: {}", media_format_.green().bold());
         }
-        let mut media = String::new();
         if let Some(media_) = self.media() {
-            let mut media_file_uri = String::from("Media File Uri: ");
+            println!("Media Information Inlcuded In the Request:\n");
             if let Some(media_uri) = media_.0 {
-                media_file_uri.push_str(&media_uri);
+                println!("Media_file Uri: {}", media_uri.green().bold());
             }
-            let mut redacted_media_file_uri = String::from("Redacted Media File Uri: ");
+
             if let Some(redact) = media_.1 {
-                redacted_media_file_uri.push_str(&redact);
+                println!("Redacted Media File Uri: {}", redact.green().bold());
             }
-            media.push_str(&media_file_uri);
-            media.push_str(" , ");
-            media.push_str(&redacted_media_file_uri);
         }
-        let mut transcripe = String::new();
+
         if let Some(uris) = self.transcript_uri() {
-            let mut transcript_file_uri = String::from("Transcript File Uri: ");
             if let Some(trans_uri) = uris.0 {
-                transcript_file_uri.push_str(&trans_uri);
+                println!("Transcript File Uri: {}", trans_uri.green().bold());
             }
-            let mut redacted_transcript_file_uri = String::from("Redacted Transcript File Uri");
             if let Some(redact) = uris.1 {
-                redacted_transcript_file_uri.push_str(&redact);
+                println!("Redacted Transcript File Uri: {}", redact.green().bold());
             }
-            transcripe.push_str(&transcript_file_uri);
-            transcripe.push_str(" , ");
-            transcripe.push_str(&redacted_transcript_file_uri);
         }
-        let mut start_time = String::new();
         if let Some(stime) = self.start_time() {
-            start_time.push_str(&stime);
+            println!("Start Time: {}", stime.green().bold());
         }
-        let mut creation_time = String::new();
         if let Some(cre_time) = self.creation_time() {
-            creation_time.push_str(&cre_time);
+            println!("Creation Time: {}", cre_time.green().bold());
         }
-        let mut completion_time = String::new();
         if let Some(com_time) = self.completion_time() {
-            completion_time.push_str(&com_time);
+            println!("Completion Time: {}", com_time.green().bold());
         }
-        let mut failure_reson = String::new();
+
         if let Some(fail_reason) = self.failure_reason() {
-            failure_reson.push_str(&fail_reason);
+            println!("Failure Reason: {}", fail_reason.green().bold());
         }
-        let mut subtitles_info = String::new();
+
         if let Some(sub_output) = self.0.subtitles.take() {
-            let mut sub_formats = String::from("Format of Subtitle: ");
-            sub_output.formats.into_iter().for_each(|format| {
-                format.into_iter().for_each(|format| {
-                    sub_formats.push_str(format.as_str());
-                });
-            });
-            let mut subtitle_file_uris = String::from("subtitle_file_uris: ");
+            if let Some(formats) = sub_output.formats {
+                formats.into_iter().for_each(|format| {
+                    println!("Subtitle Format: {}", format.as_str().green().bold());
+                })
+            }
             if let Some(sub_uris) = sub_output.subtitle_file_uris {
                 sub_uris.into_iter().for_each(|uri| {
-                    subtitle_file_uris.push_str(&uri);
-                    subtitle_file_uris.push_str(" , ");
+                    println!("Subtitle Uri: {}", uri.green().bold());
                 });
-            }
-            let mut output_start_index = String::from("output_start_index: ");
+            };
             if let Some(index) = sub_output.output_start_index {
-                output_start_index.push_str(index.to_string().as_str());
+                println!("Starting Index: {}", index.to_string().green().bold());
             }
-            subtitles_info.push_str(&sub_formats);
-            subtitles_info.push_str(&subtitle_file_uris);
-            subtitles_info.push_str(&output_start_index);
+            println!("");
         }
-        vec_of_values.push(job_name);
-        vec_of_values.push(job_status);
-        vec_of_values.push(language_code);
-        vec_of_values.push(media_format);
-        vec_of_values.push(media);
-        vec_of_values.push(transcripe);
-        vec_of_values.push(start_time);
-        vec_of_values.push(creation_time);
-        vec_of_values.push(completion_time);
-        vec_of_values.push(failure_reson);
-        vec_of_values.push(subtitles_info);
-
-        create_transcription_pdf(&headers, vec_of_values);
     }
 }
