@@ -471,7 +471,7 @@ impl FaceDetails {
     }
     /// [`AgeRange`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/struct.AgeRange.html)
     pub fn age_range(&mut self) -> (Option<i32>, Option<i32>) {
-        let age_range = if let Some(age) = self.0.age_range.as_ref() {
+        let age_range = if let Some(age) = self.0.age_range.take() {
             (age.low(), age.high())
         } else {
             (None, None)

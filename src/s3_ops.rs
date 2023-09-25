@@ -164,13 +164,19 @@ impl S3Ops {
             .send()
             .await
             .expect(&colored_msg);
-        println!("The provided object {} has been successfully updated in the bucket {}\n",data_path,bucket_name);
+        println!(
+            "The provided object {} has been successfully updated in the bucket {}\n",
+            data_path.green().bold(),
+            bucket_name.green().bold()
+        );
+
+        /*
         let current_objects = self.retrieve_keys_in_a_bucket(bucket_name).await;
         println!("Currently available keys/objects in your {bucket_name} bucket\n");
         current_objects.into_iter().for_each(|key| {
             let key = key.green().bold();
             println!("{key}\n");
-        });
+        }); */
     }
     pub async fn put_object_acl(
         &self,
