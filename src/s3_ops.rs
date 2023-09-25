@@ -197,7 +197,7 @@ impl S3Ops {
             .await
             .expect("Error while putting ACL on bucket\n");
         println!(
-            "The ACL permission '{}' has been successfully applied to the object key '{}' within the '{}' bucket",
+            "The ACL permission '{}' has been successfully applied to the object key '{}' within the '{}' bucket\n",
             acl_permission_str.green().bold(),
             name_of_object.green().bold(),
             bucket_name.green().bold()

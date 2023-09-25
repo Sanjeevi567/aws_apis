@@ -65,6 +65,56 @@ fn create_table(key: &str, value: &str) -> TableLayout {
         .unwrap();
     table
 }
+pub fn create_email_with_status_pdf(email_with_status: Vec<String>, contact_list_name: &str) {
+    let mut table = create_table("Email", "Is Verified");
+    push_table_data_emails(email_with_status, &mut table);
+    match build_document() {
+        Ok(mut document) => {
+            document_configuration(&mut document, "Email List", "Emails in the Specified List");
+            document.push(Break::new(1.0));
+            document.push(
+                Paragraph::new(format!("Contact List Name: {}", contact_list_name))
+                    .aligned(Alignment::Left)
+                    .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+            );
+            document.push(Break::new(1.0));
+            document.push(table);
+            match document.render_to_file("EmailWithStatus.pdf") {
+                Ok(_) => println!(
+                    "The '{}' is also generated with the name {} in the current directory\n",
+                    "PDF".green().bold(),
+                    "'EmailWithStatus.pdf'".green().bold()
+                ),
+                Err(_) => println!(
+                    "{}\n",
+                    "Error while generating Email 'PDF'".bright_red().bold()
+                ),
+            }
+        }
+        Err(err) => println!("{err}"),
+    }
+}
+fn push_table_data_emails(email_with_status: Vec<String>, table: &mut TableLayout) {
+    for email_with_status in email_with_status.iter() {
+        let mut email_and_status = email_with_status.split(" ");
+        let email = email_and_status.next().unwrap();
+        let status = email_and_status.next().expect("The Status is exist");
+        table
+            .row()
+            .element(
+                Paragraph::new(format!("{}", email))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(34, 91, 247)).bold()),
+            )
+            .element(
+                Paragraph::new(format!("{}", status))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
+            )
+            .push()
+            .unwrap();
+    }
+}
 pub fn create_text_result_pdf(
     headers: &Vec<&str>,
     records: Vec<String>,
