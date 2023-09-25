@@ -292,24 +292,10 @@ impl SesOps {
     pub async fn writing_email_addresses_from_provided_list_as_text_pdf(
         &self,
         list_name: Option<&str>,
-        print_emails: bool,
-        upto: Option<usize>,
     ) {
         let emails = self
             .retrieve_emails_from_provided_list(list_name, true)
             .await;
-
-        if print_emails {
-            let mut count = 0;
-            for email in &emails {
-                if count != upto.unwrap_or(0) {
-                    let email = email.green().bold();
-                    println!("    {}\n", email);
-                    count += 1;
-                    sleep(Duration::from_millis(1000));
-                }
-            }
-        }
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
