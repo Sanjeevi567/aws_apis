@@ -36,5 +36,5 @@ pub use route53::Route53Ops;
 
 mod pdf_writer;
 pub use pdf_writer::{
-    create_email_with_status_pdf, create_face_result_pdf, create_text_result_pdf,
+    create_email_pdf, create_face_result_pdf, create_text_result_pdf,
 };

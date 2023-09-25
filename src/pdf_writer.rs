@@ -65,9 +65,27 @@ fn create_table(key: &str, value: &str) -> TableLayout {
         .unwrap();
     table
 }
-pub fn create_email_with_status_pdf(email_with_status: Vec<String>, contact_list_name: &str) {
-    let mut table = create_table("Email", "Is Verified");
-    push_table_data_emails(email_with_status, &mut table);
+fn create_table_with_one_column(header: &str) -> TableLayout {
+    let mut table = TableLayout::new(vec![1]);
+    table.set_cell_decorator(FrameCellDecorator::new(true, true, false));
+    let row = table.row();
+    row.element(
+        Paragraph::new(header)
+            .aligned(Alignment::Center)
+            .styled(Style::new().bold().with_color(Color::Rgb(34, 91, 247))),
+    )
+    .push()
+    .unwrap();
+    table
+        .row()
+        .element(Break::new(1.0))
+        .push()
+        .unwrap();
+    table
+}
+pub fn create_email_pdf(emails: Vec<String>, contact_list_name: &str) {
+    let mut table = create_table_with_one_column("Emails");
+    push_table_data_emails(emails, &mut table);
     match build_document() {
         Ok(mut document) => {
             document_configuration(&mut document, "Email List", "Emails in the Specified List");
@@ -94,22 +112,14 @@ pub fn create_email_with_status_pdf(email_with_status: Vec<String>, contact_list
         Err(err) => println!("{err}"),
     }
 }
-fn push_table_data_emails(email_with_status: Vec<String>, table: &mut TableLayout) {
-    for email_with_status in email_with_status.iter() {
-        let mut email_and_status = email_with_status.split(" ");
-        let email = email_and_status.next().unwrap();
-        let status = email_and_status.next().expect("The Status is exist");
+fn push_table_data_emails(emails: Vec<String>, table: &mut TableLayout) {
+    for email in emails.iter() {
         table
             .row()
             .element(
                 Paragraph::new(format!("{}", email))
                     .aligned(Alignment::Center)
                     .styled(Style::new().with_color(Color::Rgb(34, 91, 247)).bold()),
-            )
-            .element(
-                Paragraph::new(format!("{}", status))
-                    .aligned(Alignment::Center)
-                    .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
             )
             .push()
             .unwrap();

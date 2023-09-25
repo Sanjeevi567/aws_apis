@@ -1,4 +1,4 @@
-use crate::create_email_with_status_pdf;
+use crate::create_email_pdf;
 
 use self::SimpleOrTemplate::{Simple_, Template_};
 use aws_config::SdkConfig;
@@ -238,32 +238,17 @@ impl SesOps {
             .get_email_identity()
             .email_identity(email)
             .send()
-            .await;
-        match client {
-            Ok(client) => {
-                if client.verified_for_sending_status() {
-                    true
-                } else {
-                    false
-                }
-            }
-            Err(_) => {
-                self.create_email_identity(&email).await;
-                if client.unwrap().verified_for_sending_status() {
-                    true
-                } else {
-                    false
-                }
-            }
+            .await
+            .expect("Error while Creating Email Identity\n");
+        if client.verified_for_sending_status() {
+            true
+        } else {
+            false
         }
     }
     /// This helper function retrieves the emails from the provided contact list name,
     /// stores them in a vector of strings, and then returns them to the caller.
-    async fn retrieve_emails_from_provided_list(
-        &self,
-        list_name: Option<&str>,
-        include_verfied: bool,
-    ) -> Vec<String> {
+    async fn retrieve_emails_from_provided_list(&self, list_name: Option<&str>) -> Vec<String> {
         let config = self.get_config();
         let client = SesClient::new(config);
 
@@ -290,24 +275,10 @@ impl SesOps {
             })
             .expect("Error from retrieve_emails_from_provided_list");
         let contacts = list.contacts().unwrap();
-        let emails: Vec<String> = contacts
+        contacts
             .into_iter()
             .map(|contact| contact.email_address().unwrap_or_default().into())
-            .collect();
-        let mut email_with_verfied_status = Vec::new();
-        if include_verfied {
-            for email in emails.iter() {
-                let verified_status = match self.is_email_verfied(email).await {
-                    true => "Verified",
-                    false => "Not Verified",
-                };
-                let format_string = format!("{email} {verified_status}");
-                email_with_verfied_status.push(format_string);
-            }
-            email_with_verfied_status
-        } else {
-            emails
-        }
+            .collect()
     }
 
     /// Retrieve the emails from the provided contact list name and save them to the
@@ -317,7 +288,7 @@ impl SesOps {
         list_name: Option<&str>,
     ) {
         let emails = self
-            .retrieve_emails_from_provided_list(list_name, true)
+            .retrieve_emails_from_provided_list(list_name)
             .await;
         let mut file = OpenOptions::new()
             .create(true)
@@ -325,14 +296,11 @@ impl SesOps {
             .read(true)
             .open("./emails.txt")
             .unwrap();
-        let mut vector_of_email_with_status = Vec::new();
-        emails.iter().for_each(|email_with_status| {
-            let mut email_and_status = email_with_status.split(" ");
-            let email = email_and_status.next().unwrap();
-            let status = email_and_status.next().unwrap();
-            writeln!(file, "Email: {email} and status: {status}\n").unwrap();
-            let data = format!("{email} {status}");
-            vector_of_email_with_status.push(data);
+        let mut vector_of_email = Vec::new();
+        emails.iter().for_each(|email| {
+            writeln!(file, "Email: {email}\n").unwrap();
+            let data = format!("{email}");
+            vector_of_email.push(data);
         });
         println!(
             "{}\n",
@@ -341,7 +309,7 @@ impl SesOps {
         let get_list_name =
             var("LIST_NAME").unwrap_or("No 'LIST_NAME' environment variable found".into());
         let list_name = list_name.unwrap_or(&get_list_name);
-        create_email_with_status_pdf(vector_of_email_with_status, list_name);
+        create_email_pdf(vector_of_email, list_name);
     }
 
     /// This only works when production access is enabled, i.e., in a paid AWS service, instead of a trial version that has not been tested.
@@ -575,7 +543,7 @@ impl SesOps {
         let colored_error = "Error from send_emails function".red().bold();
 
         let emails = self
-            .retrieve_emails_from_provided_list(Some(&self.get_list_name()), false)
+            .retrieve_emails_from_provided_list(Some(&self.get_list_name()))
             .await;
 
         for email in emails.iter() {
@@ -609,7 +577,7 @@ impl SesOps {
             .bold();
 
         let emails = self
-            .retrieve_emails_from_provided_list(list_name, false)
+            .retrieve_emails_from_provided_list(list_name)
             .await;
 
         let email_content = data.build();
@@ -640,7 +608,7 @@ impl SesOps {
         list_name: Option<&str>,
     ) {
         let emails = self
-            .retrieve_emails_from_provided_list(list_name, false)
+            .retrieve_emails_from_provided_list(list_name)
             .await;
 
         let email_content = data.build();
