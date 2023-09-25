@@ -7,9 +7,7 @@ use colored::Colorize;
 use dotenv::dotenv;
 use regex::Regex;
 use sesv2::{
-    operation::{
-        send_email::builders::SendEmailFluentBuilder,
-    },
+    operation::send_email::builders::SendEmailFluentBuilder,
     types::{Body, Content, Destination, EmailContent, EmailTemplateContent, Message, Template},
     Client as SesClient,
 };
@@ -129,6 +127,28 @@ impl SesOps {
             colored_email
         )
     }
+    pub async fn delete_email_identity(&self, identity: &str) {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        client
+            .delete_email_identity()
+            .email_identity(identity)
+            .send()
+            .await
+            .expect("Error while deleting Email Identity\n");
+    }
+    pub async fn delete_contact(&self, email: &str, list_name: Option<String>) {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let list_name = list_name.unwrap_or(self.get_list_name());
+        client
+            .delete_contact()
+            .contact_list_name(&list_name)
+            .email_address(email)
+            .send()
+            .await
+            .expect("Error while deleting Email Contact\n");
+    }
 
     /// This function utilizes a default list name if 'None' is passed as a parameter.
     /// It incorporates 'create_identity' internally to send a verification email.
@@ -218,13 +238,23 @@ impl SesOps {
             .get_email_identity()
             .email_identity(email)
             .send()
-            .await
-            .expect("Error while verifying Email Identity\n");
-
-        if client.verified_for_sending_status() {
-            true
-        } else {
-            false
+            .await;
+        match client {
+            Ok(client) => {
+                if client.verified_for_sending_status() {
+                    true
+                } else {
+                    false
+                }
+            }
+            Err(_) => {
+                self.create_email_identity(&email).await;
+                if client.unwrap().verified_for_sending_status() {
+                    true
+                } else {
+                    false
+                }
+            }
         }
     }
     /// This helper function retrieves the emails from the provided contact list name,
