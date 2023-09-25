@@ -1,3 +1,4 @@
+use aws_sdk_sesv2::operation::create_email_identity::CreateEmailIdentityError;
 use colored::Colorize;
 use dotenv::dotenv;
 use genpdf::{
@@ -76,14 +77,10 @@ fn create_table_with_one_column(header: &str) -> TableLayout {
     )
     .push()
     .unwrap();
-    table
-        .row()
-        .element(Break::new(1.0))
-        .push()
-        .unwrap();
+    table.row().element(Break::new(1.0)).push().unwrap();
     table
 }
-pub fn create_email_pdf(emails: Vec<String>, contact_list_name: &str) {
+pub fn create_email_pdf(emails: Vec<String>, contact_list_name: &str, region_name: &str) {
     let mut table = create_table_with_one_column("Emails");
     push_table_data_emails(emails, &mut table);
     match build_document() {
@@ -95,13 +92,18 @@ pub fn create_email_pdf(emails: Vec<String>, contact_list_name: &str) {
                     .aligned(Alignment::Left)
                     .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
             );
+            document.push(
+                Paragraph::new(format!("Region Name: {}", region_name))
+                    .aligned(Alignment::Left)
+                    .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+            );
             document.push(Break::new(1.0));
             document.push(table);
-            match document.render_to_file("EmailWithStatus.pdf") {
+            match document.render_to_file("Emails.pdf") {
                 Ok(_) => println!(
                     "The '{}' is also generated with the name {} in the current directory\n",
                     "PDF".green().bold(),
-                    "'EmailWithStatus.pdf'".green().bold()
+                    "'Emails.pdf'".green().bold()
                 ),
                 Err(_) => println!(
                     "{}\n",
@@ -280,6 +282,77 @@ fn push_table_data_face_results(
             .unwrap();
         count += 1;
         if count % 9 == 0 {
+            table
+                .row()
+                .element(Break::new(1.0))
+                .element(Break::new(1.0))
+                .push()
+                .unwrap();
+        }
+    }
+}
+pub fn create_email_identities_pdf(
+    headers: &Vec<&str>,
+    identities: Vec<String>,
+    region_name: &str,
+) {
+    let mut table = create_table("Identity Info", "Values");
+    push_table_data_emails_identies(headers, identities, &mut table);
+    match build_document() {
+        Ok(mut document) => {
+            document_configuration(
+                &mut document,
+                "Email Identies",
+                "Result of List Email Identities",
+            );
+            document.push(Break::new(1.0));
+            document.push(
+                Paragraph::new(format!("Region Name:  {}", region_name))
+                    .aligned(Alignment::Left)
+                    .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+            );
+            document.push(Break::new(1.0));
+            document.push(table);
+            match document.render_to_file("EmailIdentitiesInfo.pdf") {
+                Ok(_) => println!(
+                    "The '{}' is also generated with the name {} in the current directory\n",
+                    "PDF".green().bold(),
+                    "'EmailIdentitiesInfo.pdf'".green().bold()
+                ),
+                Err(_) => println!(
+                    "{}\n",
+                    "Error while generating Text Detection Results 'PDF'"
+                        .bright_red()
+                        .bold()
+                ),
+            }
+        }
+        Err(err) => println!("{err}"),
+    }
+}
+pub fn push_table_data_emails_identies(
+    headers: &Vec<&str>,
+    identities: Vec<String>,
+    table: &mut TableLayout,
+) {
+    let mut count = 0;
+    for (record, header) in identities.into_iter().zip(headers.into_iter().cycle()) {
+        table
+            .row()
+            .element(
+                Paragraph::new(format!("{}", header))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(34, 91, 247)).bold()),
+            )
+            .element(
+                Paragraph::new(format!("{}", record))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
+            )
+            .push()
+            .unwrap();
+        count += 1;
+        if count % 4 == 0 {
             table
                 .row()
                 .element(Break::new(1.0))

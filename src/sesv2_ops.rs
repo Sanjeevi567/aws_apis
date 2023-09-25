@@ -1,4 +1,4 @@
-use crate::create_email_pdf;
+use crate::{create_email_identities_pdf, create_email_pdf};
 
 use self::SimpleOrTemplate::{Simple_, Template_};
 use aws_config::SdkConfig;
@@ -95,6 +95,67 @@ impl SesOps {
         }
         list_names
     }
+    pub async fn list_email_identity(&self) -> Vec<String> {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let outputs = client
+            .list_email_identities()
+            .send()
+            .await
+            .expect("Error while listing email Identities\n");
+        let mut vec_of_identity_info = Vec::new();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .open("EmailIdentyDetails.txt")
+            .expect("Error while creating file");
+        if let Some(identity_info) = outputs.email_identities {
+            identity_info.into_iter().for_each(|info| {
+                if let Some(identity_type) = info.identity_type {
+                    let type_ = identity_type.as_str().to_string();
+                    let buf = format!("Identity Type: {type_}");
+                    file.write_all(buf.as_bytes()).unwrap();
+                    vec_of_identity_info.push(type_);
+                }
+                if let Some(identity_name) = info.identity_name {
+                    let buf = format!("Identity Name: {identity_name}");
+                    file.write_all(buf.as_bytes()).unwrap();
+                    vec_of_identity_info.push(identity_name);
+                }
+                let sending_enabled = format!("{}", info.sending_enabled);
+                let buf = format!("Is Sending Enables: {sending_enabled}");
+                file.write_all(buf.as_bytes()).unwrap();
+                vec_of_identity_info.push(sending_enabled);
+                if let Some(status) = info.verification_status {
+                    let status = status.as_str().to_string();
+                    let buf = format!("Verification Status: {status}");
+                    file.write_all(buf.as_bytes()).unwrap();
+                    vec_of_identity_info.push(status);
+                }
+            });
+            match File::open("EmailIdentyDetails.txt") {
+                Ok(_) => println!("Email Identity Details are written to a file called '{}'\n To view the emails, please check the current directory","EmailIdentyDetails.txt".green().bold()),
+                Err(_) => println!("{}\n", "Error while writing file".red().bold()),
+            }
+        }
+        vec_of_identity_info
+    }
+    pub async fn writing_email_identies_details_as_text_pdf(&self) {
+        let headers = vec![
+            "Identity Type",
+            "Identity Name",
+            "Is Sending Enabled",
+            "Verification Status",
+        ];
+        let identities = self.list_email_identity().await;
+        let region_name = self
+            .get_config()
+            .region()
+            .map(|region| region.as_ref())
+            .unwrap_or("No Region is found");
+        create_email_identities_pdf(&headers, identities, region_name);
+    }
     pub async fn delete_contact_list_name(&self, contact_list_name: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
@@ -136,6 +197,10 @@ impl SesOps {
             .send()
             .await
             .expect("Error while deleting Email Identity\n");
+        println!(
+            "The provided email identity '{}' has been deleted\n",
+            identity.green().bold()
+        );
     }
     pub async fn delete_contact(&self, email: &str, list_name: Option<String>) {
         let config = self.get_config();
@@ -148,6 +213,10 @@ impl SesOps {
             .send()
             .await
             .expect("Error while deleting Email Contact\n");
+        println!(
+            "The provided contact '{}' has been deleted successfully\n",
+            email.green().bold()
+        );
     }
 
     /// This function utilizes a default list name if 'None' is passed as a parameter.
@@ -256,7 +325,6 @@ impl SesOps {
             Some(list_name) => list_name.to_string(),
             None => self.get_list_name(),
         };
-
         let list = client
             .list_contacts()
             .contact_list_name(&default_list_name)
@@ -287,9 +355,7 @@ impl SesOps {
         &self,
         list_name: Option<&str>,
     ) {
-        let emails = self
-            .retrieve_emails_from_provided_list(list_name)
-            .await;
+        let emails = self.retrieve_emails_from_provided_list(list_name).await;
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
@@ -297,8 +363,9 @@ impl SesOps {
             .open("./emails.txt")
             .unwrap();
         let mut vector_of_email = Vec::new();
+        writeln!(file, "Emails\n").unwrap();
         emails.iter().for_each(|email| {
-            writeln!(file, "Email: {email}\n").unwrap();
+            writeln!(file, "{email}\n").unwrap();
             let data = format!("{email}");
             vector_of_email.push(data);
         });
@@ -309,7 +376,12 @@ impl SesOps {
         let get_list_name =
             var("LIST_NAME").unwrap_or("No 'LIST_NAME' environment variable found".into());
         let list_name = list_name.unwrap_or(&get_list_name);
-        create_email_pdf(vector_of_email, list_name);
+        let region_name = self
+            .config
+            .region()
+            .map(|region| region.as_ref())
+            .unwrap_or("No region is found in the Credential");
+        create_email_pdf(vector_of_email, list_name, region_name);
     }
 
     /// This only works when production access is enabled, i.e., in a paid AWS service, instead of a trial version that has not been tested.
@@ -480,7 +552,7 @@ impl SesOps {
         }
         if write_info {
             match File::open(&file_name) {
-                Ok(_) => println!("The email template associated with the template name '{}' has been successfully created in the current directory with the file name 'EmailTemplateOf{}.html'\n",template_name.green().bold(),template_name.green().bold()),
+                Ok(_) => println!("The email template associated with the template name '{}' has been successfully created in the current directory with the file name '{}{}.{}'\n",template_name.green().bold(),"EmailTemplateOf".green().bold(),template_name.green().bold(),"html".green().bold()),
                 Err(_) => println!("Error While writing Email Template\n")
             }
         }
@@ -576,9 +648,7 @@ impl SesOps {
             .red()
             .bold();
 
-        let emails = self
-            .retrieve_emails_from_provided_list(list_name)
-            .await;
+        let emails = self.retrieve_emails_from_provided_list(list_name).await;
 
         let email_content = data.build();
 
@@ -607,9 +677,7 @@ impl SesOps {
         from_address: Option<&str>,
         list_name: Option<&str>,
     ) {
-        let emails = self
-            .retrieve_emails_from_provided_list(list_name)
-            .await;
+        let emails = self.retrieve_emails_from_provided_list(list_name).await;
 
         let email_content = data.build();
 
