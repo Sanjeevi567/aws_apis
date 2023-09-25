@@ -12,7 +12,13 @@ use sesv2::{
     types::{Body, Content, Destination, EmailContent, EmailTemplateContent, Message, Template},
     Client as SesClient,
 };
-use std::{env::var, fs::OpenOptions, io::Write, thread::sleep, time::Duration};
+use std::{
+    env::var,
+    fs::{File, OpenOptions},
+    io::Write,
+    thread::sleep,
+    time::Duration,
+};
 
 /// The core structure for performing operations on [`SESv2`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/struct.Client.html) (Simple Email Service Version 2)
 /// clients eliminates the need for users of the API to provide credentials each
@@ -416,6 +422,7 @@ impl SesOps {
     pub async fn get_template_subject_html_and_text(
         &self,
         template_name: &str,
+        write_info: bool,
     ) -> (String, String, String) {
         let config = self.get_config();
         let client = SesClient::new(config);
@@ -428,15 +435,46 @@ impl SesOps {
         let mut subject = String::new();
         let mut html = String::new();
         let mut text = String::new();
+        let file_name = format!("EmailTemplateOf{template_name}.html");
+        let mut email_template = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .open(&file_name)
+            .expect("Error while creating file for Email Template Content\n");
         if let Some(content) = outputs.template_content {
             if let Some(subject_) = content.subject {
                 subject.push_str(&subject_);
+                if write_info {
+                    let buf = format!("Subject Part:\n{subject_}\n\n");
+                    email_template
+                        .write_all(buf.as_bytes())
+                        .expect("Error while writing subject part\n");
+                }
             }
             if let Some(html_) = content.html {
                 html.push_str(&html_);
+                if write_info {
+                    let buf = format!("Html Part:\n{html_}\n\n");
+                    email_template
+                        .write_all(buf.as_bytes())
+                        .expect("Error while writing html part\n");
+                }
             }
             if let Some(text_) = content.text {
                 text.push_str(&text_);
+                if write_info {
+                    let buf = format!("Text Part:\n{text_}\n\n");
+                    email_template
+                        .write_all(buf.as_bytes())
+                        .expect("Error while writing text part\n");
+                }
+            }
+        }
+        if write_info {
+            match File::open(&file_name) {
+                Ok(_) => println!("The email template associated with the template name '{}' has been successfully created in the current directory with the file name 'EmailTemplateOf{}.html'\n",template_name.green().bold(),template_name.green().bold()),
+                Err(_) => println!("Error While writing Email Template\n")
             }
         }
         (subject, html, text)
