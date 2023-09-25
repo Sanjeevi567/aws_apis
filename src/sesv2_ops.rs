@@ -113,7 +113,7 @@ impl SesOps {
     }
 
     /// The 'create email identity' helper function is isolated, so we don't have to use it unless necessary.
-    async fn create_email_identity(&self, email: &str) {
+    pub async fn create_email_identity(&self, email: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
 
