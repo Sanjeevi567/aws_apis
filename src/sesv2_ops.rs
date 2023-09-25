@@ -129,7 +129,7 @@ impl SesOps {
                 vec_of_identity_info.push(sending_enabled);
                 if let Some(status) = info.verification_status {
                     let status = status.as_str().to_string();
-                    let buf = format!("Verification Status: {status}");
+                    let buf = format!("Verification Status: {status}\n\n");
                     file.write_all(buf.as_bytes()).unwrap();
                     vec_of_identity_info.push(status);
                 }

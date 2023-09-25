@@ -362,3 +362,55 @@ pub fn push_table_data_emails_identies(
         }
     }
 }
+
+pub fn create_transcription_pdf(headers: &Vec<&str>, values: Vec<String>) {
+    let mut table = create_table("Transcription Job Info", "Values");
+    push_transcription_table_data(headers, values, &mut table);
+    match build_document() {
+        Ok(mut document) => {
+            document_configuration(
+                &mut document,
+                "Transcription",
+                "Result of Start Transcription Job",
+            );
+            document.push(Break::new(1.0));
+            document.push(table);
+            match document.render_to_file("TranscriptionJobInfo.pdf") {
+                Ok(_) => println!(
+                    "The '{}' is also generated with the name {} in the current directory\n",
+                    "PDF".green().bold(),
+                    "'TranscriptionJobInfo.pdf'".green().bold()
+                ),
+                Err(_) => println!(
+                    "{}\n",
+                    "Error while generating Text Detection Results 'PDF'"
+                        .bright_red()
+                        .bold()
+                ),
+            }
+        }
+        Err(err) => println!("{err}"),
+    }
+}
+fn push_transcription_table_data(
+    headers: &Vec<&str>,
+    values: Vec<String>,
+    table: &mut TableLayout,
+) {
+    for (record, header) in values.into_iter().zip(headers.into_iter().cycle()) {
+        table
+            .row()
+            .element(
+                Paragraph::new(format!("{}", header))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(34, 91, 247)).bold()),
+            )
+            .element(
+                Paragraph::new(format!("{}", record))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
+            )
+            .push()
+            .unwrap();
+    }
+}
