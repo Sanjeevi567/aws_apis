@@ -57,7 +57,7 @@ impl TranscribeOps {
                 .yellow()
                 .bold()
         );
-        print!("The job name {},is used to retrieve the transcribed results in the 'Get Transcription Job'\n",job_name.green().bold());
+        println!("The job name {},is used to retrieve the transcribed results in the 'Get Transcription Job'\n",job_name.green().bold());
     }
     pub async fn get_transcribe_results(&self, job_name: &str) -> Option<TranscriptionOutput> {
         let config = self.get_config();
@@ -204,6 +204,9 @@ impl TranscriptionOutput {
                 println!("Starting Index: {}", index.to_string().green().bold());
             }
             println!("");
+            println!("{}\n","The bucket URL cannot be accessed until it is made public or accessible through the web console".yellow().bold());
+            println!("{}\n","To achieve this, please execute the 'Modify Object Visibility' option in the S3 operations menu to make the object public".yellow().bold());
+            
         }
     }
 }
