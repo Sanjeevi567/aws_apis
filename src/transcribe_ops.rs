@@ -41,6 +41,7 @@ impl TranscribeOps {
             .output_key("transcribe_outputs/")
             .subtitles(subtitle_builder)
             .media(media_builder)
+            .identify_language(true)
             .media_format(media_format_builder)
             .transcription_job_name(job_name)
             .send()
@@ -147,7 +148,7 @@ impl TranscriptionOutput {
             .flatten()
     }
 
-    fn failure_reason(&mut self) -> Option<String> {
+    pub fn failure_reason(&mut self) -> Option<String> {
         self.0.failure_reason.take()
     }
     pub fn write_transcription_info_as_text_and_pdf(&mut self) {
