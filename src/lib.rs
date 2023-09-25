@@ -30,6 +30,7 @@ mod rekognition_ops;
 pub use rekognition_ops::{FaceDetails, RekognitionOps, TextDetect};
 
 mod transcribe_ops;
+pub use transcribe_ops::TranscribeOps;
 
 mod route53;
 pub use route53::Route53Ops;
@@ -39,3 +40,5 @@ pub use pdf_writer::{
     create_email_identities_pdf, create_email_pdf, create_face_result_pdf, create_text_result_pdf,
     create_transcription_pdf,
 };
+
+

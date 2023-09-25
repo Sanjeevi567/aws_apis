@@ -1,7 +1,7 @@
 use aws_config::SdkConfig;
 use aws_sdk_transcribe::{
-    primitives::{DateTime, DateTimeFormat},
-    types::{Media, MediaFormat, SubtitleFormat, Subtitles, Transcript, TranscriptionJob},
+    primitives::DateTimeFormat,
+    types::{Media, MediaFormat, SubtitleFormat, Subtitles, TranscriptionJob},
     Client as TranscribeClient,
 };
 use colored::Colorize;
