@@ -1,0 +1,91 @@
+
+    let mut file = OpenOptions::new()
+        .create(true)
+        .read(true)
+        .write(true)
+        .open("Face_details.txt")
+        .unwrap();
+
+    let entries = s3_ops
+        .list_objects_given_prefix(bucket_name, path_prefix)
+        .await;
+    let face_details_images = "face_details_images/";
+    create_dir(face_details_images)
+        .expect("Error while creating face_details_image/ directory for writting images\n");
+    let local_path_prefix = "read_images/";
+    create_dir(local_path_prefix).expect("Error while creating read_images/ temp directory\n");
+
+    for image_path in entries.iter().skip(1) {
+        s3_ops
+            .download_content_from_bcuket(bucket_name, &image_path, Some(local_path_prefix), false)
+            .await;
+        let outputs = rekognition_ops.detect_faces(&image_path, bucket_name).await;
+        for mut face_detail in outputs.into_iter() {
+            let have_slash_and_dot_pattern =
+                Regex::new(r#"([^./]+)\.([^/]+)"#).expect("Error while parsing Regex Syntax\n");
+            let image_name: Vec<&str> = have_slash_and_dot_pattern
+                .find_iter(&image_path)
+                .map(|string| string.as_str())
+                .collect();
+            println!(
+                "{} {}\n",
+                "Details of image".yellow().bold(),
+                image_name.join("").green().bold()
+            );
+            if let (
+                (Some(smile), Some(smile_confidence)),
+                (Some(gender), Some(gender_confidence)),
+                (Some(age_range), Some(age_confidence)),
+                (Some(beard), Some(beard_confidence)),
+                (Some(width), Some(height), Some(left), Some(top)),
+            ) = (
+                face_detail.smile(),
+                face_detail.gender(),
+                face_detail.age_range(),
+                face_detail.beard(),
+                face_detail.bounding_box(),
+            ) {
+                let details = vec![
+                    format!("Details of image: {}\n", image_name.join("")),
+                    format!("Gender: {gender}, with a confidence level of {gender_confidence}\n"),
+                    format!(
+                        "Age Range: {age_range}, with a confidence level of {age_confidence}\n"
+                    ),
+                    format!("Beard: {beard}, with a confidence level of {beard_confidence}\n"),
+                    format!("Smile: {smile}, with a confidence level of {smile_confidence}\n"),
+                    format!(
+                        "Bounding Box Details: Width: {}, Height: {}, Left: {}, Top: {}\n",
+                        width, height, left, top
+                    ),
+                ];
+                for detail in details {
+                    file.write_all(detail.as_bytes()).unwrap();
+                }
+                //drawing code
+                let read_image_path = format!("{local_path_prefix}{}", image_name.join(""));
+                let mut image = image::open(&read_image_path)
+                    .expect("Error while reading the image from path\n");
+
+                let scale = Scale::uniform(30.0);
+                let color = Rgba([255u8, 0u8, 0u8, 127u8]);
+                let data_ = include_bytes!("baby.ttf");
+                let font =
+                    Font::try_from_bytes(data_).expect("Error Getting Font Bytes from the link");
+                let gender = format!("Gender: {gender}");
+                let age = format!("Age: {age_range}");
+                let beard = format!("Beard: {beard}");
+                let smile = format!("Smile: {smile}");
+
+                draw_text_mut(&mut image, color, 0, 0, scale, &font, &gender);
+                draw_text_mut(&mut image, color, 0, 50, scale, &font, &age);
+                draw_text_mut(&mut image, color, 0, 100, scale, &font, &beard);
+                draw_text_mut(&mut image, color, 0, 150, scale, &font, &smile);
+
+                let modified_image_path_name =
+                    format!("{face_details_images}{}", image_name.join(""));
+                image
+                    .save(&modified_image_path_name)
+                    .expect("Error while writing Image file\n");
+            }
+        }
+    }

@@ -24,12 +24,14 @@ tokio-stream = {version = "0.1.14"}
 chrono ={version = "0.4.28"}
 fast_qr = {version = "0.10.2",features = ["image"]}
 dotenv = "0.15.0"
-genpdf ="0.2.0"
+genpdf ={version ="0.2.0",features = ["images"]}
 
 #writing text on images ,details from rekognition apis
 image ="0.24.7"
 imageproc ="0.23.0"
 rusttype ="0.9.3"
+reqwest="0.11.20"
+inquire ="0.6.2"
 
 aws-sdk-s3 = {version ="0.31.1"}
 aws-sdk-sesv2 = {version = "0.31.1"}

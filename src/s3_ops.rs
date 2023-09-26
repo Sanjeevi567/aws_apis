@@ -1,4 +1,5 @@
 use aws_config::SdkConfig;
+use aws_sdk_polly::primitives::SdkBody;
 use aws_sdk_s3::{
     presigning::PresigningConfig,
     primitives::ByteStream,
@@ -12,8 +13,8 @@ use colored::Colorize;
 use dotenv::dotenv;
 use regex::Regex;
 use std::{
-    env::var,
-    fs::File,
+    env::{set_current_dir, var},
+    fs::{create_dir, File, OpenOptions},
     io::Write,
     time::{Duration, SystemTime},
 };
@@ -137,7 +138,34 @@ impl S3Ops {
         }
         objects_in_bucket
     }
-    /// Store the content in the S3 storage with the specified bucket name (which should already exist),
+    pub async fn list_objects_given_prefix(
+        &self,
+        bucket_name: &str,
+        path_prefix: &str,
+    ) -> Vec<String> {
+        let config = self.get_config();
+        let client = S3Client::new(config);
+        let mut keys_in_the_prefix = Vec::new();
+        let outputs = client
+            .list_objects_v2()
+            .prefix(path_prefix)
+            .bucket(bucket_name)
+            .send()
+            .await
+            .expect("Error while listing objects give path prefix\n");
+        if let Some(keys) = outputs.contents {
+            keys.into_iter().for_each(|object_key| {
+                let key = object_key.key;
+                if let Some(key_) = key {
+                    keys_in_the_prefix.push(key_);
+                }
+            });
+        }
+        keys_in_the_prefix
+    }
+
+    /// Store the content in the S3
+    ///  storage with the specified bucket name (which should already exist),
     /// key name (to retrieve data later), and path to the data.
     pub async fn upload_content_to_a_bucket(
         &self,
@@ -270,7 +298,13 @@ impl S3Ops {
     /// Download the content to the current directory, using the name of the content
     /// file being downloaded. This process accepts a bucket name and key to retrieve
     /// the actual data
-    pub async fn download_content_from_bcuket(&self, bucket_name: &str, object_name: &str) {
+    pub async fn download_content_from_bcuket(
+        &self,
+        bucket_name: &str,
+        object_name: &str,
+        path_prefix: Option<&str>,
+        print_info: bool,
+    ) {
         let config = self.get_config();
         let client = S3Client::new(config);
 
@@ -281,23 +315,6 @@ impl S3Ops {
             .bold();
         let get_body_data = client.send().await.expect(&colored_msg);
 
-        let content_type = get_body_data.content_type().unwrap().green().bold();
-        println!("Content type of response body: {}", content_type);
-
-        let content_length = get_body_data.content_length() as f64 * 0.000001;
-        let content_length_colored = content_length.to_string().green().bold();
-        println!("The content length/size of data in MB: {content_length_colored:.3}mb");
-        let last_modified = get_body_data
-            .last_modified
-            .map(|format| {
-                format
-                    .fmt(aws_sdk_memorydb::primitives::DateTimeFormat::HttpDate)
-                    .ok()
-            })
-            .flatten();
-        if let Some(time) = last_modified {
-            println!("Last Modified: {}\n", time.green().bold());
-        }
         //The regex engine doesn't support look-arounds, including look-aheads and look-behinds. Therefore,
         //this option is used as a secondary condition. This ensures that even if it matches the dot, it won't
         // have a chance to retrieve values with dots, as the first match takes precedence.
@@ -327,18 +344,57 @@ impl S3Ops {
         if file_name.starts_with("/") {
             file_name.remove(0);
         };
-        let mut file = File::create(file_name).unwrap();
+        if print_info {
+            let content_type = get_body_data.content_type().unwrap().green().bold();
+            println!("Content type of response body: {}", content_type);
+
+            let content_length = get_body_data.content_length() as f64 * 0.000001;
+            let content_length_colored = content_length.to_string().green().bold();
+            println!("The content length/size of data in MB: {content_length_colored:.3}mb");
+            let last_modified = get_body_data
+                .last_modified
+                .map(|format| {
+                    format
+                        .fmt(aws_sdk_memorydb::primitives::DateTimeFormat::HttpDate)
+                        .ok()
+                })
+                .flatten();
+            if let Some(time) = last_modified {
+                println!("Last Modified: {}\n", time.green().bold());
+            }
+        }
+        let mut file = match path_prefix {
+            Some(prefix) => {
+                let file_path = format!("{prefix}{file_name}");
+                OpenOptions::new()
+                    .create(true)
+                    .read(true)
+                    .write(true)
+                    .open(file_path)
+                    .expect(
+                        "Error while creating file In Downloading Content from Bucket Function\n",
+                    )
+            }
+            None => File::create(file_name).expect("Error while creating file\n"),
+        };
         let bytes = get_body_data.body.collect().await.unwrap();
         let bytes = bytes.into_bytes();
-        println!("{}\n", "Writing data...".bright_green().bold());
         match file.write_all(&*bytes) {
             Ok(_) => {
-                let colored_key_name = object_name.green().bold();
-                println!(
-                    "The content of the {colored_key_name} is saved in the current directory\n"
-                )
+                if print_info {
+                    println!("{}\n", "Writing data...".bright_green().bold());
+                    let colored_key_name = object_name.green().bold();
+                    println!(
+                        "The content of the {colored_key_name} is saved in the current directory\n"
+                    );
+                }
             }
-            Err(_) => println!("{}\n", "Error while writting\n".red().bold()),
+
+            Err(_) => {
+                if print_info {
+                    println!("{}\n", "Error while writing\n".red().bold());
+                }
+            }
         }
     }
 

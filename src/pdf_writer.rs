@@ -1,11 +1,12 @@
 use colored::Colorize;
 use dotenv::dotenv;
 use genpdf::{
-    elements::{Break, FrameCellDecorator, Paragraph, TableLayout},
+    elements::{Break, FrameCellDecorator, Image, Paragraph, TableLayout},
     fonts,
     style::{Color, Style},
     Alignment, Document, Element, PaperSize, SimplePageDecorator,
 };
+use std::fs::read_dir;
 fn build_document() -> Result<Document, &'static str> {
     let builtin_font = Some(fonts::Builtin::Times);
     dotenv().ok();
@@ -176,6 +177,66 @@ pub fn create_text_result_pdf(
         Err(err) => println!("{err}"),
     }
 }
+pub fn create_detect_face_image_pdf(bucket_name: &str, path_prefix: &str) {
+    match build_document() {
+        Ok(mut document) => {
+            document_configuration(&mut document, "DetectFaces", "Result of DetectFaces");
+            document.push(Break::new(1.0));
+            document.push(
+                Paragraph::new(format!("Bucket Name:  {}", bucket_name))
+                    .aligned(Alignment::Left)
+                    .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+            );
+            document.push(Break::new(1.0));
+            document.push(
+                Paragraph::new(format!("Bucket Path Prefix:  {}", path_prefix))
+                    .aligned(Alignment::Left)
+                    .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+            );
+            document.push(Break::new(1.0));
+            push_images_into_document(&mut document);
+            match document.render_to_file("DetectFaces.pdf") {
+                Ok(_) => println!(
+                    "The '{}' is also generated with the name {} in the current directory\n",
+                    "PDF".green().bold(),
+                    "'DetectFaces.pdf'".green().bold()
+                ),
+                Err(_) => println!(
+                    "{}\n",
+                    "Error while generating DetectFaces 'PDF'"
+                        .bright_red()
+                        .bold()
+                ),
+            }
+        }
+        Err(err) => println!("{err}"),
+    }
+}
+fn push_images_into_document(document: &mut Document) {
+    let face_image_dir = "face_details_images/";
+    let entries = read_dir(face_image_dir).expect("No DIR is exist\n");
+    for path in entries {
+        let path = path.unwrap();
+        match path.file_name().to_str() {
+            Some(image_name) => {
+                let image_path = format!("{}{}", face_image_dir, image_name);
+                document.push(
+                    Paragraph::new(format!("Image Name: {}", image_name))
+                        .aligned(Alignment::Center)
+                        .styled(Style::new().with_color(Color::Rgb(0, 128, 0))),
+                );
+                document.push(Break::new(1.0));
+                document.push(
+                    Image::from_path(image_path)
+                        .expect("Unable to Load Image")
+                        .with_alignment(Alignment::Center),
+                );
+                document.push(Break::new(2));
+            }
+            None => println!("Error while Walking the Directory\n"),
+        }
+    }
+}
 pub fn create_face_result_pdf(
     headers: &Vec<&str>,
     records: Vec<String>,
@@ -217,7 +278,7 @@ pub fn create_face_result_pdf(
                 ),
                 Err(_) => println!(
                     "{}\n",
-                    "Error while generating Text Detection Results 'PDF'"
+                    "Error while generating face Detection Results 'PDF'"
                         .bright_red()
                         .bold()
                 ),

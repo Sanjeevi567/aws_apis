@@ -35,11 +35,13 @@ impl RekognitionOps {
             .name(key_name)
             .bucket(bucket_name)
             .build();
+        //  https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/operation/detect_faces/builders/struct.DetectFacesFluentBuilder.html#method.set_attributes
         let attribute = vec![
             Attribute::AgeRange,
             Attribute::Gender,
             Attribute::Smile,
             Attribute::Beard,
+            Attribute::Default,
         ];
         let image_builder = Image::builder().s3_object(s3_object_builder).build();
         let detect_face_output = client
