@@ -21,11 +21,11 @@ impl RdsOps {
     /// Operations trigger panics prematurely when default error messages are absent
     pub fn get_db_instance_id(&self) -> String {
         dotenv().ok();
-        var("DB_INSTANCE_ID").unwrap_or("You can set the database instance ID by selecting the 'configure' option from the menu\n".into())
+        var("DB_INSTANCE_ID").unwrap_or("It appears that you haven't set the 'DB_INSTANCE_ID' environment variable.\nYou can only skip this input if you have configured the variable\n".into())
     }
     pub fn get_db_cluster_id(&self) -> String {
         dotenv().ok();
-        var("DB_CLUSTER_ID").unwrap_or("You can set the database cluster ID by selecting the 'configure' option from the menu\n".into())
+        var("DB_CLUSTER_ID").unwrap_or("It appears that you haven't set the 'DB_CLUSTER_ID' environment variable.\nYou can only skip this input if you have configured the variable.\n".into())
     }
 
     pub async fn create_db_instance(
@@ -56,7 +56,7 @@ impl RdsOps {
                     .send()
                     .await
                     .map(|output|{
-                        let colored = format!("DbInstance with the identifier: {} has been created successfully.\nIt will take some time to set up and become fully operational.\nYou can check the status of the database instance by using the 'describe db instance' option\n",db_instance_identifier).green().bold();
+                        let colored = format!("DbInstance with the identifier: {} has been created successfully.\nIt will take some time to set up and become fully operational.\nYou can check the status of the database instance by using the 'Status Of Db Instance' option\n",db_instance_identifier).green().bold();
                         println!("{colored}");
                         output
                     })
@@ -68,7 +68,8 @@ impl RdsOps {
             if let Some(status) = dbinstance.db_instance_status {
                 let colored_status = status.green().bold();
                 println!(
-                    "The current status of the database instance is...: {}",
+                    "{}: {}\n",
+                    "The current status of the database instance is".yellow().bold(),
                     colored_status
                 );
             }
@@ -134,7 +135,7 @@ impl RdsOps {
                 let status_ = output.db_instance_status;
                 if let Some(status) = status_ {
                     let colored_status = status.green().bold();
-                    println!("The current status of Db Instance: {colored_status}\n");
+                    println!("{}: {colored_status}\n","The current status of Db Instance".yellow().bold());
                 }
             });
         }
@@ -173,7 +174,7 @@ impl RdsOps {
                    };
                    if let Some(status_) = status {
                     let colored_status = status_.green().bold();
-                    println!("The current status of the database instance is...: {}\n",colored_status);
+                    println!("{}: {}\n",colored_status,"The current status of the Database Instance".yellow().bold());
                        
                    }
   
@@ -212,7 +213,7 @@ impl RdsOps {
                         };
                         if let Some(status_) = status {
                             let colored_status = status_.green().bold();
-                            println!("The current status of the database instance is...: {}\n",colored_status);
+                            println!("{}: {}\n",colored_status,"The current status of the Database Instance".yellow().bold());
                                
                            }
                      })
@@ -242,7 +243,8 @@ impl RdsOps {
             if let Some(status) = dbinstance.db_instance_status {
                 let colored_status = status.green().bold();
                 println!(
-                    "The current status of the database instance is...: {}",
+                    "{} : {}\n",
+                    "The current status of the Database Instance".yellow().bold(),
                     colored_status
                 );
             }
@@ -283,7 +285,7 @@ impl RdsOps {
                    };
                    if let Some(status_) = status {
                     let colored_status = status_.green().bold();
-                    println!("The current status of the database instance is...: {}\n",colored_status); 
+                    println!("{}: {}\n","The current status of the Database Instance".yellow().bold(),colored_status); 
                    }
                   })
                   .expect(&error);
@@ -355,7 +357,7 @@ impl RdsOps {
                 if let Some(cluster) = output.db_cluster.clone() {
                     if let Some(status) = cluster.status {
                         let colored_status = status.green().bold();
-                        println!("The current status of the database instance is...: {}\n",colored_status);
+                        println!("{}: {}\n","The current status of the Database Cluster".yellow().bold(),colored_status);
                     }
                    }
                 output
