@@ -25,6 +25,7 @@ chrono ={version = "0.4.28"}
 fast_qr = {version = "0.10.2",features = ["image"]}
 dotenv = "0.15.0"
 genpdf ={version ="0.2.0",features = ["images"]}
+printpdf ="0.3.4"
 
 #writing text on images ,details from rekognition apis
 image ="0.24.7"

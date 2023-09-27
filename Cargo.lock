@@ -721,6 +721,7 @@ dependencies = [
  "image 0.24.7",
  "imageproc",
  "inquire",
+ "printpdf",
  "regex",
  "reqwest",
  "rusttype 0.9.3",

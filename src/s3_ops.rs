@@ -1,5 +1,4 @@
 use aws_config::SdkConfig;
-use aws_sdk_polly::primitives::SdkBody;
 use aws_sdk_s3::{
     presigning::PresigningConfig,
     primitives::ByteStream,
@@ -13,13 +12,11 @@ use colored::Colorize;
 use dotenv::dotenv;
 use regex::Regex;
 use std::{
-    env::{set_current_dir, var},
-    fs::{create_dir, File, OpenOptions},
+    env::var,
+    fs::{File, OpenOptions},
     io::Write,
     time::{Duration, SystemTime},
 };
-use tokio_stream::StreamExt;
-
 /// The core structure for performing operations on the [`S3 client`](https://docs.rs/aws-sdk-s3/latest/aws_sdk_s3/struct.Client.html) eliminates the need for
 /// API users to provide credentials each time they use the service. Instead,
 /// these credentials are abstracted by this structure and its inherent functions
