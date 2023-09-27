@@ -36,14 +36,14 @@ inquire ="0.6.2"
 
 aws-sdk-s3 = {version ="0.31.1"}
 aws-sdk-sesv2 = {version = "0.30.0"}
-aws-sdk-rds ={version ="0.31.1"}
-aws-sdk-memorydb ={version = "0.31.1"}
+aws-sdk-rds ={version ="0.30.0"}
+aws-sdk-memorydb ={version = "0.30.0"}
 aws-sdk-polly ="0.31.1"
-aws-sdk-pinpoint ="0.31.1"
-aws-sdk-sns ="0.31.1"
-aws-sdk-rekognition="0.31.1"
-aws-sdk-transcribe ="0.31.1"
-aws-sdk-route53 ="0.31.1"
+aws-sdk-pinpoint ="0.30.0"
+aws-sdk-sns ="0.30.0"
+aws-sdk-rekognition="0.30.0"
+aws-sdk-transcribe ="0.30.0"
+aws-sdk-route53 ="0.30.0"
 
 #Regex is employed for locating template variables within the provided data, especially when updating a template. 
 # This is particularly useful for providing information about the template during updates. It is also utilized in 
