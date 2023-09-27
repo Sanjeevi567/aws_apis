@@ -13,7 +13,7 @@ use dotenv::dotenv;
 use regex::Regex;
 use std::{
     env::var,
-    fs::{File, OpenOptions},
+    fs::{create_dir, File, OpenOptions},
     io::Write,
     time::{Duration, SystemTime},
 };
@@ -65,7 +65,7 @@ impl S3Ops {
             .map(|_| {
                 let colored_bucket = bucket_name.green().bold();
                 println!(
-                    "Congratulations! The bucket with the name {colored_bucket} has been successfully created"
+                    "Congratulations! The bucket with the name {colored_bucket} has been successfully created\n"
                 );
             })
             .expect(&colored_msg);
@@ -77,7 +77,7 @@ impl S3Ops {
         let client = S3Client::new(config);
 
         let mut bucket_lists = Vec::new();
-        let colored_msg = "Error from get_buckets function".red().bold();
+        let colored_msg = "Error from get_buckets function\n".red().bold();
         let output = client.list_buckets().send().await.expect(&colored_msg);
         let bucket_list = output.buckets();
 
@@ -97,7 +97,7 @@ impl S3Ops {
         let client = S3Client::new(config);
 
         let client = client.delete_bucket().bucket(bucket_name);
-        let colored_msg = "Error from delete_bucket function".red().bold();
+        let colored_msg = "Error from delete_bucket function\n".red().bold();
         client.send().await.expect(&colored_msg);
         let current_buckets = self.get_buckets().await;
         println!("Currently available buckets in your aws account\n");
@@ -178,7 +178,7 @@ impl S3Ops {
             .build()
             .await
             .unwrap();
-        let colored_msg = "Error from upload_content_to_a_bucket function"
+        let colored_msg = "Error from upload_content_to_a_bucket function\n"
             .red()
             .bold();
         client
@@ -246,7 +246,7 @@ impl S3Ops {
         let config = self.get_config();
         let client = S3Client::new(config);
 
-        let colored_msg = "Error from multipart_upload function".red().bold();
+        let colored_msg = "Error from multipart_upload function\n".red().bold();
         let mulit_part = client
             .create_multipart_upload()
             .bucket(bucket_name)
@@ -307,7 +307,7 @@ impl S3Ops {
 
         let client = client.get_object().bucket(bucket_name).key(object_name);
 
-        let colored_msg = "Error from download_content_from_bucket function"
+        let colored_msg = "Error from download_content_from_bucket function\n"
             .red()
             .bold();
         let get_body_data = client.send().await.expect(&colored_msg);
@@ -394,6 +394,59 @@ impl S3Ops {
             }
         }
     }
+    pub async fn download_transcription_results(&self, bucket_name: &str) {
+        let config = self.get_config();
+        let client = S3Client::new(config);
+        let keys = self
+            .list_objects_given_prefix(bucket_name, "transcribe_outputs/")
+            .await;
+        create_dir("TranscribeOutputs/").expect("Error while creating TranscribeOutputs/");
+        for key in keys.into_iter().skip(1) {
+            let get_object = client
+                .get_object()
+                .key(&key)
+                .bucket(bucket_name)
+                .send()
+                .await
+                .expect("Error while getting objects\n");
+            let bytes = get_object.body.collect().await.unwrap();
+            let bytes = bytes.into_bytes();
+
+            let have_slash_and_dot_pattern =
+                Regex::new(r#"([^./]+)\.([^/]+)"#).expect("Error while parsing Regex Syntax\n");
+            let have_slash_but_no_extension_pattern =
+                Regex::new(r#"/([^/]+)$"#).expect("Error while parsing regex syntax");
+            let file_name: Vec<String> = if have_slash_and_dot_pattern.is_match(&key) {
+                have_slash_and_dot_pattern
+                    .find_iter(&key)
+                    .map(|string| string.as_str().to_string())
+                    .collect()
+            } else {
+                have_slash_but_no_extension_pattern
+                    .find_iter(&key)
+                    .map(|string| string.as_str().to_string())
+                    .collect()
+            };
+            let mut file_name = file_name.join("");
+            if file_name.starts_with("/") {
+                file_name.remove(0);
+            };
+            let file_name = format!("TranscribeOutputs/{}", file_name);
+            let mut file = OpenOptions::new()
+                .create(true)
+                .read(true)
+                .write(true)
+                .open(&file_name)
+                .expect("Error while creating file\n");
+            match file.write_all(&*bytes) {
+                Ok(_) => println!(
+                    "The file named '{}' has been saved to the '{}{}' directory in the current path",
+                    file_name.green().bold(),"TranscribeOutputs/".green().bold(),file_name.green().bold()
+                ),
+                Err(_) => println!("{}\n","Error while writing file".red().bold()),
+            }
+        }
+    }
 
     pub async fn get_presigned_url_for_an_object(
         &self,
@@ -425,7 +478,7 @@ impl S3Ops {
 
         let get_hour = (60 * 60 * end_time) / expired_in.as_secs();
 
-        let colored_msg = "Error from get_presigned_url_for_an_object".red().bold();
+        let colored_msg = "Error from get_presigned_url_for_an_object\n".red().bold();
         let presigned_req = client
             .get_object()
             .bucket(bucket_name)
@@ -492,7 +545,7 @@ impl S3Ops {
     pub async fn delete_content_in_a_bucket(&self, bucket_name: &str, object_name: &str) {
         let config = self.get_config();
         let client = S3Client::new(config);
-        let colored_msg = "Error from delete_content_in_a_bucket function"
+        let colored_msg = "Error from delete_content_in_a_bucket function\n"
             .red()
             .bold();
         client
