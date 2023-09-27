@@ -57,7 +57,11 @@ impl TranscribeOps {
                 .yellow()
                 .bold()
         );
-        println!("The job name {},is used to retrieve the transcribed results in the 'Get Transcription Job'\n",job_name.green().bold());
+        println!(
+            "The job name {},is used to retrieve the transcribed results in the '{}'\n",
+            job_name.green().bold(),
+            "Get Transcription Job".yellow().bold()
+        );
     }
     pub async fn get_transcribe_results(&self, job_name: &str) -> Option<TranscriptionOutput> {
         let config = self.get_config();

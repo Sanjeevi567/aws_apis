@@ -15,7 +15,7 @@ impl Route53Ops {
     pub async fn create_hosted_zone(&self, domain_name: &str, caller_reference: &str) {
         let config = self.get_config();
         let client = Route53Client::new(config);
-        let output = client
+        client
             .create_hosted_zone()
             .name(domain_name)
             .caller_reference(caller_reference)
