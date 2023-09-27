@@ -409,6 +409,7 @@ impl SesOps {
         template_name: &str,
         subject: &str,
         template: &str,
+        text: Option<String>
     ) {
         let config = self.get_config();
         let client = SesClient::new(config);
@@ -416,6 +417,7 @@ impl SesOps {
         let email_template_builder = EmailTemplateContent::builder()
             .subject(subject)
             .html(template)
+            .set_text(text)
             .build();
         let build = client
             .create_email_template()
