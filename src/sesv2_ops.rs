@@ -37,19 +37,19 @@ impl SesOps {
     /// The 'from' address has to be verified since this is the base email used to send mail to others
     pub fn get_from_address(&self) -> String {
         dotenv().ok();
-        var("FROM_ADDRESS").unwrap_or("You should set the 'FROM_ADDRESS' environment variable to skip the input; otherwise, do not skip it".into())
+        var("FROM_ADDRESS").unwrap_or("It appears that you haven't set the 'FROM_ADDRESS' environment variable. You can only skip this input if you have configured the variable".into())
     }
     /// The template name must correspond to the credentials you used, and the
     /// template data must accurately match the template employed by those services
     pub fn get_template_name(&self) -> String {
         dotenv().ok();
-        var("TEMPLATE_NAME").unwrap_or("You should set the 'TEMPLATE_NAME' environment variable to skip the input; otherwise, do not skip it".into())
+        var("TEMPLATE_NAME").unwrap_or("It appears that you haven't set the 'TEMPLATE_NAME' environment variable. You can only skip this input if you have configured the variable".into())
     }
     /// If the list name does not exist, i.e., if it has not been set using the
     /// appropriate methods, an error will occur when attempting to use it.
     pub fn get_list_name(&self) -> String {
         dotenv().ok();
-        var("LIST_NAME").unwrap_or("You should set the 'LIST_NAME' environment variable to skip the input; otherwise, do not skip it".into())
+        var("LIST_NAME").unwrap_or("It appears that you haven't set the 'LIST_NAME' environment variable. You can only skip this input if you have configured the variable".into())
     }
 
     /// This is a private function used internally to verify service credentials.
@@ -409,7 +409,7 @@ impl SesOps {
         template_name: &str,
         subject: &str,
         template: &str,
-        text: Option<String>
+        text: Option<String>,
     ) {
         let config = self.get_config();
         let client = SesClient::new(config);

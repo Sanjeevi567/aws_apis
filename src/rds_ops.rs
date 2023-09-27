@@ -69,7 +69,9 @@ impl RdsOps {
                 let colored_status = status.green().bold();
                 println!(
                     "{}: {}\n",
-                    "The current status of the database instance is".yellow().bold(),
+                    "The current status of the database instance is"
+                        .yellow()
+                        .bold(),
                     colored_status
                 );
             }
@@ -113,7 +115,10 @@ impl RdsOps {
         )
     }
 
-    pub async fn status_of_db_instance(&self, db_instance_identifier: Option<&str>) {
+    pub async fn status_of_db_instance(
+        &self,
+        db_instance_identifier: Option<&str>,
+    ) -> Option<String> {
         let config = self.get_config();
         let client = RdsClient::new(config);
 
@@ -128,17 +133,16 @@ impl RdsOps {
             .send()
             .await
             .expect("Error while getting status of db instance\n");
+        let mut db_status = None;
         let db_instance = output.db_instances;
         if let Some(mut vec_of_db_instance) = db_instance {
             let first_instance = vec_of_db_instance.drain(..1);
             first_instance.into_iter().for_each(|output| {
                 let status_ = output.db_instance_status;
-                if let Some(status) = status_ {
-                    let colored_status = status.green().bold();
-                    println!("{}: {colored_status}\n","The current status of Db Instance".yellow().bold());
-                }
+                db_status = status_;
             });
         }
+        db_status
     }
 
     /// Returns the status of db instance if it successfully start the db_instance
@@ -244,7 +248,9 @@ impl RdsOps {
                 let colored_status = status.green().bold();
                 println!(
                     "{} : {}\n",
-                    "The current status of the Database Instance".yellow().bold(),
+                    "The current status of the Database Instance"
+                        .yellow()
+                        .bold(),
                     colored_status
                 );
             }
