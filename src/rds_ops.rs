@@ -205,7 +205,7 @@ impl RdsOps {
                      .send()
                      .await
                      .map(|output|{
-                        println!("The db_instance with the db_instance_id: {default_db_instance_id} is initiating the process of stopping\n");
+                        println!("The db_instance with the db_instance_id: {} is initiating the process of stopping\n",default_db_instance_id.green().bold());
                         let status = if let Some(dbinstance) = output.db_instance{
                             if let Some(status) =dbinstance.db_instance_status{
                                 Some(status)
@@ -217,7 +217,7 @@ impl RdsOps {
                         };
                         if let Some(status_) = status {
                             let colored_status = status_.green().bold();
-                            println!("{}: {}\n",colored_status,"The current status of the Database Instance".yellow().bold());
+                            println!("{}: {}\n","The current status of the Database Instance".yellow().bold(),colored_status);
                                
                            }
                      })
