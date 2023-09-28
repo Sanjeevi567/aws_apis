@@ -437,7 +437,7 @@ pub async fn create_celebrity_single_pdf(
                             .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
                     );
                     document.push(Break::new(1.0));
-                    let image = image::open(&file_name)
+                    let image = image::open(&file_path)
                         .expect("Error while opening the image\n")
                         .resize_to_fill(800, 600, image::imageops::FilterType::Gaussian);
                     image
@@ -595,7 +595,7 @@ async fn recognize_celebrities(
                             "Width: {width:.2},Height: {height:.2},Left: {left:.2},Top: {top:.2}"
                         );
                         println!(
-                            "Celebrity Bounding  Box Details: {}",
+                            "Celebrity Bounding Box Details: {}",
                             format_bbox.green().bold()
                         );
                         let buf = format!("Celebrity Bounding Box Details: {}\n", format_bbox);
@@ -606,7 +606,7 @@ async fn recognize_celebrities(
                 records.push(bbox_string);
                 if let Some(smile) = face.smile {
                     let format_smile = format!("{}", smile.value);
-                    println!("Is Celebrity Smiling?: {}\n\n", format_smile.green().bold());
+                    println!("Is Celebrity Smiling?: {}\n", format_smile.green().bold());
                     let buf = format!("Is Celebrity Smiling?: {}\n", format_smile);
                     file.write_all(buf.as_bytes()).unwrap();
                     records.push(format_smile);

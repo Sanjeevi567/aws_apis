@@ -321,7 +321,7 @@ impl RekognitionOps {
                     let gender_ = gender.r#type;
                     if let Some(genderr) = gender_ {
                         let finall = genderr.as_str().to_string();
-                        println!("Celebrity Gender: {}\n", finall.green().bold());
+                        println!("Celebrity Gender: {}", finall.green().bold());
                         let buf = format!("Celebrity Gender: {}", finall);
                         file.write_all(buf.as_bytes()).unwrap();
                         records.push(finall);
