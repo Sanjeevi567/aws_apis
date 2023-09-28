@@ -11,6 +11,7 @@ use sesv2::{
     types::{Body, Content, Destination, EmailContent, EmailTemplateContent, Message, Template},
     Client as SesClient,
 };
+use std::panic;
 use std::{
     env::var,
     fs::{File, OpenOptions},
@@ -436,6 +437,20 @@ impl SesOps {
                 )
             })
             .expect(&colored_error);
+        panic::set_hook(Box::new(|panic_info| {
+            if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+                println!("panic occurred: {:?}", s);
+            } else {
+                println!("panic occurred");
+            }
+            if let Some(location) = panic_info.location() {
+                println!(
+                    "panic occurred in file '{}' at line {}\n",
+                    location.file(),
+                    location.line()
+                );
+            }
+        }));
     }
     pub async fn list_email_templates(&self) -> Vec<String> {
         let config = self.get_config();

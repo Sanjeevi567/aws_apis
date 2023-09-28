@@ -13,7 +13,7 @@ use dotenv::dotenv;
 use regex::Regex;
 use std::{
     env::var,
-    fs::{create_dir, File, OpenOptions},
+    fs::{create_dir, create_dir_all, File, OpenOptions},
     io::Write,
     time::{Duration, SystemTime},
 };
