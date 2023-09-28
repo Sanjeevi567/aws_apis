@@ -319,7 +319,7 @@ pub async fn create_celebrity_pdf(
 }
 pub async fn create_celebrity_single_pdf(
     local_image_dir: Option<&str>,
-    entries: Vec<String>,
+    entries: Option<Vec<String>>,
     bucket_name: Option<&str>,
 ) {
     let mut document = build_document();
@@ -385,7 +385,7 @@ pub async fn create_celebrity_single_pdf(
                 create_dir("DownloadedImages/")
                     .expect("Error while creating DownloadedImages/ for writing images from S3 bucket\n");
                 let mut count = 0;
-                for key_image_name in entries.into_iter().skip(1) {
+                for key_image_name in entries.unwrap().into_iter().skip(1) {
                     let sdk_config = aws_config::load_from_env().await;
                     let client = aws_sdk_s3::Client::new(&sdk_config);
                     let outputs = client
