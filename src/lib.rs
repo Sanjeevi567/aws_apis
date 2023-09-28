@@ -37,6 +37,6 @@ pub use route53::Route53Ops;
 
 mod pdf_writer;
 pub use pdf_writer::{
-    create_detect_face_image_pdf, create_email_identities_pdf, create_email_pdf,
-    create_face_result_pdf, create_text_result_pdf,
+    create_celebrity_pdf, create_celebrity_single_pdf, create_detect_face_image_pdf,
+    create_email_identities_pdf, create_email_pdf, create_face_result_pdf, create_text_result_pdf,
 };

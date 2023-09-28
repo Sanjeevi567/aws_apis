@@ -342,7 +342,7 @@ impl SesOps {
                 );
                 contacts
             })
-            .expect("Error from retrieve_emails_from_provided_list");
+            .expect("Error from retrieve_emails_from_provided_list\n");
         let contacts = list.contacts().unwrap();
         contacts
             .into_iter()
@@ -425,7 +425,7 @@ impl SesOps {
             .template_content(email_template_builder)
             .template_name(template_name);
 
-        let colored_error = "Error from create_email_template".red().bold();
+        let colored_error = "Error from create_email_template\n".red().bold();
         build
             .send()
             .await
@@ -437,20 +437,6 @@ impl SesOps {
                 )
             })
             .expect(&colored_error);
-        panic::set_hook(Box::new(|panic_info| {
-            if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
-                println!("panic occurred: {:?}", s);
-            } else {
-                println!("panic occurred");
-            }
-            if let Some(location) = panic_info.location() {
-                println!(
-                    "panic occurred in file '{}' at line {}\n",
-                    location.file(),
-                    location.line()
-                );
-            }
-        }));
     }
     pub async fn list_email_templates(&self) -> Vec<String> {
         let config = self.get_config();

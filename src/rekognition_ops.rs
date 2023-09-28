@@ -1,6 +1,10 @@
-use std::{fs::OpenOptions, io::Write};
+use std::{
+    fs::OpenOptions,
+    io::{Read, Write},
+};
 
 use aws_config::SdkConfig;
+use aws_sdk_pinpoint::primitives::Blob;
 use aws_sdk_rekognition::{
     operation::{
         get_face_detection::GetFaceDetectionOutput,
@@ -16,7 +20,10 @@ use aws_sdk_rekognition::{
 use colored::Colorize;
 use std::ops::Deref;
 
-use crate::pdf_writer::{create_face_result_pdf, create_text_result_pdf};
+use crate::{
+    create_celebrity_pdf,
+    pdf_writer::{create_face_result_pdf, create_text_result_pdf},
+};
 pub struct RekognitionOps {
     config: SdkConfig,
 }
@@ -224,6 +231,149 @@ impl RekognitionOps {
             .expect("Error while getting face detection result\n");
 
         GetFaceInfo(get_face_detection_output)
+    }
+    pub async fn recognize_celebrities(
+        &self,
+        local_image_path: Option<&str>,
+        bucket_name: Option<&str>,
+        image_key_name: Option<&str>,
+    ) {
+        let config = self.get_config();
+        let client = RekogClient::new(config);
+        let image = match local_image_path {
+            Some(local_image_path_) => {
+                let mut file = std::fs::File::open(local_image_path_)
+                    .expect("Error while reading the path you specified\n");
+                let mut vec_of_u8s = Vec::new();
+                file.read_to_end(&mut vec_of_u8s).unwrap();
+                let bytes_builder = Blob::new(vec_of_u8s);
+                Image::builder().bytes(bytes_builder).build()
+            }
+            None => {
+                let s3_object_builder = S3Object::builder()
+                    .set_bucket(bucket_name.map(|to_str| to_str.to_string()))
+                    .set_name(image_key_name.map(|to_str| to_str.to_string()))
+                    .build();
+                Image::builder().s3_object(s3_object_builder).build()
+            }
+        };
+
+        let outputs = client
+            .recognize_celebrities()
+            .image(image)
+            .send()
+            .await
+            .expect("Erro while Recognizing Celebrities\n");
+        if let Some(celebrity_faces) = outputs.celebrity_faces {
+            let headers = vec![
+                "Celebrity Name".into(),
+                "Unique Celebrity Identifier".into(),
+                "Gender of the Celebrity".into(),
+                "Face Location of the Celebrity's Face".into(),
+                "Is the Celebrity Smiling?".into(),
+            ];
+            let mut records = Vec::new();
+            let file_name = format!("CelebrityDetails.txt");
+            let mut file = OpenOptions::new()
+                .create(true)
+                .read(true)
+                .write(true)
+                .open(&file_name)
+                .expect("Error while creating file\n");
+            celebrity_faces.into_iter().for_each(|faces| {
+                if let Some(name) = faces.name {
+                    let famous_for = match name.as_str() {
+                        "Ralph Fiennes" => format!("{name}(voldemort)"),
+                        "Chris Hemsworth" => format!("{name}(Odin Son Thor)"),
+                        "Tom Hiddleston" => format!("{name}(Loki)"),
+                        "Johnny Depp" => format!("{name}(Captain Jack Sparrow)"),
+                        "Tom Holland" => format!("{name}(Little Spider Man)"),
+                        "Tobey Maguire" => format!("{name}(Amazing Spider Man)"),
+                        "Andrew Garfield" => format!("{name}(Amazing Spider Man)"),
+                        "Robert Downey Jr." => format!("{name}(Iron Man)"),
+                        "Tom Felton" => format!("{name}(Draco Malfoy)"),
+                        "Rupert Grint" => format!("{name}(Ron Weasley)"),
+                        "Emma Watson" => format!("{name}(Hermione Granger)"),
+                        "Daniel Radcliffe" => format!("{name}(Harry Potter)"),
+                        "Mark Alan" => format!("{name}(Hulk)"),
+                        "Chris Evans" => format!("{name}(Captain America)"),
+                        "Chadwick Boseman" => format!("{name}(Black Panther)"),
+                        "Vin Diesel" => format!("{name}(Dominic Toretto,I'm Groot)"),
+                        "Paul Walker" => format!("{name}(Car Racer)"),
+                        "Joseph Vijay" => format!("{name}(Ilaya Thalapathy)"),
+                        "Rajinikanth" => format!("{name}(Super Star)"),
+                        "Kamal Haasan" => format!("{name}(Ulaga Nayagan)"),
+                        "Ajith Kumar" => format!("{name}(Ultimate Star)"),
+                        _ => format!("{name}"),
+                    };
+                    println!("Celebrity Name: {}", famous_for.green().bold());
+                    let buf = format!("Celebrity Name: {}\n", famous_for);
+                    file.write_all(buf.as_bytes()).unwrap();
+                    records.push(famous_for);
+                }
+                if let Some(id) = faces.id {
+                    println!("Celebrity Amazon ID: {}", id.green().bold());
+                    let buf = format!("Celebrity Amazon ID: {}\n", id);
+                    file.write_all(buf.as_bytes()).unwrap();
+                    records.push(id);
+                }
+                if let Some(gender) = faces.known_gender {
+                    let gender_ = gender.r#type;
+                    if let Some(genderr) = gender_ {
+                        let finall = genderr.as_str().to_string();
+                        println!("Celebrity Gender: {}\n", finall.green().bold());
+                        let buf = format!("Celebrity Gender: {}", finall);
+                        file.write_all(buf.as_bytes()).unwrap();
+                        records.push(finall);
+                    }
+                }
+                if let Some(face) = faces.face {
+                    let mut bbox_string = String::new();
+                    if let Some(bbox) = face.bounding_box {
+                        if let (Some(width), Some(height), Some(left), Some(top)) =
+                            (bbox.width, bbox.height, bbox.left, bbox.top)
+                        {
+                            let format_bbox =
+                                format!("Width: {width:.2},Height: {height:.2},Left: {left:.2},Top: {top:.2}");
+                            println!(
+                                "Celebrity Face Location Info: {}",
+                                format_bbox.green().bold()
+                            );
+                            let buf = format!("Bouding Box Details: {}\n", format_bbox);
+                            file.write_all(buf.as_bytes()).unwrap();
+                            bbox_string.push_str(&format_bbox);
+                        }
+                    }
+                    records.push(bbox_string);
+                    if let Some(smile) = face.smile {
+                        let format_smile = format!("{}", smile.value);
+                        println!(
+                            "Is the Celebrity Smiling: {}\n",
+                            format_smile.green().bold()
+                        );
+                        let buf = format!("Is the Celebrity Smiling: {}", format_smile);
+                        file.write_all(buf.as_bytes()).unwrap();
+                        records.push(format_smile);
+                    }
+                }
+            });
+            match std::fs::File::open(file_name) {
+                Ok(_) => println!(
+                    "{}\n",
+                    "The text file has been successfully written to the current directory"
+                        .green()
+                        .bold()
+                ),
+                Err(_) => println!("{}\n", "Error while writing File".red().bold()),
+            }
+            create_celebrity_pdf(
+                headers,
+                records,
+                local_image_path,
+                (bucket_name, image_key_name),
+            )
+            .await;
+        }
     }
     pub async fn create_face_liveness(&self, bucket_name: &str) {
         let config = self.get_config();
