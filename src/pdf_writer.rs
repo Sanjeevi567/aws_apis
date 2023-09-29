@@ -775,16 +775,12 @@ pub fn create_detect_face_image_pdf(bucket_name: &str, path_prefix: &str) {
 }
 fn push_images_into_document(document: &mut Document) {
     let face_image_dir = "compressed_images/";
-    let entries = read_dir(face_image_dir).expect("No face_details_images DIR is exist\n");
-    let mut compressor = FolderCompressor::new(face_image_dir, "compressed_images/");
-    compressor.set_thread_count(4);
-    compressor.set_delelte_origin(true);
-    compressor.compress().expect("Erro while compressing Images\n");
-    for path in entries {
+    let entries = read_dir(face_image_dir).expect("No compressed_images/ DIR is exist\n");
+    for path in entries.into_iter() {
         let path = path.unwrap();
         match path.file_name().to_str() {
             Some(image_name) => {
-                let image_path = format!("{}{}", face_image_dir, image_name);
+                let image_path = format!("compressed_images/{}", image_name);
                 document.push(
                     Paragraph::new(format!("Image Name: {}", image_name))
                         .aligned(Alignment::Center)
