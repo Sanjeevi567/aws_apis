@@ -43,6 +43,7 @@ aws-sdk-sns ="0.30.0"
 aws-sdk-rekognition="0.30.0"
 aws-sdk-transcribe ="0.30.0"
 aws-sdk-route53 ="0.30.0"
+aws-sdk-dynamodb = "0.31.1"
 
 #Regex is employed for locating template variables within the provided data, especially when updating a template. 
 # This is particularly useful for providing information about the template during updates. It is also utilized in 

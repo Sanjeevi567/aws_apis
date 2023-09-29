@@ -386,7 +386,7 @@ pub async fn create_celebrity_single_pdf(
                     "Error while creating DownloadedImages/ for writing images from S3 bucket\n",
                 );
                 let mut count = 0;
-                for key_image_name in entries.unwrap().into_iter(){
+                for key_image_name in entries.unwrap().into_iter() {
                     let sdk_config = aws_config::load_from_env().await;
                     let client = aws_sdk_s3::Client::new(&sdk_config);
                     let outputs = client

@@ -35,6 +35,9 @@ pub use transcribe_ops::TranscribeOps;
 mod route53;
 pub use route53::Route53Ops;
 
+mod dynamodb;
+pub use dynamodb::DynamoDbOps;
+
 mod pdf_writer;
 pub use pdf_writer::{
     create_celebrity_pdf, create_celebrity_single_pdf, create_detect_face_image_pdf,

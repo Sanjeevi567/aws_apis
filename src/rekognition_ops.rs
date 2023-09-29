@@ -101,7 +101,6 @@ impl RekognitionOps {
         let outputs = client
             .index_faces()
             .collection_id(collection_id)
-            
             .image(image_builder)
             .send()
             .await

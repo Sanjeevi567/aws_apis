@@ -403,7 +403,7 @@ impl S3Ops {
             .list_objects_given_prefix(bucket_name, "transcribe_outputs/")
             .await;
         create_dir("TranscribeOutputs/").expect("Error while creating TranscribeOutputs/");
-        for key in keys.into_iter(){
+        for key in keys.into_iter() {
             let get_object = client
                 .get_object()
                 .key(&key)
