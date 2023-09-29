@@ -23,7 +23,7 @@ use std::ops::Deref;
 
 use crate::{
     create_celebrity_pdf,
-    pdf_writer::{create_face_result_pdf, create_text_result_pdf},
+    pdf_writer::{create_face_result_pdf, create_text_result_pdf,create_text_only_pdf},
 };
 
 pub struct RekognitionOps {
@@ -636,7 +636,7 @@ impl GetTextInfo {
             .write(true)
             .open("Get_Text_Detection_Results.txt")
             .expect("Error while Creating File\n");
-
+        let mut only_texts = Vec::new();
         text_detection_result.into_iter().for_each(|text_outputs| {
             let timestamp = text_outputs.timestamp();
             let get_text = text_outputs.text_detection;
@@ -652,7 +652,8 @@ impl GetTextInfo {
                 if let Some(text) = texts {
                     let buf = format!("Detected Text: {text}\n");
                     file.write_all(buf.as_bytes()).unwrap();
-                    all_types_results.push(text);
+                    all_types_results.push(text.clone());
+                    only_texts.push(text);
                 }
                 if let Some(text_type) = text_type {
                     let buf = format!("Text Type: {text_type}\n");
@@ -676,6 +677,7 @@ impl GetTextInfo {
             job_id,
             (bucket_name, video_key_name),
         );
+        create_text_only_pdf(only_texts);
     }
 }
 impl Deref for GetTextInfo {

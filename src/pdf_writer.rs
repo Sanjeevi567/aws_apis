@@ -5,7 +5,7 @@ use genpdf::{
     style::{Color, Style},
     Alignment, Document, Element, PaperSize, SimplePageDecorator,
 };
-use image_compressor::{compressor, FolderCompressor};
+use image_compressor::compressor;
 use printpdf;
 use printpdf::types::plugins::graphics::two_dimensional::font::BuiltinFont;
 use regex::Regex;
@@ -743,6 +743,29 @@ pub fn create_text_result_pdf(
                 .bold()
         ),
     }
+}
+pub fn create_text_only_pdf(texts:Vec<String>){
+    let mut document = build_document();
+    document_configuration(
+        &mut document,
+        "Text Detection Results",
+        "Result of Start Text Detection Task",
+    );
+    document.push(Break::new(1.0));
+    document.push(
+        Paragraph::new("Detected Texts")
+            .aligned(Alignment::Center)
+            .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+    );
+    document.push(Break::new(1.0));
+    for text in texts{
+        document.push(
+            Paragraph::new(format!("{}",text))
+                .aligned(Alignment::Left)
+                .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+        );
+    }
+
 }
 pub fn create_detect_face_image_pdf(bucket_name: &str, path_prefix: &str) {
     let mut document = build_document();
