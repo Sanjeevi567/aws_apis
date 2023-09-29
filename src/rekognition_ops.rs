@@ -12,9 +12,8 @@ use aws_sdk_rekognition::{
         get_text_detection::GetTextDetectionOutput,
     },
     types::{
-        Attribute,CreateFaceLivenessSessionRequestSettings, FaceDetail,
-        FaceDetection, Image, LivenessOutputConfig, S3Object, TextDetection, TextDetectionResult,
-        Video,
+        Attribute, CreateFaceLivenessSessionRequestSettings, FaceDetail, FaceDetection, Image,
+        LivenessOutputConfig, S3Object, TextDetection, TextDetectionResult, Video,
     },
     Client as RekogClient,
 };
@@ -23,7 +22,7 @@ use std::ops::Deref;
 
 use crate::{
     create_celebrity_pdf,
-    pdf_writer::{create_face_result_pdf, create_text_result_pdf,create_text_only_pdf},
+    pdf_writer::{create_face_result_pdf, create_text_only_pdf, create_text_result_pdf},
 };
 
 pub struct RekognitionOps {
@@ -109,7 +108,10 @@ impl RekognitionOps {
             face_record.into_iter().for_each(|face| {
                 if let Some(face) = face.face {
                     if let Some(face_id) = face.face_id {
-                        println!("Face Id For the Uploaded Face: {}\n", face_id.green().bold());
+                        println!(
+                            "Face Id For the Uploaded Face: {}\n",
+                            face_id.green().bold()
+                        );
                     }
                 }
             })

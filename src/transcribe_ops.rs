@@ -6,7 +6,7 @@ use aws_sdk_transcribe::{
 };
 use colored::Colorize;
 
-pub struct TranscribeOps{
+pub struct TranscribeOps {
     config: SdkConfig,
 }
 impl TranscribeOps {

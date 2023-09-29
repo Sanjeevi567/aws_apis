@@ -22,7 +22,7 @@ use std::{
 /// time they use the service. Instead, these credentials are abstracted by this
 /// structure along with its inherent functions and methods.
 #[derive(Debug)]
-pub struct SesOps{
+pub struct SesOps {
     config: SdkConfig,
 }
 

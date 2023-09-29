@@ -744,7 +744,7 @@ pub fn create_text_result_pdf(
         ),
     }
 }
-pub fn create_text_only_pdf(texts:Vec<String>){
+pub fn create_text_only_pdf(texts: Vec<String>) {
     let mut document = build_document();
     document_configuration(
         &mut document,
@@ -758,14 +758,26 @@ pub fn create_text_only_pdf(texts:Vec<String>){
             .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
     );
     document.push(Break::new(1.0));
-    for text in texts{
+    for text in texts {
         document.push(
-            Paragraph::new(format!("{}",text))
+            Paragraph::new(format!("{}", text))
                 .aligned(Alignment::Left)
                 .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
         );
     }
-
+    match document.render_to_file("TextDetectionResultsTextOnly.pdf") {
+        Ok(_) => println!(
+            "The '{}' is also generated with the name {} in the current directory\n",
+            "PDF".green().bold(),
+            "'TextDetectionResultsTextOnly.pdf'".green().bold()
+        ),
+        Err(_) => println!(
+            "{}\n",
+            "Error while generating Text Detection Results 'PDF'"
+                .bright_red()
+                .bold()
+        ),
+    }
 }
 pub fn create_detect_face_image_pdf(bucket_name: &str, path_prefix: &str) {
     let mut document = build_document();
@@ -1000,10 +1012,7 @@ pub fn push_table_data_emails_identies(
         }
     }
 }
-pub fn create_polly_voice_info_pdf(
-    headers: Vec<&str>,
-    values: Vec<String>,
-) {
+pub fn create_polly_voice_info_pdf(headers: Vec<&str>, values: Vec<String>) {
     let mut table = create_table("Voices Info", "Values");
     push_voice_info_into_table(headers, values, &mut table);
     let mut document = build_document();
@@ -1061,4 +1070,3 @@ pub fn push_voice_info_into_table(
         }
     }
 }
-

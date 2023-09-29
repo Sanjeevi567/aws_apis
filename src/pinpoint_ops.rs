@@ -4,7 +4,7 @@ use aws_sdk_pinpoint::{
     Client as PinPointClient,
 };
 
-pub struct PinPointOps{
+pub struct PinPointOps {
     config: SdkConfig,
 }
 impl PinPointOps {

@@ -12,10 +12,10 @@ pub struct DynamoDbOps {
     config: SdkConfig,
 }
 impl DynamoDbOps {
-    pub fn build(config:SdkConfig) -> Self {
+    pub fn build(config: SdkConfig) -> Self {
         Self { config }
     }
-    fn get_config(&self)->&SdkConfig{
+    fn get_config(&self) -> &SdkConfig {
         &self.config
     }
     pub async fn create_table(
