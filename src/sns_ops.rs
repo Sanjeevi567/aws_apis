@@ -4,11 +4,11 @@ use aws_config::SdkConfig;
 use aws_sdk_sns::Client as SnsClient;
 use colored::Colorize;
 
-pub struct SnsOps {
-    config: SdkConfig,
+pub struct SnsOps<'a> {
+    config: &'a SdkConfig,
 }
-impl SnsOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> SnsOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
     }
     fn get_config(&self) -> &SdkConfig {

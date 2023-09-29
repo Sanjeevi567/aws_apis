@@ -13,11 +13,11 @@ use std::ops::Deref;
 
 use colored::Colorize;
 
-pub struct PollyOps {
-    config: SdkConfig,
+pub struct PollyOps<'a> {
+    config: &'a SdkConfig,
 }
-impl PollyOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> PollyOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
     }
     fn get_config(&self) -> &SdkConfig {

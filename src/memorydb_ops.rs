@@ -4,11 +4,11 @@ use aws_sdk_memorydb::{
     Client as MemDbClient,
 };
 use colored::Colorize;
-pub struct MemDbOps {
-    config: SdkConfig,
+pub struct MemDbOps<'a> {
+    config: &'a SdkConfig,
 }
-impl MemDbOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> MemDbOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
     }
     fn get_config(&self) -> &SdkConfig {

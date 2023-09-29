@@ -5,6 +5,7 @@ use genpdf::{
     style::{Color, Style},
     Alignment, Document, Element, PaperSize, SimplePageDecorator,
 };
+use image_compressor::{compressor, FolderCompressor};
 use printpdf;
 use printpdf::types::plugins::graphics::two_dimensional::font::BuiltinFont;
 use regex::Regex;
@@ -12,7 +13,6 @@ use std::{
     fs::{create_dir, read_dir, remove_dir_all, OpenOptions},
     io::Write,
 };
-use image_compressor::{FolderCompressor,compressor};
 pub fn build_document() -> Document {
     let builtin_font = Some(BuiltinFont::HelveticaBold);
     let load_helvetica_regular = include_bytes!("./assets/HelveticaRegular.ttf").to_vec();
@@ -176,8 +176,10 @@ pub async fn create_celebrity_pdf(
     document.push(Break::new(1.0));
     match local_image_path {
         Some(local_image) => {
-            let compressor = compressor::Compressor::new(&local_image,&local_image);
-            compressor.compress_to_jpg().expect("Error while Compressing to JPG\n");
+            let compressor = compressor::Compressor::new(&local_image, &local_image);
+            compressor
+                .compress_to_jpg()
+                .expect("Error while Compressing to JPG\n");
             let image = image::open(&local_image)
                 .expect("Error while opening the image\n")
                 .resize_to_fill(800, 800, image::imageops::FilterType::Gaussian);

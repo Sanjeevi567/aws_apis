@@ -11,7 +11,6 @@ use sesv2::{
     types::{Body, Content, Destination, EmailContent, EmailTemplateContent, Message, Template},
     Client as SesClient,
 };
-use std::panic;
 use std::{
     env::var,
     fs::{File, OpenOptions},
@@ -23,13 +22,13 @@ use std::{
 /// time they use the service. Instead, these credentials are abstracted by this
 /// structure along with its inherent functions and methods.
 #[derive(Debug)]
-pub struct SesOps {
-    config: SdkConfig,
+pub struct SesOps<'a> {
+    config: &'a SdkConfig,
 }
 
-impl SesOps {
+impl<'a> SesOps<'a> {
     ///When calling this function, it builds the credentials and the SesOps struct.
-    pub fn build(config: SdkConfig) -> Self {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config: config }
     }
 
