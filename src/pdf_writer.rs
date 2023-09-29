@@ -12,6 +12,7 @@ use std::{
     fs::{create_dir, read_dir, remove_dir_all, OpenOptions},
     io::Write,
 };
+use image_compressor::{FolderCompressor,compressor};
 pub fn build_document() -> Document {
     let builtin_font = Some(BuiltinFont::HelveticaBold);
     let load_helvetica_regular = include_bytes!("./assets/HelveticaRegular.ttf").to_vec();
@@ -175,6 +176,8 @@ pub async fn create_celebrity_pdf(
     document.push(Break::new(1.0));
     match local_image_path {
         Some(local_image) => {
+            let compressor = compressor::Compressor::new(&local_image,&local_image);
+            compressor.compress_to_jpg().expect("Error while Compressing to JPG\n");
             let image = image::open(&local_image)
                 .expect("Error while opening the image\n")
                 .resize_to_fill(800, 800, image::imageops::FilterType::Gaussian);
@@ -221,7 +224,7 @@ pub async fn create_celebrity_pdf(
                     );
                 }
             }
-            remove_dir_all("tempdir/").expect("Error while deleting tempdir/");
+            //remove_dir_all("tempdir/").expect("Error while deleting tempdir/");
         }
         None => {
             if let (Some(bucket_name), Some(key_image_name)) = (bucket_name, key_image_name) {
@@ -771,8 +774,12 @@ pub fn create_detect_face_image_pdf(bucket_name: &str, path_prefix: &str) {
     }
 }
 fn push_images_into_document(document: &mut Document) {
-    let face_image_dir = "face_details_images/";
+    let face_image_dir = "compressed_images/";
     let entries = read_dir(face_image_dir).expect("No face_details_images DIR is exist\n");
+    let mut compressor = FolderCompressor::new(face_image_dir, "compressed_images/");
+    compressor.set_thread_count(4);
+    compressor.set_delelte_origin(true);
+    compressor.compress().expect("Erro while compressing Images\n");
     for path in entries {
         let path = path.unwrap();
         match path.file_name().to_str() {
