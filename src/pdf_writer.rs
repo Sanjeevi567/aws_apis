@@ -772,7 +772,7 @@ pub fn create_detect_face_image_pdf(bucket_name: &str, path_prefix: &str) {
 }
 fn push_images_into_document(document: &mut Document) {
     let face_image_dir = "face_details_images/";
-    let entries = read_dir(face_image_dir).expect("No DIR is exist\n");
+    let entries = read_dir(face_image_dir).expect("No face_details_images DIR is exist\n");
     for path in entries {
         let path = path.unwrap();
         match path.file_name().to_str() {

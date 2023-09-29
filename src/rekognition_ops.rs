@@ -86,7 +86,7 @@ impl RekognitionOps {
             println!("Model Version: {}", model_version.green().bold());
         }
         if let Some(code) = outputs.status_code {
-            let format = format!("Status Code: {}", code);
+            let format = format!("Status Code: {}\n", code);
             println!("{}\n", format.green().bold());
         }
     }
@@ -109,7 +109,7 @@ impl RekognitionOps {
             face_record.into_iter().for_each(|face| {
                 if let Some(face) = face.face {
                     if let Some(face_id) = face.face_id {
-                        println!("Face Id For the Uploaded Face: {}", face_id.green().bold());
+                        println!("Face Id For the Uploaded Face: {}\n", face_id.green().bold());
                     }
                 }
             })
@@ -128,7 +128,7 @@ impl RekognitionOps {
         if let Some(search_face_output) = outputs.face_matches {
             search_face_output.into_iter().for_each(|similarity| {
                 if let Some(simiarity_) = similarity.similarity {
-                    println!("Similarity With Already Indexed Face: {}", simiarity_);
+                    println!("Similarity With Already Indexed Face: {}\n", simiarity_);
                 }
             })
         }

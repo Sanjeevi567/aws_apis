@@ -166,7 +166,7 @@ impl PollyOps {
             .set_engine(Some(engine_name.into()))
             .send()
             .await
-            .expect("Error while get information about voices");
+            .expect("Error while get information about voices\n");
         let voices = output.voices;
         let mut supported_voice_id = Vec::new();
         let mut supported_langauge_name = Vec::new();
@@ -218,7 +218,7 @@ impl PollyOps {
             .status(status_builder)
             .send()
             .await
-            .expect("Error while listing synthesise tasks");
+            .expect("Error while listing synthesise tasks\n");
         let info = output.synthesis_tasks;
         if let Some(vec_of_tasks) = info {
             println!("Synthesize Task Details\n\n");
@@ -244,7 +244,7 @@ impl PollyOps {
                     println!("Task Status: {}", status.green().bold());
                 }
                 if let Some(uri) = output_uri {
-                    println!("Output URI: {}", uri.green().bold());
+                    println!("Output URI: {}\n", uri.green().bold());
                 }
             });
         }
@@ -430,8 +430,7 @@ impl SpeechOuputInfo {
                 .into_bytes();
             match file.write_all(&bytes) {
                 Ok(_) => {
-                    let colored_msg =format!("An audio file with the name {path_alias}_voice_audio.{extension_} has been successfully created in the current directory\n")
-                        .green().bold();
+                    let colored_msg =format!("An audio file with the name {}/{}_voice_audio.{} has been successfully created\n",path_prefix.green().bold(),path_alias.green().bold(),extension_.green().bold());
                     println!("{colored_msg}");
                 }
                 Err(_) => println!("Error while writing data.."),
@@ -461,8 +460,7 @@ impl SpeechOuputInfo {
                 .into_bytes();
             match file.write_all(&bytes) {
                 Ok(_) => {
-                    let colored_msg =format!("An audio file with the extension {extension_} has been successfully written to the current directory\n")
-                        .green().bold();
+                    let colored_msg =format!("An audio file with the extension {} has been successfully written to the current directory\n",extension_.green().bold());
                     println!("{colored_msg}");
                 }
                 Err(_) => println!("Error while writing data.."),

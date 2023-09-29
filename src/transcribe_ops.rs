@@ -208,7 +208,7 @@ impl TranscriptionOutput {
                 println!("Starting Index: {}", index.to_string().green().bold());
             }
             println!("");
-            println!("{}\n","The bucket URL cannot be accessed until it is made public or accessible through the web console".yellow().bold());
+            println!("{}\n","The bucket URL cannot be accessed until it is made public or only accessible through the web console".yellow().bold());
             println!("{}\n","To achieve this, please execute the 'Modify Object Visibility' option in the S3 operations menu to make the object public".yellow().bold());
         }
     }
