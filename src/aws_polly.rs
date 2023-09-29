@@ -302,8 +302,8 @@ impl SynthesizeTask {
         };
         task_status
     }
-    pub fn task_status_reason(&mut self) -> Option<String> {
-        self.0.task_status_reason.take()
+    pub fn get_task_status_reason(&self) -> Option<&str> {
+        self.0.task_status_reason.as_deref()
     }
 
     pub fn get_output_uri(&self) -> Option<&str> {
