@@ -981,7 +981,7 @@ pub fn create_polly_voice_info_pdf(
     headers: Vec<&str>,
     values: Vec<String>,
 ) {
-    let mut table = create_table("Identity Info", "Values");
+    let mut table = create_table("Voices Info", "Values");
     push_voice_info_into_table(headers, values, &mut table);
     let mut document = build_document();
     document_configuration(
