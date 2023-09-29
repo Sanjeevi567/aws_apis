@@ -12,8 +12,9 @@ use aws_sdk_rekognition::{
         get_text_detection::GetTextDetectionOutput,
     },
     types::{
-        Attribute, CreateFaceLivenessSessionRequestSettings, FaceDetail, FaceDetection, Image,
-        LivenessOutputConfig, S3Object, TextDetection, TextDetectionResult, Video,
+        Attribute, BoundingBox, CreateFaceLivenessSessionRequestSettings, FaceDetail,
+        FaceDetection, Image, LivenessOutputConfig, S3Object, TextDetection, TextDetectionResult,
+        Video,
     },
     Client as RekogClient,
 };
@@ -24,6 +25,7 @@ use crate::{
     create_celebrity_pdf,
     pdf_writer::{create_face_result_pdf, create_text_result_pdf},
 };
+
 pub struct RekognitionOps {
     config: SdkConfig,
 }
@@ -68,6 +70,70 @@ impl RekognitionOps {
         vec_of_facedetails
     }
 
+    pub async fn create_collection(&self, collection_id: &str) {
+        let config = self.get_config();
+        let client = RekogClient::new(config);
+        let outputs = client
+            .create_collection()
+            .collection_id(collection_id)
+            .send()
+            .await
+            .expect("Error while creating Create Collection\n");
+        if let Some(arn) = outputs.collection_arn {
+            println!("Collection Arn: {}", arn.green().bold());
+        }
+        if let Some(model_version) = outputs.face_model_version {
+            println!("Model Version: {}", model_version.green().bold());
+        }
+        if let Some(code) = outputs.status_code {
+            let format = format!("Status Code: {}", code);
+            println!("{}\n", format.green().bold());
+        }
+    }
+    pub async fn index_faces(&self, bucket_name: &str, key_image_name: &str, collection_id: &str) {
+        let config = self.get_config();
+        let client = RekogClient::new(config);
+        let s3_object_builder = S3Object::builder()
+            .bucket(bucket_name)
+            .name(key_image_name)
+            .build();
+        let image_builder = Image::builder().s3_object(s3_object_builder).build();
+        let outputs = client
+            .index_faces()
+            .collection_id(collection_id)
+            
+            .image(image_builder)
+            .send()
+            .await
+            .expect("Error while Indexing Faces\n");
+        if let Some(face_record) = outputs.face_records {
+            face_record.into_iter().for_each(|face| {
+                if let Some(face) = face.face {
+                    if let Some(face_id) = face.face_id {
+                        println!("Face Id For the Uploaded Face: {}", face_id.green().bold());
+                    }
+                }
+            })
+        }
+    }
+    pub async fn search_faces(&self, collection_id: &str, face_id: &str) {
+        let config = self.get_config();
+        let client = RekogClient::new(config);
+        let outputs = client
+            .search_faces()
+            .collection_id(collection_id)
+            .face_id(face_id)
+            .send()
+            .await
+            .expect("Error While Searching Faces\n");
+        if let Some(search_face_output) = outputs.face_matches {
+            search_face_output.into_iter().for_each(|similarity| {
+                if let Some(simiarity_) = similarity.similarity {
+                    println!("Similarity With Already Indexed Face: {}", simiarity_);
+                }
+            })
+        }
+    }
     pub async fn detect_texts(&self, bucket_name: &str, key_name: &str) -> Vec<TextDetect> {
         let config = self.get_config();
         let client = RekogClient::new(config);

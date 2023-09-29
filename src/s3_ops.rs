@@ -135,6 +135,7 @@ impl S3Ops {
         }
         objects_in_bucket
     }
+    /// The first path is the prefix itself, so it's removed and returns everything after the period. This way, you don't need to use skip(1) when iterating
     pub async fn list_objects_given_prefix(
         &self,
         bucket_name: &str,
@@ -158,6 +159,7 @@ impl S3Ops {
                 }
             });
         }
+        keys_in_the_prefix.remove(0);
         keys_in_the_prefix
     }
 
@@ -401,7 +403,7 @@ impl S3Ops {
             .list_objects_given_prefix(bucket_name, "transcribe_outputs/")
             .await;
         create_dir("TranscribeOutputs/").expect("Error while creating TranscribeOutputs/");
-        for key in keys.into_iter().skip(1) {
+        for key in keys.into_iter(){
             let get_object = client
                 .get_object()
                 .key(&key)
