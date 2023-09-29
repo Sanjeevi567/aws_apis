@@ -120,7 +120,7 @@ impl PollyOps {
                     "The Task ID for initiating speech synthesis tasks is as follows: {}\n",
                     task_id.green().bold()
                 );
-                let file_name = format!("{}_task_id", text_to_synthesize);
+                let file_name = format!("{}_task_id.txt", text_to_synthesize);
                 let mut file = OpenOptions::new()
                     .create(true)
                     .read(true)
