@@ -525,7 +525,7 @@ impl SesOps {
             if let Some(subject_) = content.subject {
                 subject.push_str(&subject_);
                 if write_info {
-                    let buf = format!("Subject Part:\n{subject_}\n\n");
+                    let buf = format!("Subject Part:\n{subject_}\n");
                     email_template
                         .write_all(buf.as_bytes())
                         .expect("Error while writing subject part\n");
