@@ -22,13 +22,13 @@ use std::{
 /// time they use the service. Instead, these credentials are abstracted by this
 /// structure along with its inherent functions and methods.
 #[derive(Debug)]
-pub struct SesOps<'a> {
-    config: &'a SdkConfig,
+pub struct SesOps{
+    config: SdkConfig,
 }
 
-impl<'a> SesOps<'a> {
+impl SesOps {
     ///When calling this function, it builds the credentials and the SesOps struct.
-    pub fn build(config: &'a SdkConfig) -> Self {
+    pub fn build(config: SdkConfig) -> Self {
         Self { config: config }
     }
 

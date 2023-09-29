@@ -22,17 +22,17 @@ use std::{
 /// these credentials are abstracted by this structure and its inherent functions
 /// and methods
 #[derive(Debug)]
-pub struct S3Ops<'a> {
-    config: &'a SdkConfig,
+pub struct S3Ops {
+    config: SdkConfig,
 }
-impl<'a> S3Ops<'a> {
+impl S3Ops {
     fn get_config(&self) -> &SdkConfig {
         &self.config
     }
 
     /// This function accepts an [`SdkConfig`](https://docs.rs/aws-config/latest/aws_config/struct.SdkConfig.html), retrieves the region name from it if
     /// available; otherwise, it sets it to an empty string and then constructs a S3Ops instance   
-    pub fn build(config: &'a SdkConfig) -> Self {
+    pub fn build(config: SdkConfig) -> Self {
         Self { config: config }
     }
 

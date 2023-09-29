@@ -8,12 +8,15 @@ use aws_sdk_dynamodb::{
 use colored::Colorize;
 use serde_json::Value;
 use std::{fs::File, io::BufReader};
-pub struct DynamoDbOps<'a> {
-    config: &'a SdkConfig,
+pub struct DynamoDbOps {
+    config: SdkConfig,
 }
-impl<'a> DynamoDbOps<'a> {
-    pub fn build(config: &'a SdkConfig) -> Self {
+impl DynamoDbOps {
+    pub fn build(config:SdkConfig) -> Self {
         Self { config }
+    }
+    fn get_config(&self)->&SdkConfig{
+        &self.config
     }
     pub async fn create_table(
         &self,
@@ -21,7 +24,7 @@ impl<'a> DynamoDbOps<'a> {
         attribute_definition_json_path: &str,
         key_schema_json_path: &str,
     ) {
-        let client = DynClient::new(self.config);
+        let client = DynClient::new(self.get_config());
 
         let attribute_definitions = parse_attribute_defintion_json(attribute_definition_json_path);
         let key_schema_defintions = parse_key_schema_defintion_json(key_schema_json_path);

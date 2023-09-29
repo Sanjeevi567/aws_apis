@@ -6,11 +6,11 @@ use aws_sdk_transcribe::{
 };
 use colored::Colorize;
 
-pub struct TranscribeOps<'a> {
-    config: &'a SdkConfig,
+pub struct TranscribeOps{
+    config: SdkConfig,
 }
-impl<'a> TranscribeOps<'a> {
-    pub fn build(config: &'a SdkConfig) -> Self {
+impl TranscribeOps {
+    pub fn build(config: SdkConfig) -> Self {
         Self { config }
     }
     fn get_config(&self) -> &SdkConfig {

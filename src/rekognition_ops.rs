@@ -12,8 +12,9 @@ use aws_sdk_rekognition::{
         get_text_detection::GetTextDetectionOutput,
     },
     types::{
-        Attribute, CreateFaceLivenessSessionRequestSettings, FaceDetail, FaceDetection, Image,
-        LivenessOutputConfig, S3Object, TextDetection, TextDetectionResult, Video,
+        Attribute,CreateFaceLivenessSessionRequestSettings, FaceDetail,
+        FaceDetection, Image, LivenessOutputConfig, S3Object, TextDetection, TextDetectionResult,
+        Video,
     },
     Client as RekogClient,
 };
@@ -25,11 +26,11 @@ use crate::{
     pdf_writer::{create_face_result_pdf, create_text_result_pdf},
 };
 
-pub struct RekognitionOps<'a> {
-    config: &'a SdkConfig,
+pub struct RekognitionOps {
+    config: SdkConfig,
 }
-impl<'a> RekognitionOps<'a> {
-    pub fn build(config: &'a SdkConfig) -> Self {
+impl RekognitionOps {
+    pub fn build(config: SdkConfig) -> Self {
         Self { config }
     }
     fn get_config(&self) -> &SdkConfig {
@@ -108,10 +109,7 @@ impl<'a> RekognitionOps<'a> {
             face_record.into_iter().for_each(|face| {
                 if let Some(face) = face.face {
                     if let Some(face_id) = face.face_id {
-                        println!(
-                            "Face Id For the Uploaded Face: {}\n",
-                            face_id.green().bold()
-                        );
+                        println!("Face Id For the Uploaded Face: {}\n", face_id.green().bold());
                     }
                 }
             })

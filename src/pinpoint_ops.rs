@@ -4,11 +4,11 @@ use aws_sdk_pinpoint::{
     Client as PinPointClient,
 };
 
-pub struct PinPointOps<'a> {
-    config: &'a SdkConfig,
+pub struct PinPointOps{
+    config: SdkConfig,
 }
-impl<'a> PinPointOps<'a> {
-    pub fn build(config: &'a SdkConfig) -> Self {
+impl PinPointOps {
+    pub fn build(config: SdkConfig) -> Self {
         Self { config }
     }
     fn get_config(&self) -> &SdkConfig {
