@@ -749,13 +749,13 @@ pub fn create_text_only_pdf(texts: Vec<String>) {
     document_configuration(
         &mut document,
         "Text Detection Results",
-        "Result of Start Text Detection Task",
+        "Result Text Detection",
     );
     document.push(Break::new(1.0));
     document.push(
         Paragraph::new("Detected Texts")
             .aligned(Alignment::Center)
-            .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+            .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
     );
     document.push(Break::new(1.0));
     for text in texts {
