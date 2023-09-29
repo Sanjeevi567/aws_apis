@@ -120,12 +120,12 @@ impl PollyOps {
                     "The Task ID for initiating speech synthesis tasks is as follows: {}\n",
                     task_id.green().bold()
                 );
-
+                let file_name = format!("{}_task_id", text_to_synthesize);
                 let mut file = OpenOptions::new()
                     .create(true)
                     .read(true)
                     .write(true)
-                    .open("task_id.txt")
+                    .open(file_name)
                     .expect("Error while creating file\n");
                 let buf = format!("The speech synthesis task with ID {task_id} has been initiated for the bucket named {bucket_name}");
                 match file.write_all(buf.as_bytes()) {
@@ -301,6 +301,9 @@ impl SynthesizeTask {
             None
         };
         task_status
+    }
+    pub fn task_status_reason(&mut self) -> Option<String> {
+        self.0.task_status_reason.take()
     }
 
     pub fn get_output_uri(&self) -> Option<&str> {
