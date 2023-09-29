@@ -521,35 +521,31 @@ impl SesOps {
             .write(true)
             .open(&file_name)
             .expect("Error while creating file for Email Template Content\n");
+        let mut load_email_makeup = include_str!("assets/get_template_makeup.html").to_string();
         if let Some(content) = outputs.template_content {
             if let Some(subject_) = content.subject {
                 subject.push_str(&subject_);
                 if write_info {
-                    let buf = format!("Subject Part:\n{subject_}\n");
-                    email_template
-                        .write_all(buf.as_bytes())
-                        .expect("Error while writing subject part\n");
+                    let replaced_subject = load_email_makeup.replace("subject_part", &subject_);
+                    load_email_makeup.push_str(&replaced_subject);
                 }
             }
             if let Some(html_) = content.html {
                 html.push_str(&html_);
                 if write_info {
-                    let buf = format!("Html Part:\n{html_}\n\n");
-                    email_template
-                        .write_all(buf.as_bytes())
-                        .expect("Error while writing html part\n");
+                    let replaced_html = load_email_makeup.replace("html_part", &html);
+                    load_email_makeup.push_str(&replaced_html);
                 }
             }
             if let Some(text_) = content.text {
                 text.push_str(&text_);
                 if write_info {
-                    let buf = format!("Text Part:\n{text_}\n\n");
-                    email_template
-                        .write_all(buf.as_bytes())
-                        .expect("Error while writing text part\n");
+                    let replaced_text = load_email_makeup.replace("text_part", &text_);
+                    load_email_makeup.push_str(&replaced_text);
                 }
             }
         }
+        email_template.write_all(load_email_makeup.as_bytes()).unwrap();
         if write_info {
             match File::open(&file_name) {
                 Ok(_) => println!("The email template associated with the template name '{}' has been successfully created in the current directory with the file name '{}{}.{}'\n",template_name.green().bold(),"EmailTemplateOf".green().bold(),template_name.green().bold(),"html".green().bold()),
