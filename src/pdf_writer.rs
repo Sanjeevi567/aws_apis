@@ -977,3 +977,65 @@ pub fn push_table_data_emails_identies(
         }
     }
 }
+pub fn create_polly_voice_info_pdf(
+    headers: Vec<&str>,
+    values: Vec<String>,
+) {
+    let mut table = create_table("Identity Info", "Values");
+    push_voice_info_into_table(headers, values, &mut table);
+    let mut document = build_document();
+    document_configuration(
+        &mut document,
+        "Voices Info",
+        "Result of Obtain Voice Information From Amazon Polly",
+    );
+    document.push(Break::new(1.0));
+    document.push(Break::new(1.0));
+    document.push(table);
+    match document.render_to_file("VoicesInfo.pdf") {
+        Ok(_) => println!(
+            "The '{}' is also generated with the name {} in the current directory\n",
+            "PDF".green().bold(),
+            "'VoicesInfo.pdf'".green().bold()
+        ),
+        Err(_) => println!(
+            "{}\n",
+            "Error while generating Text Detection Results 'PDF'"
+                .bright_red()
+                .bold()
+        ),
+    }
+}
+pub fn push_voice_info_into_table(
+    headers: Vec<&str>,
+    values: Vec<String>,
+    table: &mut TableLayout,
+) {
+    let mut count = 0;
+    for (record, header) in values.into_iter().zip(headers.into_iter().cycle()) {
+        table
+            .row()
+            .element(
+                Paragraph::new(format!("{}", header))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(34, 91, 247)).bold()),
+            )
+            .element(
+                Paragraph::new(format!("{}", record))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
+            )
+            .push()
+            .unwrap();
+        count += 1;
+        if count % 6 == 0 {
+            table
+                .row()
+                .element(Break::new(1.0))
+                .element(Break::new(1.0))
+                .push()
+                .unwrap();
+        }
+    }
+}
+
