@@ -1,5 +1,5 @@
 mod credentials;
-pub use credentials::{load_credential_from_env, CredentInitialize};
+pub use credentials::{load_credential_from_env, CredentInitialize,load_from_env};
 
 mod memorydb_ops;
 pub use memorydb_ops::{MemDbClusterInfo, MemDbOps};
