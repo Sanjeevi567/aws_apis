@@ -4,7 +4,6 @@ use aws_credential_types::{
     Credentials,
 };
 use aws_types::region::Region;
-
 use colored::Colorize;
 use dotenv::dotenv;
 use std::env::var;
