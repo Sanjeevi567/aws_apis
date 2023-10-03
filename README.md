@@ -30,7 +30,7 @@ S3 service operations encompass a variety of tasks, including:
 
 SES service operations encompass various tasks, including:
 
-1. **Creating New Email Templates:** Expertly crafting fresh email templates tailored to your specific needs.
+1. **Creating New Email Templates:** Creating New Email Templates: Designing custom email templates that cater to your specific requirements. This option should be at your disposal since the only way to create an email template for the SES service is through REST APIs, unlike the Pinpoint service, where you can create email templates using the web console and REST APIs as well.
 
 2. **Deleting Templates:** Effortlessly removing unnecessary email templates from your account.
 
