@@ -61,8 +61,8 @@ Furthermore, SES service operations leverage environment variables to streamline
 ## Cross-Service Permissions
    - Some operations involve cross-service communication. For example, recognizing faces using Rekognition requires S3 bucket and key names for face images. Ensure proper permissions are set up for cross-service functionality.
 
-## Placeholder Information
-   - Placeholder information is used throughout the different services to provide the necessary details. These placeholders are retrieved from the credentials you provide.
+## Placeholder Information and PDF Generation:
+   - Placeholder information is used throughout the different services to provide the necessary details. These placeholders are retrieved from the credentials you provide. Most operations generate a text file and also create a PDF containing the data from that text file
 
 ## Service Isolation
    - Each service can use different credentials, but credentials cannot be mixed within services. Each service abstracts credentials so that you can provide them once and use them for all operations within that service without explicitly passing credentials for each operation.
@@ -70,5 +70,3 @@ Furthermore, SES service operations leverage environment variables to streamline
 For services like Rekognition, Polly, and Transcribe, refer to the accompanying [repository](https://github.com/Sanjuvi/DLearningClient) and [blog post](https://sanjuvi.github.io/Blog/posts/Deep-Learning-Rust/) for detailed information on how to run the application.
 
 To facilitate IAM user management and policy assignment, you can use the [IAM Client CLI](https://sanjuvi.github.io/Blog/posts/Aws-Iam/) application provided in [this repository](https://github.com/Sanjuvi/aws_iam_client_cli).
-
-
