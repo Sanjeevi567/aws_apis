@@ -1,4 +1,4 @@
-pub use aws_config::{SdkConfig,load_from_env};
+pub use aws_config::{load_from_env, SdkConfig};
 use aws_credential_types::{
     provider::{ProvideCredentials, SharedCredentialsProvider},
     Credentials,

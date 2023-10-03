@@ -20,6 +20,9 @@ aws-config = {version ="0.56.0"}
 aws-types = {version ="0.56.1"}
 tokio = {package = "tokio",version ="1.32.0",features = ["macros","rt-multi-thread"]}
 tokio-stream = {version = "0.1.14"}
+spinoff ="0.8.0"
+filesize = "0.2.0"
+indicatif ="0.17.7"
 
 chrono ={version = "0.4.28"}
 fast_qr = {version = "0.10.2",features = ["image"]}

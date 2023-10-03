@@ -525,21 +525,27 @@ impl SesOps {
             if let Some(subject_) = content.subject {
                 subject.push_str(&subject_);
                 if write_info {
-                    let buf = format!(r#"<h1 style="text-align: center;">Subject Part</h1><br><br><p style="text-align: center;padding-left: 100px;padding-right: 100px;">{subject_}</p><br><br>"#);
+                    let buf = format!(
+                        r#"<h1 style="text-align: center;">Subject Part</h1><br><br><p style="text-align: center;padding-left: 100px;padding-right: 100px;">{subject_}</p><br><br>"#
+                    );
                     email_template.write_all(buf.as_bytes()).unwrap();
                 }
             }
             if let Some(html_) = content.html {
                 html.push_str(&html_);
                 if write_info {
-                    let buf = format!(r#"<h1 style="text-align: center;">Html Part</h1><br><br>{html_}<br><br>"#);
+                    let buf = format!(
+                        r#"<h1 style="text-align: center;">Html Part</h1><br><br>{html_}<br><br>"#
+                    );
                     email_template.write_all(buf.as_bytes()).unwrap();
                 }
             }
             if let Some(text_) = content.text {
                 text.push_str(&text_);
                 if write_info {
-                    let buf = format!(r#"<h1 style="text-align: center;">Text Part</h1><br><br><p style="padding-left: 100px;padding-right: 100px;">{text_}</p><br><br><br><br><br>"#);
+                    let buf = format!(
+                        r#"<h1 style="text-align: center;">Text Part</h1><br><br><p style="padding-left: 100px;padding-right: 100px;">{text_}</p><br><br><br><br><br>"#
+                    );
                     email_template.write_all(buf.as_bytes()).unwrap();
                 }
             }

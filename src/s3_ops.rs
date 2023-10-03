@@ -169,6 +169,13 @@ impl S3Ops {
         data_path: &str,
         name_of_object: &str,
     ) {
+        use filesize::PathExt;
+        use std::path::Path;
+
+        use std::thread;
+        use std::time::Duration;
+        use std::{cmp::min, fmt::Write};
+
         let config = self.get_config();
         let client = S3Client::new(config);
 
@@ -177,9 +184,45 @@ impl S3Ops {
             .build()
             .await
             .unwrap();
-        let colored_msg = "Error from upload_content_to_a_bucket function\n"
-            .red()
-            .bold();
+        let path = Path::new(&data_path);
+        let file_size = match path.symlink_metadata() {
+            Ok(metadata) => match path.size_on_disk_fast(&metadata) {
+                Ok(realsize) => Some(realsize),
+                Err(_) => None,
+            },
+            Err(_) => None,
+        };
+        match file_size {
+            Some(size) => {
+                let msg = format!(
+                    "Uploading the file '{}' and its size is: {} Mb\n",
+                    data_path.green().bold(),
+                    (size / (1024 * 1024)).to_string().green().bold()
+                );
+                println!("{msg}");
+                let size_in_mb = size / (1024 * 1024);
+                if size_in_mb < 50 {
+                    println!(
+                        "{}\n",
+                        "It will take less than a minute to upload the content"
+                            .yellow()
+                            .bold()
+                    );
+                } else if size_in_mb*1024 < 1048576 {
+                    let guessed_minutes = size_in_mb / (50 * 50);
+                    println!("It will take approximately '{}' minutes to upload content, so please be patient\n",guessed_minutes.to_string().yellow().bold());
+                } else if size_in_mb*1024 > 1048576 {
+                    let guessed_hours = size_in_mb / (50 * 50);
+                    println!("It will take approximately '{}' hours to upload content, so you can accomplish other tasks while it's uploading\n",guessed_hours.to_string().yellow().bold());
+                }
+            }
+            None => {
+                let msg = format!("Uploading the file'{}'\n", data_path.green().bold());
+                println!("{msg}");
+                println!("{}\n","No file size information is available; you can either wait or engage in other tasks while the uploading process is in progress".yellow().bold());
+            }
+        };
+        let start_time = SystemTime::now();
         client
             .put_object()
             .bucket(bucket_name)
@@ -187,13 +230,33 @@ impl S3Ops {
             .body(build_body_data)
             .send()
             .await
-            .expect(&colored_msg);
-        println!(
-            "The provided object {} has been successfully updated in the bucket {}\n",
-            data_path.green().bold(),
-            bucket_name.green().bold()
-        );
-
+            .map(|_| {
+                println!(
+                    "The provided object {} has been successfully updated in the bucket {}\n",
+                    data_path.green().bold(),
+                    bucket_name.green().bold()
+                );
+                let end_time = start_time
+                    .elapsed()
+                    .expect("Error while converting to duration from system time\n");
+                if end_time.as_secs() < 60 {
+                    println!(
+                        "It took '{}' seconds to update the file",
+                        end_time.as_secs().to_string().yellow().bold()
+                    );
+                } else if end_time.as_secs() < 36000 {
+                    println!(
+                        "Uploading the provided content required '{}' minutes",
+                        (end_time.as_secs() / 60).to_string().yellow().bold()
+                    );
+                } else {
+                    println!(
+                        "Uploading the provided content required '{}' hours",
+                        (end_time.as_secs() / (60 * 60)).to_string().yellow().bold()
+                    );
+                };
+            })
+            .expect("Error while uploading content to a bucket\n");
         /*
         let current_objects = self.retrieve_keys_in_a_bucket(bucket_name).await;
         println!("Currently available keys/objects in your {bucket_name} bucket\n");

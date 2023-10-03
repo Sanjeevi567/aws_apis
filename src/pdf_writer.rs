@@ -221,7 +221,7 @@ pub async fn create_celebrity_pdf(
                     );
                 }
             }
-        remove_dir_all("tempdir/").expect("Error while deleting tempdir/");
+            remove_dir_all("tempdir/").expect("Error while deleting tempdir/");
         }
         None => {
             if let (Some(bucket_name), Some(key_image_name)) = (bucket_name, key_image_name) {
