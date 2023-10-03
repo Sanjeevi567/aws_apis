@@ -5,7 +5,6 @@ use genpdf::{
     style::{Color, Style},
     Alignment, Document, Element, PaperSize, SimplePageDecorator,
 };
-use image_compressor::compressor;
 use printpdf;
 use printpdf::types::plugins::graphics::two_dimensional::font::BuiltinFont;
 use regex::Regex;
@@ -176,10 +175,6 @@ pub async fn create_celebrity_pdf(
     document.push(Break::new(1.0));
     match local_image_path {
         Some(local_image) => {
-            let compressor = compressor::Compressor::new(&local_image, &local_image);
-            compressor
-                .compress_to_jpg()
-                .expect("Error while Compressing to JPG\n");
             let image = image::open(&local_image)
                 .expect("Error while opening the image\n")
                 .resize_to_fill(800, 800, image::imageops::FilterType::Gaussian);
@@ -226,7 +221,7 @@ pub async fn create_celebrity_pdf(
                     );
                 }
             }
-            //remove_dir_all("tempdir/").expect("Error while deleting tempdir/");
+        remove_dir_all("tempdir/").expect("Error while deleting tempdir/");
         }
         None => {
             if let (Some(bucket_name), Some(key_image_name)) = (bucket_name, key_image_name) {
