@@ -171,11 +171,6 @@ impl S3Ops {
     ) {
         use filesize::PathExt;
         use std::path::Path;
-
-        use std::thread;
-        use std::time::Duration;
-        use std::{cmp::min, fmt::Write};
-
         let config = self.get_config();
         let client = S3Client::new(config);
 
