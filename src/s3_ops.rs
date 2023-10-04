@@ -179,7 +179,7 @@ impl S3Ops {
             .build()
             .await
             .unwrap();
-        let path = Path::new(&data_path);
+        /*let path = Path::new(&data_path);
         let file_size = match path.symlink_metadata() {
             Ok(metadata) => match path.size_on_disk_fast(&metadata) {
                 Ok(realsize) => Some(realsize),
@@ -217,7 +217,7 @@ impl S3Ops {
                 println!("{}\n","No file size information is available; you can either wait or engage in other tasks while the uploading process is in progress".yellow().bold());
             }
         };
-        let start_time = SystemTime::now();
+        let start_time = SystemTime::now();*/
         client
             .put_object()
             .bucket(bucket_name)
@@ -231,7 +231,7 @@ impl S3Ops {
                     data_path.green().bold(),
                     bucket_name.green().bold()
                 );
-                let end_time = start_time
+                /*let end_time = start_time
                     .elapsed()
                     .expect("Error while converting to duration from system time\n");
                 if end_time.as_secs() < 60 {
@@ -249,7 +249,7 @@ impl S3Ops {
                         "Uploading the provided content required '{}' hours",
                         (end_time.as_secs() / (60 * 60)).to_string().yellow().bold()
                     );
-                };
+                }; */
             })
             .expect("Error while uploading content to a bucket\n");
         /*
