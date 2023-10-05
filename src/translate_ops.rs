@@ -62,19 +62,14 @@ impl TranslateOps {
 
         (lang_names, lang_codes)
     }
-    pub async fn translate_text(
-        &self,
-        source_lang_code: &str,
-        text_path: &str,
-        target_lang_code: &str,
-    ) {
+    pub async fn translate_text(&self, text_path: &str, target_lang_code: &str) {
         let sdk_config = self.get_config();
         let client = TranslateClient::new(sdk_config);
         let text_data =
             fs::read_to_string(text_path).expect("Error opening the file you specified\n");
         let outputs = client
             .translate_text()
-            .source_language_code(source_lang_code)
+            .source_language_code("auto")
             .text(text_data)
             .target_language_code(target_lang_code)
             .send()
@@ -101,7 +96,6 @@ impl TranslateOps {
     }
     pub async fn translate_document(
         &self,
-        source_lang_code: &str,
         document_type: &str,
         document_path: &str,
         target_lang_code: &str,
@@ -128,7 +122,7 @@ impl TranslateOps {
                     .build();
                 let outputs = client
                     .translate_document()
-                    .source_language_code(source_lang_code)
+                    .source_language_code("auto")
                     .document(document_build)
                     .target_language_code(target_lang_code)
                     .send()
@@ -177,7 +171,6 @@ impl TranslateOps {
     pub async fn start_text_translation_job(
         &self,
         job_name: &str,
-        source_lang_code: &str,
         target_lang_codes: Option<Vec<String>>,
         input_s3_uri: &str,
         document_type: &str,
@@ -221,7 +214,7 @@ impl TranslateOps {
                     .start_text_translation_job()
                     .client_token(client_token)
                     .data_access_role_arn(role_arn)
-                    .source_language_code(source_lang_code)
+                    .source_language_code("auto")
                     .set_target_language_codes(target_lang_codes)
                     .input_data_config(input_config_build)
                     .output_data_config(output_config)
@@ -237,14 +230,14 @@ impl TranslateOps {
                     .expect("Error while creating file\n");
                 if let Some(job_id) = outputs.job_id {
                     println!("The Job ID: {}", job_id.green().bold());
-                    let buf = format!("Transcription Job ID: {}",job_id);
+                    let buf = format!("Transcription Job ID: {}", job_id);
                     file.write_all(buf.as_bytes()).unwrap();
                     match File::open("path") {
                         Ok(_) => {
                             println!("The job ID has been written to the current directory in a file named '{}'","TranscriptionJobID.txt".green().bold());
                             println!("{}\n","The job ID is necessary to retrieve details about the job in other options".yellow().bold());
                         }
-                        Err(_) => println!("{}\n","Error writing job id".red().bold())
+                        Err(_) => println!("{}\n", "Error writing job id".red().bold()),
                     }
                 }
                 if let Some(job_status) = outputs.job_status {
