@@ -175,6 +175,7 @@ impl TranslateOps {
         input_s3_uri: &str,
         document_type: &str,
         output_s3_uri: &str,
+        role_arn: &str,
     ) {
         let sdk_config = self.get_config();
         let client = TranslateClient::new(sdk_config);
@@ -204,7 +205,6 @@ impl TranslateOps {
         };
         match document_type_ {
             Some(document_type) => {
-                let role_arn = "arn:aws:iam::108394706369:role/TranslateRole";
                 let input_config_build = InputDataConfig::builder()
                     .s3_uri(input_s3_uri)
                     .content_type(document_type)
@@ -372,7 +372,7 @@ impl TranslateOps {
                     file.write_all(buf.as_bytes()).unwrap();
                 }
                 if let Some(job_id) = details.job_id {
-                    let buf = format!("Job ID: {}", job_id);
+                    let buf = format!("Job ID: {}\n", job_id);
                     file.write_all(buf.as_bytes()).unwrap();
                 }
                 if let Some(submit_time) = details.submitted_time {
@@ -435,7 +435,7 @@ impl TranslateOps {
         match File::open("ListTranslationJobsDetails.txt") {
             Ok(_) => {
                 println!("The details of the translation job list have been written to the current directory with the filename '{}'\n","ListTranslationJobsDetails.txt".green().bold());
-                println!("{}\n","If you want to access specific job information without leaving the terminal, execute the 'Describe Text Translation Job' option to learn more about the job details".yellow().bold());
+                println!("{}\n","If you want to access specific job information without leaving the terminal, execute the ---Describe Text Translation Job--- option to learn more about the job details".yellow().bold());
             }
             Err(_) => println!("{}\n", "Error writing File".red().bold()),
         }
