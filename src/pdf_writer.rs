@@ -768,7 +768,7 @@ pub fn create_text_only_pdf(texts: Vec<String>) {
         ),
         Err(_) => println!(
             "{}\n",
-            "Error while generating Text Detection Results 'PDF'"
+            "Error while generating TextDetectionResultsTextOnly 'PDF'"
                 .bright_red()
                 .bold()
         ),
@@ -938,6 +938,74 @@ fn push_table_data_face_results(
                 .push()
                 .unwrap();
         }
+    }
+}
+pub fn create_translated_text_pdf(translated_texts: String) {
+    let mut document = build_document();
+    document_configuration(&mut document, "Translation", "Result of Translate Text");
+    document.push(Break::new(1.0));
+    document.push(
+        Paragraph::new(format!("{}", translated_texts))
+            .aligned(Alignment::Left)
+            .styled(Style::new().with_color(Color::Rgb(0, 128, 0)).bold()),
+    );
+    match document.render_to_file("TranslatedText.pdf") {
+        Ok(_) => println!(
+            "The '{}' is also generated with the name {} in the current directory\n",
+            "PDF".green().bold(),
+            "'TranslatedText.pdf'".green().bold()
+        ),
+        Err(_) => println!(
+            "{}\n",
+            "Error while generating TranslatedText 'PDF'"
+                .bright_red()
+                .bold()
+        ),
+    }
+}
+pub fn create_translation_language_details_pdf(lang_codes: Vec<String>, lang_names: Vec<String>) {
+    let mut table = create_table("Languge Code", "Language Name");
+    let mut document = build_document();
+    document_configuration(&mut document, "Languages", "Result of List Languages");
+    document.push(Break::new(1.0));
+    document.push(Break::new(1.0));
+    let mut row = table.row();
+    row.element(Break::new(1.0))
+        .element(Break::new(1.0))
+        .push()
+        .unwrap();
+    push_lang_info_into_table(lang_codes, lang_names, &mut table);
+    document.push(table);
+    match document.render_to_file("ListLanguages.pdf") {
+        Ok(_) => println!(
+            "The '{}' is also generated with the name {} in the current directory\n",
+            "PDF".green().bold(),
+            "'ListLanguages.pdf'".green().bold()
+        ),
+        Err(_) => println!(
+            "{}\n",
+            "Error while generating ListLanguages 'PDF'"
+                .bright_red()
+                .bold()
+        ),
+    }
+}
+fn push_lang_info_into_table(headers: Vec<String>, values: Vec<String>, table: &mut TableLayout) {
+    for (record, header) in values.into_iter().zip(headers.into_iter()) {
+        table
+            .row()
+            .element(
+                Paragraph::new(format!("{}", header))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(34, 91, 247)).bold()),
+            )
+            .element(
+                Paragraph::new(format!("{}", record))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
+            )
+            .push()
+            .unwrap();
     }
 }
 pub fn create_email_identities_pdf(

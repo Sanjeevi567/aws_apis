@@ -32,6 +32,9 @@ pub use rekognition_ops::{FaceDetails, RekognitionOps, TextDetect};
 mod transcribe_ops;
 pub use transcribe_ops::TranscribeOps;
 
+mod translate_ops;
+pub use translate_ops::TranslateOps;
+
 mod route53;
 pub use route53::Route53Ops;
 
@@ -43,4 +46,5 @@ pub use pdf_writer::{
     create_celebrity_pdf, create_celebrity_single_pdf, create_detect_face_image_pdf,
     create_email_identities_pdf, create_email_pdf, create_face_result_pdf,
     create_polly_voice_info_pdf, create_text_only_pdf, create_text_result_pdf,
+    create_translated_text_pdf, create_translation_language_details_pdf,
 };

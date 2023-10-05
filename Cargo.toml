@@ -35,17 +35,18 @@ rusttype ="0.9.3"
 serde_json = "1.0"
 image_compressor = "1.3.0"
 
-aws-sdk-s3 = {version ="0.31.1"}
-aws-sdk-sesv2 = {version = "0.30.0"}
-aws-sdk-rds ={version ="0.30.0"}
-aws-sdk-memorydb ={version = "0.30.0"}
+aws-sdk-s3 = {version ="0.31.2"}
+aws-sdk-sesv2 = {version = "0.31.1"}
+aws-sdk-rds ={version ="0.31.1"}
+aws-sdk-memorydb ={version = "0.31.1"}
 aws-sdk-polly ="0.31.1"
-aws-sdk-pinpoint ="0.30.0"
-aws-sdk-sns ="0.30.0"
-aws-sdk-rekognition="0.30.0"
-aws-sdk-transcribe ="0.30.0"
-aws-sdk-route53 ="0.30.0"
+aws-sdk-pinpoint ="0.31.1"
+aws-sdk-sns ="0.31.1"
+aws-sdk-rekognition="0.31.1"
+aws-sdk-transcribe ="0.31.1"
+aws-sdk-route53 ="0.31.1"
 aws-sdk-dynamodb = "0.31.1"
+aws-sdk-translate = "0.31.1"
 
 #Regex is employed for locating template variables within the provided data, especially when updating a template. 
 # This is particularly useful for providing information about the template during updates. It is also utilized in 
