@@ -57,7 +57,7 @@ impl TranslateOps {
                 Ok(_) => println!("The supported language details have been saved to the current directory with the filename '{}'\n","Supported_Languages_Details.txt".green().bold()),
                 Err(_) => println!("{}\n","Error while writing Data".red().bold())
             }
-            create_translation_language_details_pdf(lang_codes.clone(), lang_names.clone());
+            create_translation_language_details_pdf(lang_names.clone(), lang_codes.clone());
         }
 
         (lang_names, lang_codes)
@@ -222,22 +222,23 @@ impl TranslateOps {
                     .send()
                     .await
                     .expect("Error while Starting Text Transcription Job\n");
+                let file_name = format!("TranscriptionJobIDFor{}.txt", job_name);
                 let mut file = OpenOptions::new()
                     .create(true)
                     .read(true)
                     .write(true)
-                    .open("TranscriptionJobID.txt")
+                    .open(&file_name)
                     .expect("Error while creating file\n");
                 if let Some(job_id) = outputs.job_id {
                     println!("The Job ID: {}", job_id.green().bold());
-                    let buf = format!("Transcription Job ID: {}", job_id);
+                    let buf = format!("Transcription Job ID for the Job Name: {}", job_id);
                     file.write_all(buf.as_bytes()).unwrap();
-                    match File::open("path") {
+                    match File::open(&file_name) {
                         Ok(_) => {
-                            println!("The job ID has been written to the current directory in a file named '{}'","TranscriptionJobID.txt".green().bold());
+                            println!("The job ID has been written to a file named '{}' in the current directory for the job named '{}'",file_name.green().bold(),job_name.green().bold());
                             println!("{}\n","The job ID is necessary to retrieve details about the job in other options".yellow().bold());
                         }
-                        Err(_) => println!("{}\n", "Error writing job id".red().bold()),
+                        Err(_) => println!("{}\n", "Error while writing the job id".red().bold()),
                     }
                 }
                 if let Some(job_status) = outputs.job_status {
