@@ -964,9 +964,9 @@ pub fn create_translated_text_pdf(translated_texts: String) {
     }
 }
 pub fn create_translation_language_details_pdf(lang_codes: Vec<String>, lang_names: Vec<String>) {
-    let mut table = create_table("Languge Code", "Language Name");
+    let mut table = create_table("Languge Name", "Language Code");
     let mut document = build_document();
-    document_configuration(&mut document, "Languages", "Result of List Languages");
+    document_configuration(&mut document, "Languages", "Supported Languages in the Translate Service");
     document.push(Break::new(1.0));
     document.push(Break::new(1.0));
     let mut row = table.row();
