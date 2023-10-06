@@ -102,10 +102,6 @@ impl TranslateOps {
     ) {
         let sdk_config = self.get_config();
         let client = TranslateClient::new(sdk_config);
-        let mut file = File::open(document_path).expect("Error opening the file path specified\n");
-        let mut vec_of_bytes = Vec::new();
-        file.read_to_end(&mut vec_of_bytes).unwrap();
-        let build_blob = Blob::new(vec_of_bytes);
         let document_type_ = match document_type {
             "html" | "HTML" | "Html" => Some("text/html"),
             "plain" | "Plain" | "PLAIN" => Some("text/plain"),
@@ -116,6 +112,11 @@ impl TranslateOps {
         };
         match document_type_ {
             Some(type_) => {
+                let mut file =
+                    File::open(document_path).expect("Error opening the file path specified\n");
+                let mut vec_of_bytes = Vec::new();
+                file.read_to_end(&mut vec_of_bytes).unwrap();
+                let build_blob = Blob::new(vec_of_bytes);
                 let document_build = Document::builder()
                     .content(build_blob)
                     .content_type(type_)
@@ -179,15 +180,6 @@ impl TranslateOps {
     ) {
         let sdk_config = self.get_config();
         let client = TranslateClient::new(sdk_config);
-        let client_token = match std::env::var("aws_access_key_id") {
-            Ok(access_key) => access_key,
-            Err(_) => {
-                println!("The '{}' environment variable is not found, so I am attempting to retrieve the access key from the credentials file","aws_access_key_id\n".yellow().bold());
-                let shared_credential = sdk_config.credentials_provider().unwrap();
-                let credentials = shared_credential.provide_credentials().await.unwrap();
-                credentials.access_key_id().to_string()
-            }
-        };
         let document_type_ = match document_type {
             "html" | "HTML" | "Html" => Some("text/html"),
             "plain" | "Plain" | "PLAIN" => Some("text/plain"),
@@ -205,6 +197,15 @@ impl TranslateOps {
         };
         match document_type_ {
             Some(document_type) => {
+                let client_token = match std::env::var("aws_access_key_id") {
+                    Ok(access_key) => access_key,
+                    Err(_) => {
+                        println!("The '{}' environment variable is not found, so I am attempting to retrieve the access key from the credentials file","aws_access_key_id\n".yellow().bold());
+                        let shared_credential = sdk_config.credentials_provider().unwrap();
+                        let credentials = shared_credential.provide_credentials().await.unwrap();
+                        credentials.access_key_id().to_string()
+                    }
+                };
                 let input_config_build = InputDataConfig::builder()
                     .s3_uri(input_s3_uri)
                     .content_type(document_type)
@@ -278,7 +279,7 @@ impl TranslateOps {
         if let Some(details) = outputs.text_translation_job_properties {
             if let Some(data_role_access_arn) = details.data_access_role_arn {
                 println!(
-                    "Data Access Role Arn: {}",
+                    "Data Access Role Amazon Resource Name(ARN): {}",
                     data_role_access_arn.green().bold()
                 );
             }
@@ -293,13 +294,14 @@ impl TranslateOps {
                     "Source Language Code: {}",
                     source_language_code.green().bold()
                 );
+                println!("{}\n","The source language of the document is automatically identified using the ;DetectDominantLanguages' API of the Comprehend service".yellow().bold());
             }
             if let Some(target_languages_codes) = details.target_language_codes {
                 println!("{}\n", "Target Language Codes".yellow().bold());
                 target_languages_codes.into_iter().for_each(|lang_code| {
                     println!("Language Code: {}", lang_code.green().bold());
                 });
-                println!("");
+                println!("{}\n","Execute the 'Get Language Info' option to determine the language associated with the provided language codes".yellow().bold());
             }
             if let Some(job_details) = details.job_details {
                 if let Some(document_count) = job_details.input_documents_count {
