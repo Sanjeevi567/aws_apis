@@ -625,15 +625,13 @@ impl SesOps {
             .retrieve_emails_from_provided_list(Some(&self.get_list_name()))
             .await;
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
+        let load_json = include_str!("./assets/template_data.json").to_string();
         'go: for email in emails.iter() {
             if email_identies.contains(email) {
                 let is_email_verified = self.is_email_verfied(&email).await;
                 if is_email_verified {
                     let name = email.chars().take(9).collect::<String>();
-                    let load_json = include_str!("./assets/template_data.json").to_string();
-                    let data = load_json.replace("SubjectName", "Demo");
-                    let data = data.replace("SubjectDescription", "Tesing The variables");
-                    let data = data.replace("email", email);
+                    let data = load_json.replace("email", email);
                     let data = data.replace("name", &name);
                     let template =
                         TemplateMail::builder(self.get_template_name().as_str(), &data).build();
@@ -645,12 +643,12 @@ impl SesOps {
                     .await
                     .send()
                     .await
-                    .expect("Send_bulk_templated_emails\n");
+                    .expect("Error while executing Send_bulk_templated_emails\n");
                     let colored_email = email.green().bold();
                     let colored_template_data = data.green().bold();
                     println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n");
                 } else {
-                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send emails to other email addresses in the list\n",email.bright_red().bold());
+                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send templated emails to other verified email addresses in the list\n",email.bright_red().bold());
                     continue 'go;
                 }
             } else {
@@ -658,6 +656,7 @@ impl SesOps {
                 self.create_email_identity(email).await;
             }
         }
+        println!("{}","If you have any red-colored emails above, the operation won't be executed for those emails, but it will be executed for the other emails, where the templated mail has already been sent".yellow().bold());
     }
 
     /// This method accept type of `SimpleMail` with content of [`EmailContent`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/types/struct.EmailContent.html)
@@ -692,7 +691,7 @@ impl SesOps {
                         })
                         .expect(&colored_error);
                 } else {
-                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send emails to other email addresses in the list\n",email.bright_red().bold());
+                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send Simple Emails to other verified email addresses in the list\n",email.bright_red().bold());
                     continue 'go;
                 }
             } else {
@@ -700,6 +699,7 @@ impl SesOps {
                 self.create_email_identity(&email).await;
             }
         }
+        println!("{}\n","If you have any red-colored emails above, the operation won't be executed for those emails, but it will be executed for the other emails, where the Simple Mail has already been sent".yellow().bold());
     }
 
     /// This utility function is designed for sending mail to a single address.

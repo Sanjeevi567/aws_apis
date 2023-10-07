@@ -973,7 +973,7 @@ pub fn create_translation_language_details_pdf(lang_codes: Vec<String>, lang_nam
     );
     document.push(Break::new(1.0));
     document.push(Break::new(1.0));
-    let mut row = table.row();
+    let row = table.row();
     row.element(Break::new(1.0))
         .element(Break::new(1.0))
         .push()
