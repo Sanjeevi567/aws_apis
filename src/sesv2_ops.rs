@@ -308,7 +308,7 @@ impl SesOps {
     }
     /// This helper function retrieves the emails from the provided contact list name,
     /// stores them in a vector of strings, and then returns them to the caller.
-    async fn retrieve_emails_from_provided_list(&self, list_name: Option<&str>) -> Vec<String> {
+    pub async fn retrieve_emails_from_provided_list(&self, list_name: Option<&str>) -> Vec<String> {
         let config = self.get_config();
         let client = SesClient::new(config);
 
