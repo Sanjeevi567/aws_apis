@@ -611,30 +611,36 @@ impl SesOps {
     /// emails to the addresses in a list, all without introducing any code smells on
     /// the caller's side and doesn't take any parameters. This is inlcuded for your reference
     /// Here is the [`template`]() I've used for this operation.
-    pub async fn send_emails(&self) {
-        let colored_error = "Error from send_emails function".red().bold();
-
+    pub async fn send_bulk_templated_emails(&self) {
         let emails = self
             .retrieve_emails_from_provided_list(Some(&self.get_list_name()))
             .await;
 
-        for email in emails.iter() {
-            let name = email.chars().take(9).collect::<String>();
-            let load_json = include_str!("./assets/template_data.json").to_string();
-            let data = load_json.replace("SubjectName", "Demo");
-            let data = data.replace("SubjectDescription", "Tesing The variables");
-            let data = data.replace("email", email);
-            let data = data.replace("name", &name);
-            let template = TemplateMail::builder(self.get_template_name().as_str(), &data).build();
-            self.send_mono_email(email, Template_(template), Some(&self.get_from_address()))
-                .await
-                .send()
-                .await
-                .expect(&colored_error);
-            let colored_email = email.green().bold();
-            let colored_template_data = data.green().bold();
-            println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n")
+        'go: for email in emails.iter() {
+            let is_email_verified = self.is_email_verfied(email).await;
+            if is_email_verified {
+                let name = email.chars().take(9).collect::<String>();
+                let load_json = include_str!("./assets/template_data.json").to_string();
+                let data = load_json.replace("SubjectName", "Demo");
+                let data = data.replace("SubjectDescription", "Tesing The variables");
+                let data = data.replace("email", email);
+                let data = data.replace("name", &name);
+                let template =
+                    TemplateMail::builder(self.get_template_name().as_str(), &data).build();
+                self.send_mono_email(email, Template_(template), Some(&self.get_from_address()))
+                    .await
+                    .send()
+                    .await
+                    .expect("Error from send_emails function\n");
+                let colored_email = email.green().bold();
+                let colored_template_data = data.green().bold();
+                println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n")
+            } else {
+                println!("The email address '{}' in the list hasn't been verified, yet it continues to send emails to other email addresses in the list",email.bright_red().bold());
+                continue 'go;
+            }
         }
+        println!("{}\n","If you have any red-colored emails above, please verify those email addresses by executing the 'Create Email Identity' option to resend a verification email.".yellow().bold());
     }
 
     /// This method accept type of `SimpleMail` with content of [`EmailContent`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/types/struct.EmailContent.html)
@@ -652,18 +658,23 @@ impl SesOps {
 
         let email_content = data.build();
 
-        for email in emails.into_iter() {
-            let email_content_ = email_content.clone();
-            //println!("{email}\n");
-            self.send_mono_email(&email, Simple_(email_content_), from_address)
-                .await
-                .send()
-                .await
-                .map(|_| {
-                    let colored_email = email.green().bold();
-                    println!("Simple Mail is send to {colored_email} successfully...\n")
-                })
-                .expect(&colored_error);
+        'go: for email in emails.into_iter() {
+            let is_email_verified = self.is_email_verfied(&email).await;
+            if is_email_verified {
+                let email_content_ = email_content.clone();
+                self.send_mono_email(&email, Simple_(email_content_), from_address)
+                    .await
+                    .send()
+                    .await
+                    .map(|_| {
+                        let colored_email = email.green().bold();
+                        println!("Simple Email Content is send to {colored_email} successfully\n")
+                    })
+                    .expect(&colored_error);
+            } else {
+                println!("The email address '{}' in the list hasn't been verified, yet it continues to send emails to other email addresses in the list",email.bright_red().bold());
+                continue 'go;
+            }
         }
     }
 
@@ -671,7 +682,7 @@ impl SesOps {
     /// It becomes particularly useful when you have multiple clients and need to send distinct data
     /// using the same template, possibly with the assistance of machine learning algorithms for suggestions.
 
-    pub async fn send_multi_email_with_template(
+    pub async fn send_multi_template_emails(
         &self,
         data: TemplateMail<'static>,
         from_address: Option<&str>,

@@ -1,7 +1,8 @@
 {
-    "Subject_Name" : "SubjectName",
-    "Subject_Description" : "SubjectDescription",
-    "Name" : "name",
-    "Email" : "email",
-    "Blog" : "https://sanjuvi.github.io/Blog/"
+    "Name" : "sanjuvi",
+    "Email" : "sanjeevimani567@gmail.com",
+    "Blog": "https://sanjuvi.github.io/Blog/",
+    "Lang" : "Rust",
+    "Author's_Name" : "Sanjeevi",
+    "Api": "AWS Simple Email Service(SES)"
 }
