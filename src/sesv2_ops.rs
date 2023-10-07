@@ -616,7 +616,7 @@ impl SesOps {
             .retrieve_emails_from_provided_list(Some(&self.get_list_name()))
             .await;
 
-        'go: for email in emails.iter() {
+        'go:for email in emails.iter() {
             let is_email_verified = self.is_email_verfied(email).await;
             if is_email_verified {
                 let name = email.chars().take(9).collect::<String>();
@@ -658,7 +658,7 @@ impl SesOps {
 
         let email_content = data.build();
 
-        'go: for email in emails.into_iter() {
+        'go:for email in emails.into_iter() {
             let is_email_verified = self.is_email_verfied(&email).await;
             if is_email_verified {
                 let email_content_ = email_content.clone();
@@ -671,7 +671,7 @@ impl SesOps {
                         println!("Simple Email Content is send to {colored_email} successfully\n")
                     })
                     .expect(&colored_error);
-            } else {
+            }else {
                 println!("The email address '{}' in the list hasn't been verified, yet it continues to send emails to other email addresses in the list",email.bright_red().bold());
                 continue 'go;
             }
@@ -682,7 +682,7 @@ impl SesOps {
     /// It becomes particularly useful when you have multiple clients and need to send distinct data
     /// using the same template, possibly with the assistance of machine learning algorithms for suggestions.
 
-    pub async fn send_multi_template_emails(
+    pub async fn send_multi_email_with_template(
         &self,
         data: TemplateMail<'static>,
         from_address: Option<&str>,
