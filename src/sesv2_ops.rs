@@ -543,7 +543,7 @@ impl SesOps {
                     .bold()
             );
             for contact_list_name in available_list_names {
-                println!("    {}", contact_list_name.bright_yellow().bold());
+                println!("    {}", contact_list_name.bright_green().bold());
             }
             println!("");
             None
@@ -605,18 +605,6 @@ impl SesOps {
                 create_email_pdf(vector_of_email, list_name, region_name);
             }
             None => {
-                println!(
-                    "The provided list name '{}' doesn't exist",
-                    list_name
-                        .unwrap_or(self.get_list_name().as_str())
-                        .red()
-                        .bold()
-                );
-                println!("{}\n","Below is the available contact list of names in your credentials or region, if applicable".yellow().bold());
-                let lists = self.list_contact_lists().await;
-                for list in lists {
-                    println!("    {}", list.green().bold());
-                }
             }
         }
     }
