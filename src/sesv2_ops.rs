@@ -73,7 +73,7 @@ impl SesOps {
                 add_space
             })
             .collect::<String>();
-        if !available_list_names.contains(list_name) {
+        if available_list_names.is_empty() {
             let client = client
                 .create_contact_list()
                 .contact_list_name(list_name)
