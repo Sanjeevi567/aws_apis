@@ -664,7 +664,7 @@ impl SesOps {
                 add_space
             })
             .collect::<String>();
-        if email_templates.contains(template_name) {
+        if !email_templates.contains(template_name) {
             let email_template_builder = EmailTemplateContent::builder()
                 .subject(subject)
                 .html(template)
