@@ -738,6 +738,11 @@ impl SesOps {
                     .yellow()
                     .bold()
             );
+            let templates = self.list_email_templates().await;
+            for template_name in templates {
+                println!("    {}", template_name.green().bold());
+            }
+            println!("");
         }
     }
     pub async fn update_template(
@@ -783,6 +788,12 @@ impl SesOps {
                     .yellow()
                     .bold()
             );
+            let templates = self.list_email_templates().await;
+            for template_name in templates {
+                println!("    {}", template_name.green().bold());
+            }
+            println!("");
+
         }
     }
     pub async fn get_template_subject_html_and_text(
@@ -790,17 +801,7 @@ impl SesOps {
         template_name: &str,
         write_info: bool,
     ) -> Option<(String, String, String)> {
-        let email_templates = self
-            .list_email_templates()
-            .await
-            .into_iter()
-            .map(|to_string| {
-                let mut add_space = to_string;
-                add_space.push(' ');
-                add_space
-            })
-            .collect::<String>();
-        if email_templates.contains(template_name) {
+        if self.is_email_template_exist(template_name).await {
             let mut subject = String::new();
             let mut html = String::new();
             let mut text = String::new();
