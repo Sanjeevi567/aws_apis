@@ -859,6 +859,21 @@ impl SesOps {
             }
             Some((subject, html, text))
         } else {
+            println!(
+                "The template named '{}' doesn't exist",
+                template_name.red().bold()
+            );
+            println!(
+                "{}\n",
+                "Here are the available template names in your credentials or region"
+                    .yellow()
+                    .bold()
+            );
+            let templates = self.list_email_templates().await;
+            for template_name in templates {
+                println!("    {}", template_name.green().bold());
+            }
+            println!("");
             None
         }
     }
