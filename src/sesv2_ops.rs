@@ -95,7 +95,7 @@ impl SesOps {
                     .bold()
             );
             println!("1) You may not have the proper credentials to execute this operation.\nYou need the following permissions: '{}' and '{}'","ses:CreateContactList".yellow().bold(),"ses:ListContactLists".yellow().bold());
-            println!("{}\n","2) Only one contact list name per account or region can be created. Here is the contact list name in your account and region, if there is any".yellow().bold());
+            println!("{}\n","2) Only one contact list name per account or region can be created.\nHere is the contact list name in your account and region, if there is any".yellow().bold());
             let lists = self.list_contact_lists().await;
             for list in lists {
                 println!("    {}", list.green().bold());
