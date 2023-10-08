@@ -564,6 +564,8 @@ impl SesOps {
                 Ok(_) => println!("The email template associated with the template name '{}' has been successfully created in the current directory with the file name '{}{}.{}'\n",template_name.green().bold(),"EmailTemplateOf".green().bold(),template_name.green().bold(),"html".green().bold()),
                 Err(_) => println!("Error While writing Email Template\n")
             }
+        } else {
+            std::fs::remove_file(&file_name).expect("This won't fail unless in Rare cases\n");
         }
         (subject, html, text)
     }
