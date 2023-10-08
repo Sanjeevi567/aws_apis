@@ -689,7 +689,13 @@ impl SesOps {
                 .expect(&colored_error);
         } else {
             println!("Template '{}' already exists",template_name.red().bold());
-            println!("{}\n","Try using different template name".yellow().bold());
+            println!("{}","Try using different template name".yellow().bold());
+            println!("{}\n","Below are the available template names in your credentials and region".yellow().bold());
+            let templates = self.list_email_templates().await;
+            for template_name in templates{
+                println!("    {}",template_name.green().bold());
+            }
+            println!("");
         }
     }
     pub async fn list_email_templates(&self) -> Vec<String> {
