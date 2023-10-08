@@ -101,7 +101,12 @@ impl SesOps {
                 println!("    {}", list.green().bold());
             }
             println!("");
-            println!("{}","If you see anything, you must delete it before creating a new contact list name".yellow().bold());
+            println!(
+                "{}",
+                "If you see anything, you must delete it before creating a new contact list name"
+                    .yellow()
+                    .bold()
+            );
             println!("{}\n","Please note that deleting a contact list name will also delete all the emails in that list".red().bold());
         }
     }
@@ -649,29 +654,43 @@ impl SesOps {
     ) {
         let config = self.get_config();
         let client = SesClient::new(config);
-
-        let email_template_builder = EmailTemplateContent::builder()
-            .subject(subject)
-            .html(template)
-            .set_text(text)
-            .build();
-        let build = client
-            .create_email_template()
-            .template_content(email_template_builder)
-            .template_name(template_name);
-
-        let colored_error = "Error from create_email_template\n".red().bold();
-        build
-            .send()
+        let email_templates = self
+            .list_email_templates()
             .await
-            .map(|_| {
-                let colored_tempname = template_name.green().bold();
-                println!(
-                    "The email template named '{}' has been created\n",
-                    colored_tempname,
-                )
+            .into_iter()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
             })
-            .expect(&colored_error);
+            .collect::<String>();
+        if email_templates.contains(template_name) {
+            let email_template_builder = EmailTemplateContent::builder()
+                .subject(subject)
+                .html(template)
+                .set_text(text)
+                .build();
+            let build = client
+                .create_email_template()
+                .template_content(email_template_builder)
+                .template_name(template_name);
+
+            let colored_error = "Error from create_email_template\n".red().bold();
+            build
+                .send()
+                .await
+                .map(|_| {
+                    let colored_tempname = template_name.green().bold();
+                    println!(
+                        "The email template named '{}' has been created\n",
+                        colored_tempname,
+                    )
+                })
+                .expect(&colored_error);
+        } else {
+            println!("Template '{}' already exists",template_name.red().bold());
+            println!("{}\n","Try using different template name".yellow().bold());
+        }
     }
     pub async fn list_email_templates(&self) -> Vec<String> {
         let config = self.get_config();
