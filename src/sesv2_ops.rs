@@ -171,36 +171,68 @@ impl SesOps {
         );
     }
 
-    /// The 'create email identity' helper function is isolated, so we don't have to use it unless necessary.
     pub async fn create_email_identity(&self, email: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
-
-        client
-            .create_email_identity()
-            .email_identity(email)
-            .send()
-            .await
-            .expect("Error while creating Email Identity\n");
-        let colored_email = email.green().bold();
-        println!(
-            "The email verfication send to: {} if exist\n",
-            colored_email
-        )
+        let available_email_identities = self.retrieve_emails_from_list_email_identities().await;
+        if !available_email_identities.contains(email) {
+            client
+                .create_email_identity()
+                .email_identity(email)
+                .send()
+                .await
+                .expect("Error while creating Email Identity\n");
+            let colored_email = email.green().bold();
+            println!(
+                "The email verfication send to: {} if exist\n",
+                colored_email
+            );
+        } else {
+            println!("The email identity '{}' already exists, but an email verification has been sent to this email again\n",email.yellow().bold());
+            client
+                .delete_email_identity()
+                .email_identity(email)
+                .send()
+                .await
+                .expect("Error while deleting Email Identity\n");
+            client
+                .create_email_identity()
+                .email_identity(email)
+                .send()
+                .await
+                .expect("Error while creating Email Identity\n");
+            let colored_email = email.green().bold();
+            println!("The email verfication send to: {}\n", colored_email);
+        }
     }
     pub async fn delete_email_identity(&self, identity: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
-        client
-            .delete_email_identity()
-            .email_identity(identity)
-            .send()
-            .await
-            .expect("Error while deleting Email Identity\n");
-        println!(
-            "The provided email identity '{}' has been deleted\n",
-            identity.green().bold()
-        );
+        let available_email_identities = self.retrieve_emails_from_list_email_identities().await;
+        if available_email_identities.contains(identity) {
+            client
+                .delete_email_identity()
+                .email_identity(identity)
+                .send()
+                .await
+                .expect("Error while deleting Email Identity\n");
+            println!(
+                "The provided email identity '{}' has been deleted\n",
+                identity.green().bold()
+            );
+        } else {
+            println!(
+                "The email idenitity '{}' does not exist",
+                identity.red().bold()
+            );
+            println!(
+                "{}\n",
+                "We will create an email identity for this address by sending a verification email"
+                    .yellow()
+                    .bold()
+            );
+            self.create_email_identity(identity).await;
+        }
     }
     pub async fn delete_contact(&self, email: &str, list_name: Option<String>) {
         let config = self.get_config();
@@ -219,6 +251,70 @@ impl SesOps {
         );
     }
 
+    pub async fn get_emails_given_list_name(&self, list_name: Option<&str>) -> Option<String> {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let available_list_names = self
+            .list_contact_lists()
+            .await
+            .into_iter()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
+            })
+            .collect::<String>();
+        if available_list_names.contains(list_name.unwrap_or(&self.get_list_name().as_str())) {
+            let mut emails = String::new();
+            let list = client
+                .list_contacts()
+                .contact_list_name(list_name.unwrap_or(&self.get_list_name().as_str()))
+                .send()
+                .await
+                .map(|contacts| {
+                    let colored_list_name = list_name
+                        .unwrap_or(&self.get_list_name().as_str())
+                        .green()
+                        .bold();
+                    println!("List named {} is exist\n", colored_list_name);
+                    contacts
+                })
+                .expect("Error from retrieve_emails_from_provided_list\n");
+            let contacts = list.contacts().unwrap();
+            contacts.into_iter().for_each(|contact| {
+                let email = contact.email_address().unwrap_or_default();
+                emails.push_str(email);
+            });
+            Some(emails)
+        } else {
+            println!(
+                "The provided list name '{}' doesn't exist",
+                list_name
+                    .unwrap_or(self.get_list_name().as_str())
+                    .red()
+                    .bold()
+            );
+            None
+        }
+    }
+    pub async fn get_contacts_in_the_list(&self, list_name: Option<&str>) -> String {
+        let config = self.get_config();
+        let client = SesClient::new(config);
+        let output = client
+            .list_contacts()
+            .contact_list_name(list_name.unwrap_or(&self.get_list_name()))
+            .send()
+            .await
+            .expect("Error while getting contact lists\n");
+        let mut contacts = String::new();
+        if let Some(contacts_) = output.contacts {
+            contacts_.into_iter().for_each(|contact| {
+                contacts.push_str(contact.email_address.unwrap_or_default().as_str());
+                contacts.push(' ');
+            });
+        }
+        contacts
+    }
     /// This function utilizes a default list name if 'None' is passed as a parameter.
     /// It incorporates 'create_identity' internally to send a verification email.
     /// Due to my use of a trial version, I am unable to employ a custom verification
@@ -234,15 +330,17 @@ impl SesOps {
             Some(list_name) => list_name.to_string(),
             None => self.get_list_name(),
         };
-        let client = client
-            .create_contact()
-            .contact_list_name(&default_list_name)
-            .email_address(email);
-        let colored_error_outside = "Error from create_email_contact_with_verification"
-            .red()
-            .bold();
+        let available_contacts = self.get_contacts_in_the_list(list_name).await;
+        if !available_contacts.contains(email) {
+            let client = client
+                .create_contact()
+                .contact_list_name(&default_list_name)
+                .email_address(email);
+            let colored_error_outside = "Error from create_email_contact_with_verification"
+                .red()
+                .bold();
 
-        client
+            client
             .send()
             .await
             .map(|_| async {
@@ -252,10 +350,27 @@ impl SesOps {
                     "The email address {colored_email} has been added to the contact list named: {}\n",
                     colored_list_name
                 );
-                self.create_email_identity(email).await;
+                let email_identies = self.retrieve_emails_from_list_email_identities().await;
+                if !email_identies.contains(email){
+                    self.create_email_identity(email).await;
+                }else {
+                    println!("The email '{}' already has an email identity",email.yellow().bold());
+                    println!("But we are sending a verification email again for this email\n");
+                    let client = SesClient::new(self.get_config());
+                    client.delete_email_identity().email_identity(email).send().await.expect("Error while deleting email identity\n");
+                    client.create_email_identity().email_identity(email).send().await.expect("Error while creating email identity\n");
+                    println!("The verification email has been sent to: {}",email.green().bold());
+                }
             })
             .expect(&colored_error_outside)
             .await;
+        } else {
+            println!(
+                "The email contact '{}' already exists in the given list '{}'",
+                email.yellow().bold(),
+                default_list_name.yellow().bold()
+            );
+        }
     }
 
     /// Sometimes, we may not want to verify it immediately; instead, we simply want
@@ -273,21 +388,30 @@ impl SesOps {
             Some(list_name) => list_name.to_string(),
             None => self.get_list_name(),
         };
-        let client = client
-            .create_contact()
-            .contact_list_name(&default_list_name)
-            .email_address(email);
+        let contacts = self.get_contacts_in_the_list(list_name).await;
+        if contacts.contains(email) {
+            let client = client
+                .create_contact()
+                .contact_list_name(&default_list_name)
+                .email_address(email);
 
-        let colored_error = "Error from create_email_contact_without_verification\n"
-            .red()
-            .bold();
+            let colored_error = "Error from create_email_contact_without_verification\n"
+                .red()
+                .bold();
 
-        client.send().await.expect(&colored_error);
+            client.send().await.expect(&colored_error);
 
-        let colored_email = email.green().bold();
-        let colored_list_name = default_list_name.green().bold();
-        println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n");
-        println!("You must pass the email '{}' to the 'Create Email Identity' option before sending an email to this address",email.yellow().bold());
+            let colored_email = email.green().bold();
+            let colored_list_name = default_list_name.green().bold();
+            println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n");
+            println!("You must pass the email '{}' to the 'Create Email Identity' option before sending an email to this address",email.yellow().bold());
+        } else {
+            println!(
+                "The email contact '{}' already exists in the given list '{}'",
+                email.yellow().bold(),
+                default_list_name.yellow().bold()
+            );
+        }
     }
     /// Returns true if the email is verified; otherwise, returns false.
     pub async fn is_email_verfied(&self, email: &str) -> bool {
@@ -308,7 +432,10 @@ impl SesOps {
     }
     /// This helper function retrieves the emails from the provided contact list name,
     /// stores them in a vector of strings, and then returns them to the caller.
-    pub async fn retrieve_emails_from_provided_list(&self, list_name: Option<&str>) -> Vec<String> {
+    pub async fn retrieve_emails_from_provided_list(
+        &self,
+        list_name: Option<&str>,
+    ) -> Option<Vec<String>> {
         let config = self.get_config();
         let client = SesClient::new(config);
 
@@ -316,28 +443,55 @@ impl SesOps {
             Some(list_name) => list_name.to_string(),
             None => self.get_list_name(),
         };
-        let list = client
-            .list_contacts()
-            .contact_list_name(&default_list_name)
-            .send()
+        let available_list_names = self
+            .list_contact_lists()
             .await
-            .map(|contacts| {
-                let colored_list_name = default_list_name.green().bold();
-                println!("List named {} is exist\n", colored_list_name);
-                println!(
-                    "{}\n",
-                    "Data is retrieved from the internet, a process that takes seconds."
-                        .blue()
-                        .bold()
-                );
-                contacts
-            })
-            .expect("Error from retrieve_emails_from_provided_list\n");
-        let contacts = list.contacts().unwrap();
-        contacts
             .into_iter()
-            .map(|contact| contact.email_address().unwrap_or_default().into())
-            .collect()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
+            })
+            .collect::<String>();
+        if available_list_names.contains(&default_list_name) {
+            let mut emails = Vec::new();
+            let list = client
+                .list_contacts()
+                .contact_list_name(&default_list_name)
+                .send()
+                .await
+                .map(|contacts| {
+                    let colored_list_name = default_list_name.green().bold();
+                    println!("List named {} is exist\n", colored_list_name);
+                    contacts
+                })
+                .expect("Error from retrieve_emails_from_provided_list\n");
+            let contacts = list.contacts().unwrap();
+            contacts
+                .into_iter()
+                .map(|contact| contact.email_address().unwrap_or_default().into())
+                .for_each(|email| {
+                    emails.push(email);
+                });
+            Some(emails)
+        } else {
+            println!(
+                "The provided list name '{}' doesn't exist",
+                default_list_name.red().bold()
+            );
+            let available_list_names = self.list_contact_lists().await;
+            println!(
+                "{}\n",
+                "Only the contact list names below are available on your credentials"
+                    .yellow()
+                    .bold()
+            );
+            for contact_list_name in available_list_names {
+                println!("    {}", contact_list_name.bright_yellow().bold());
+            }
+            println!("");
+            None
+        }
     }
     pub async fn retrieve_emails_from_list_email_identities(&self) -> String {
         let config = self.get_config();
@@ -365,32 +519,45 @@ impl SesOps {
         list_name: Option<&str>,
     ) {
         let emails = self.retrieve_emails_from_provided_list(list_name).await;
-        let mut file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .read(true)
-            .open("./emails.txt")
-            .unwrap();
-        let mut vector_of_email = Vec::new();
-        writeln!(file, "Emails\n").unwrap();
-        emails.iter().for_each(|email| {
-            writeln!(file, "{email}\n").unwrap();
-            let data = format!("{email}");
-            vector_of_email.push(data);
-        });
-        println!(
-            "{}\n",
-            "Emails are written to a file called 'emails.txt'\n To view the emails, please check the current directory".green().bold()
-        );
-        let get_list_name =
-            var("LIST_NAME").unwrap_or("No 'LIST_NAME' environment variable found".into());
-        let list_name = list_name.unwrap_or(&get_list_name);
-        let region_name = self
-            .config
-            .region()
-            .map(|region| region.as_ref())
-            .unwrap_or("No region is found in the Credential");
-        create_email_pdf(vector_of_email, list_name, region_name);
+        match emails {
+            Some(emails) => {
+                let mut file = OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .read(true)
+                    .open("./emails.txt")
+                    .unwrap();
+                let mut vector_of_email = Vec::new();
+                writeln!(file, "Emails\n").unwrap();
+                emails.iter().for_each(|email| {
+                    writeln!(file, "{email}\n").unwrap();
+                    let data = format!("{email}");
+                    vector_of_email.push(data);
+                });
+                println!(
+                "{}\n",
+                "Emails are written to a file called 'emails.txt'\n To view the emails, please check the current directory".green().bold()
+            );
+                let get_list_name =
+                    var("LIST_NAME").unwrap_or("No 'LIST_NAME' environment variable found".into());
+                let list_name = list_name.unwrap_or(&get_list_name);
+                let region_name = self
+                    .config
+                    .region()
+                    .map(|region| region.as_ref())
+                    .unwrap_or("No region is found in the Credential");
+                create_email_pdf(vector_of_email, list_name, region_name);
+            }
+            None => {
+                println!(
+                    "The provided list name '{}' doesn't exist",
+                    list_name
+                        .unwrap_or(self.get_list_name().as_str())
+                        .red()
+                        .bold()
+                );
+            }
+        }
     }
 
     /// This only works when production access is enabled, i.e., in a paid AWS service, instead of a trial version that has not been tested.
@@ -467,13 +634,36 @@ impl SesOps {
     pub async fn delete_template(&self, template_name: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
-        client
-            .delete_email_template()
-            .template_name(template_name)
-            .send()
+        let email_templates = self
+            .list_email_templates()
             .await
-            .expect("Error While deleting Template\n");
-        println!("The template associated with the specified template name '{}' has been deleted successfully",template_name.green().bold());
+            .into_iter()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
+            })
+            .collect::<String>();
+        if email_templates.contains(template_name) {
+            client
+                .delete_email_template()
+                .template_name(template_name)
+                .send()
+                .await
+                .expect("Error While deleting Template\n");
+            println!("The template associated with the specified template name '{}' has been deleted successfully",template_name.green().bold());
+        } else {
+            println!(
+                "The template named '{}' doesn't exist",
+                template_name.red().bold()
+            );
+            println!(
+                "{}\n",
+                "Here are the available template names in your credentials and region"
+                    .yellow()
+                    .bold()
+            );
+        }
     }
     pub async fn update_template(
         &self,
@@ -482,92 +672,129 @@ impl SesOps {
         html: &str,
         text: Option<String>,
     ) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
-        let text_str = text
-            .as_ref()
-            .map(|to_string| to_string.to_string())
-            .unwrap_or("".into());
-        let template_builder = EmailTemplateContent::builder()
-            .subject(subject)
-            .set_text(text)
-            .html(html)
-            .build();
-        client
-            .update_email_template()
-            .template_name(template_name)
-            .template_content(template_builder)
-            .send()
+        let email_templates = self
+            .list_email_templates()
             .await
-            .expect("Error while Updating Template\n");
-        match (subject.is_empty(),text_str.is_empty()) {
+            .into_iter()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
+            })
+            .collect::<String>();
+        if email_templates.contains(template_name) {
+            let config = self.get_config();
+            let client = SesClient::new(config);
+            let text_str = text
+                .as_ref()
+                .map(|to_string| to_string.to_string())
+                .unwrap_or("".into());
+            let template_builder = EmailTemplateContent::builder()
+                .subject(subject)
+                .set_text(text)
+                .html(html)
+                .build();
+            client
+                .update_email_template()
+                .template_name(template_name)
+                .template_content(template_builder)
+                .send()
+                .await
+                .expect("Error while Updating Template\n");
+            match (subject.is_empty(),text_str.is_empty()) {
             (false,false) => println!("{}\n","The template has been successfully updated with the provided subject, HTML body, and text body".green().bold()),
             (true,false) => println!("{}\n","The template has been successfully updated with the provided HTML body, and text body".green().bold()),
             (false,true) => println!("{}\n","The template has been successfully updated with the provided subject, HTML body".green().bold()),
             (true,true) => println!("{}\n","The template has been successfully updated with the provided HTML body".green().bold())
+        }
+        } else {
+            println!(
+                "The template named '{}' doesn't exist",
+                template_name.red().bold()
+            );
+            println!(
+                "{}\n",
+                "Here are the available template names in your credentials and region"
+                    .yellow()
+                    .bold()
+            );
         }
     }
     pub async fn get_template_subject_html_and_text(
         &self,
         template_name: &str,
         write_info: bool,
-    ) -> (String, String, String) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
-        let outputs = client
-            .get_email_template()
-            .template_name(template_name)
-            .send()
+    ) -> Option<(String, String, String)> {
+        let email_templates = self
+            .list_email_templates()
             .await
-            .expect("Error While Getting Template\n");
-        let mut subject = String::new();
-        let mut html = String::new();
-        let mut text = String::new();
-        let file_name = format!("EmailTemplateOf{template_name}.html");
-        let mut email_template = OpenOptions::new()
-            .create(true)
-            .read(true)
-            .write(true)
-            .open(&file_name)
-            .expect("Error while creating file for Email Template Content\n");
-        if let Some(content) = outputs.template_content {
-            if let Some(subject_) = content.subject {
-                subject.push_str(&subject_);
-                if write_info {
-                    let buf = format!(
-                        r#"<h1 style="text-align: center;">Subject Part</h1><br><br><p style="text-align: center;padding-left: 100px;padding-right: 100px;">{subject_}</p><br><br>"#
-                    );
-                    email_template.write_all(buf.as_bytes()).unwrap();
+            .into_iter()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
+            })
+            .collect::<String>();
+        if email_templates.contains(template_name) {
+            let mut subject = String::new();
+            let mut html = String::new();
+            let mut text = String::new();
+            let config = self.get_config();
+            let client = SesClient::new(config);
+            let outputs = client
+                .get_email_template()
+                .template_name(template_name)
+                .send()
+                .await
+                .expect("Error While Getting Template\n");
+            let file_name = format!("EmailTemplateOf{template_name}.html");
+            let mut email_template = OpenOptions::new()
+                .create(true)
+                .read(true)
+                .write(true)
+                .open(&file_name)
+                .expect("Error while creating file for Email Template Content\n");
+            if let Some(content) = outputs.template_content {
+                if let Some(subject_) = content.subject {
+                    subject.push_str(&subject_);
+                    if write_info {
+                        let buf = format!(
+                            r#"<h1 style="text-align: center;">Subject Part</h1><br><br><p style="text-align: center;padding-left: 100px;padding-right: 100px;">{subject_}</p><br><br>"#
+                        );
+                        email_template.write_all(buf.as_bytes()).unwrap();
+                    }
+                }
+                if let Some(html_) = content.html {
+                    html.push_str(&html_);
+                    if write_info {
+                        let buf = format!(
+                            r#"<h1 style="text-align: center;">Html Part</h1><br><br>{html_}<br><br>"#
+                        );
+                        email_template.write_all(buf.as_bytes()).unwrap();
+                    }
+                }
+                if let Some(text_) = content.text {
+                    text.push_str(&text_);
+                    if write_info {
+                        let buf = format!(
+                            r#"<h1 style="text-align: center;">Text Part</h1><br><br><p style="padding-left: 100px;padding-right: 100px;">{text_}</p><br><br><br><br><br>"#
+                        );
+                        email_template.write_all(buf.as_bytes()).unwrap();
+                    }
                 }
             }
-            if let Some(html_) = content.html {
-                html.push_str(&html_);
-                if write_info {
-                    let buf = format!(
-                        r#"<h1 style="text-align: center;">Html Part</h1><br><br>{html_}<br><br>"#
-                    );
-                    email_template.write_all(buf.as_bytes()).unwrap();
-                }
-            }
-            if let Some(text_) = content.text {
-                text.push_str(&text_);
-                if write_info {
-                    let buf = format!(
-                        r#"<h1 style="text-align: center;">Text Part</h1><br><br><p style="padding-left: 100px;padding-right: 100px;">{text_}</p><br><br><br><br><br>"#
-                    );
-                    email_template.write_all(buf.as_bytes()).unwrap();
-                }
-            }
-        }
-        if write_info {
-            match File::open(&file_name) {
+            if write_info {
+                match File::open(&file_name) {
                 Ok(_) => println!("The email template associated with the template name '{}' has been successfully created in the current directory with the file name '{}{}.{}'\n",template_name.green().bold(),"EmailTemplateOf".green().bold(),template_name.green().bold(),"html".green().bold()),
                 Err(_) => println!("Error While writing Email Template\n")
             }
+            } else {
+                std::fs::remove_file(&file_name).expect("This won't fail unless in Rare cases\n");
+            }
+            Some((subject, html, text))
         } else {
-            std::fs::remove_file(&file_name).expect("This won't fail unless in Rare cases\n");
+            None
         }
-        (subject, html, text)
     }
     pub fn get_template_variables_of_subject_and_html_body(
         &self,
@@ -626,39 +853,50 @@ impl SesOps {
         let emails = self
             .retrieve_emails_from_provided_list(Some(&self.get_list_name()))
             .await;
-        let email_identies = self.retrieve_emails_from_list_email_identities().await;
-        let load_json = include_str!("./assets/template_data.json").to_string();
-        'go: for email in emails.iter() {
-            if email_identies.contains(email) {
-                let is_email_verified = self.is_email_verfied(&email).await;
-                if is_email_verified {
-                    let name = email.chars().take(9).collect::<String>();
-                    let data = load_json.replace("email", email);
-                    let data = data.replace("name", &name);
-                    let template =
-                        TemplateMail::builder(self.get_template_name().as_str(), &data).build();
-                    self.send_mono_email(
-                        email,
-                        Template_(template),
-                        Some(&self.get_from_address()),
-                    )
-                    .await
-                    .send()
-                    .await
-                    .expect("Error while executing Send_bulk_templated_emails\n");
-                    let colored_email = email.green().bold();
-                    let colored_template_data = data.green().bold();
-                    println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n");
-                } else {
-                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send templated emails to other verified email addresses in the list\n",email.bright_red().bold());
-                    continue 'go;
+        match emails {
+            Some(emails) => {
+                let email_identies = self.retrieve_emails_from_list_email_identities().await;
+                let load_json = include_str!("./assets/template_data.json").to_string();
+                'go: for email in emails.iter() {
+                    if email_identies.contains(email) {
+                        let is_email_verified = self.is_email_verfied(&email).await;
+                        if is_email_verified {
+                            let name = email.chars().take(9).collect::<String>();
+                            let data = load_json.replace("email", email);
+                            let data = data.replace("name", &name);
+                            let template =
+                                TemplateMail::builder(self.get_template_name().as_str(), &data)
+                                    .build();
+                            self.send_mono_email(
+                                email,
+                                Template_(template),
+                                Some(&self.get_from_address()),
+                            )
+                            .await
+                            .send()
+                            .await
+                            .expect("Error while executing Send_bulk_templated_emails\n");
+                            let colored_email = email.green().bold();
+                            let colored_template_data = data.green().bold();
+                            println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n");
+                        } else {
+                            println!("The email address '{}' in the list hasn't been verified, yet it continues to send templated emails to other verified email addresses in the list\n",email.bright_red().bold());
+                            continue 'go;
+                        }
+                    } else {
+                        println!("The email address '{}' in this list doesn't have an identity; therefore, it creates an identity by executing the 'Create Email Identity' option on your behalf\n",email.yellow().bold());
+                        self.create_email_identity(email).await;
+                    }
                 }
-            } else {
-                println!("The email address '{}' in this list doesn't have an identity; therefore, it creates an identity by executing the 'Create Email Identity' option on your behalf\n",email.yellow().bold());
-                self.create_email_identity(email).await;
+                println!("{}","If you have any red-colored emails above, the operation won't be executed for those emails, but it will be executed for the other emails, where the templated mail has already been sent".yellow().bold());
+            }
+            None => {
+                println!(
+                    "The provided list name '{}' doesn't exist",
+                    self.get_list_name().red().bold()
+                );
             }
         }
-        println!("{}","If you have any red-colored emails above, the operation won't be executed for those emails, but it will be executed for the other emails, where the templated mail has already been sent".yellow().bold());
     }
 
     /// This method accept type of `SimpleMail` with content of [`EmailContent`](https://docs.rs/aws-sdk-sesv2/latest/aws_sdk_sesv2/types/struct.EmailContent.html)
@@ -673,35 +911,44 @@ impl SesOps {
             .bold();
 
         let emails = self.retrieve_emails_from_provided_list(list_name).await;
-
-        let email_content = data.build();
-        let email_identies = self.retrieve_emails_from_list_email_identities().await;
-        'go: for email in emails.into_iter() {
-            if email_identies.contains(&email) {
-                let is_email_verified = self.is_email_verfied(&email).await;
-                if is_email_verified {
-                    let email_content_ = email_content.clone();
-                    self.send_mono_email(&email, Simple_(email_content_), from_address)
-                        .await
-                        .send()
-                        .await
-                        .map(|_| {
-                            let colored_email = email.green().bold();
-                            println!(
-                                "Simple Email Content is send to {colored_email} successfully\n"
-                            )
-                        })
-                        .expect(&colored_error);
-                } else {
-                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send Simple Emails to other verified email addresses in the list\n",email.bright_red().bold());
-                    continue 'go;
+        match emails {
+            Some(emails) => {
+                let email_content = data.build();
+                let email_identies = self.retrieve_emails_from_list_email_identities().await;
+                'go: for email in emails.into_iter() {
+                    if email_identies.contains(&email) {
+                        let is_email_verified = self.is_email_verfied(&email).await;
+                        if is_email_verified {
+                            let email_content_ = email_content.clone();
+                            self.send_mono_email(&email, Simple_(email_content_), from_address)
+                                .await
+                                .send()
+                                .await
+                                .map(|_| {
+                                    let colored_email = email.green().bold();
+                                    println!(
+                                        "Simple Email Content is send to {colored_email} successfully\n"
+                                    )
+                                })
+                                .expect(&colored_error);
+                        } else {
+                            println!("The email address '{}' in the list hasn't been verified, yet it continues to send Simple Emails to other verified email addresses in the list\n",email.bright_red().bold());
+                            continue 'go;
+                        }
+                    } else {
+                        println!("The email address '{}' in this list doesn't have an identity; therefore, it creates an identity by executing the 'Create Email Identity' option on your behalf\n",email.yellow().bold());
+                        self.create_email_identity(&email).await;
+                    }
                 }
-            } else {
-                println!("The email address '{}' in this list doesn't have an identity; therefore, it creates an identity by executing the 'Create Email Identity' option on your behalf\n",email.yellow().bold());
-                self.create_email_identity(&email).await;
+                println!("{}\n","If you have any red-colored emails above, the operation won't be executed for those emails, but it will be executed for the other emails, where the Simple Mail has already been sent".yellow().bold());
+            }
+            None => {
+                println!(
+                    "The provided list name '{}' doesn't exist",
+                    self.get_list_name().red().bold()
+                );
             }
         }
-        println!("{}\n","If you have any red-colored emails above, the operation won't be executed for those emails, but it will be executed for the other emails, where the Simple Mail has already been sent".yellow().bold());
     }
 
     /// This utility function is designed for sending mail to a single address.
@@ -715,21 +962,33 @@ impl SesOps {
         list_name: Option<&str>,
     ) {
         let emails = self.retrieve_emails_from_provided_list(list_name).await;
+        match emails {
+            Some(emails) => {
+                let email_content = data.build();
 
-        let email_content = data.build();
-
-        let colored_error = "Error from send_multi_email_with_template".red().bold();
-        for email in emails.into_iter() {
-            let email_content_ = email_content.clone();
-            self.send_mono_email(&email, Simple_(email_content_), from_address)
-                .await
-                .send()
-                .await
-                .map(|_| {
-                    let colored_email = email.green().bold();
-                    println!("Template Mail is send to {colored_email} successfully...\n")
-                })
-                .expect(&colored_error);
+                let colored_error = "Error from send_multi_email_with_template".red().bold();
+                for email in emails.into_iter() {
+                    let email_content_ = email_content.clone();
+                    self.send_mono_email(&email, Simple_(email_content_), from_address)
+                        .await
+                        .send()
+                        .await
+                        .map(|_| {
+                            let colored_email = email.green().bold();
+                            println!("Template Mail is send to {colored_email} successfully...\n")
+                        })
+                        .expect(&colored_error);
+                }
+            }
+            None => {
+                println!(
+                    "The provided list name '{}' doesn't exist",
+                    list_name
+                        .unwrap_or(self.get_list_name().as_str())
+                        .red()
+                        .bold()
+                );
+            }
         }
     }
 }

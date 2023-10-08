@@ -169,8 +169,6 @@ impl S3Ops {
         data_path: &str,
         name_of_object: &str,
     ) {
-        use filesize::PathExt;
-        use std::path::Path;
         let config = self.get_config();
         let client = S3Client::new(config);
 
@@ -179,7 +177,9 @@ impl S3Ops {
             .build()
             .await
             .unwrap();
-        /*let path = Path::new(&data_path);
+        /*
+                use filesize::PathExt;
+        use std::path::Path;let path = Path::new(&data_path);
         let file_size = match path.symlink_metadata() {
             Ok(metadata) => match path.size_on_disk_fast(&metadata) {
                 Ok(realsize) => Some(realsize),
