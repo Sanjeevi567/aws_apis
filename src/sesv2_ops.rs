@@ -306,7 +306,10 @@ impl SesOps {
         let config = self.get_config();
         let client = SesClient::new(config);
 
-        if self.is_contact_list_name_exist(list_name.unwrap_or(&self.get_list_name().as_str())).await {
+        if self
+            .is_contact_list_name_exist(list_name.unwrap_or(&self.get_list_name().as_str()))
+            .await
+        {
             let mut emails = String::new();
             let list = client
                 .list_contacts()
@@ -476,7 +479,7 @@ impl SesOps {
             None
         }
     }
-    pub async fn is_contact_list_name_exist(&self,contact_list_name: &str)->bool{
+    pub async fn is_contact_list_name_exist(&self, contact_list_name: &str) -> bool {
         let available_list_names = self
             .list_contact_lists()
             .await
@@ -487,9 +490,9 @@ impl SesOps {
                 add_space
             })
             .collect::<String>();
-        if available_list_names.contains(contact_list_name){
+        if available_list_names.contains(contact_list_name) {
             true
-        }else {
+        } else {
             false
         }
     }
@@ -609,6 +612,11 @@ impl SesOps {
                         .red()
                         .bold()
                 );
+                println!("{}\n","Below is the available contact list of names in your credentials or region, if applicable".yellow().bold());
+                let lists = self.list_contact_lists().await;
+                for list in lists {
+                    println!("    {}", list.green().bold());
+                }
             }
         }
     }
@@ -699,7 +707,7 @@ impl SesOps {
         }
         templates_names
     }
-    pub async fn is_email_template_exist(&self, template_name: &str)->bool{
+    pub async fn is_email_template_exist(&self, template_name: &str) -> bool {
         let email_templates = self
             .list_email_templates()
             .await
@@ -710,16 +718,16 @@ impl SesOps {
                 add_space
             })
             .collect::<String>();
-        if email_templates.contains(template_name){
+        if email_templates.contains(template_name) {
             true
-        }else {
+        } else {
             false
         }
     }
     pub async fn delete_template(&self, template_name: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
-        if self.is_email_template_exist(template_name).await{
+        if self.is_email_template_exist(template_name).await {
             client
                 .delete_email_template()
                 .template_name(template_name)
@@ -793,7 +801,6 @@ impl SesOps {
                 println!("    {}", template_name.green().bold());
             }
             println!("");
-
         }
     }
     pub async fn get_template_subject_html_and_text(
