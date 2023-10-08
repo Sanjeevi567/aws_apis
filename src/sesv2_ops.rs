@@ -63,19 +63,44 @@ impl SesOps {
     pub async fn create_contact_list_name(&self, list_name: &str, description: Option<String>) {
         let config = self.get_config();
         let client = SesClient::new(config);
-        let client = client
-            .create_contact_list()
-            .contact_list_name(list_name)
-            .set_description(description);
-        let colored_error = "Error from create_contact_list_name()".red().bold();
-        client
-            .send()
+        let available_list_names = self
+            .list_contact_lists()
             .await
-            .map(|_| {
-                let colored_list = list_name.green().bold();
-                println!("The list named {colored_list} created sucessfully\n")
+            .into_iter()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
             })
-            .expect(&colored_error);
+            .collect::<String>();
+        if !available_list_names.contains(list_name) {
+            let client = client
+                .create_contact_list()
+                .contact_list_name(list_name)
+                .set_description(description);
+            let colored_error = "Error from create_contact_list_name()".red().bold();
+            client
+                .send()
+                .await
+                .map(|_| {
+                    let colored_list = list_name.green().bold();
+                    println!("The list named {colored_list} created sucessfully\n")
+                })
+                .expect(&colored_error);
+        } else {
+            println!(
+                "{}\n",
+                "Possible reasons this operation may have failed are"
+                    .red()
+                    .bold()
+            );
+            println!("1) You may not have the proper credentials to execute this operation.\nYou need the following permissions: '{}' and '{}'","ses:CreateContactList".yellow().bold(),"ses:ListContactLists".yellow().bold());
+            println!("{}\n","2) Only one contact list name per account or region can be created. Here is the contact list name in your account and region, if there is any".yellow().bold());
+            let lists = self.list_contact_lists().await;
+            for list in lists {
+                println!("    {}", list.green().bold());
+            }
+        }
     }
     pub async fn list_contact_lists(&self) -> Vec<String> {
         let config = self.get_config();
@@ -159,16 +184,44 @@ impl SesOps {
     pub async fn delete_contact_list_name(&self, contact_list_name: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
-        client
-            .delete_contact_list()
-            .contact_list_name(contact_list_name)
-            .send()
+        let available_list_names = self
+            .list_contact_lists()
             .await
-            .expect("Error while deleting contact list name\n");
-        println!(
-            "The specified contact list name '{}' has been deleted successfully",
-            contact_list_name.green().bold()
-        );
+            .into_iter()
+            .map(|to_string| {
+                let mut add_space = to_string;
+                add_space.push(' ');
+                add_space
+            })
+            .collect::<String>();
+        if available_list_names.contains(contact_list_name) {
+            client
+                .delete_contact_list()
+                .contact_list_name(contact_list_name)
+                .send()
+                .await
+                .expect("Error while deleting contact list name\n");
+            println!(
+                "The specified contact list name '{}' has been deleted successfully",
+                contact_list_name.green().bold()
+            );
+        } else {
+            println!(
+                "The contact list named '{}' doesn't exist\n",
+                contact_list_name.red().bold()
+            );
+            println!(
+                "{}\n",
+                "The following lists are in your credentials and region"
+                    .yellow()
+                    .bold()
+            );
+            let contact_lists = self.list_contact_lists().await;
+            for contact_list in contact_lists {
+                println!("    {}", contact_list);
+            }
+            println!("");
+        }
     }
 
     pub async fn create_email_identity(&self, email: &str) {
@@ -413,21 +466,25 @@ impl SesOps {
             );
         }
     }
-    /// Returns true if the email is verified; otherwise, returns false.
-    pub async fn is_email_verfied(&self, email: &str) -> bool {
+    /// Returns Some of true or false if the identity is exist otherwise returns None.
+    pub async fn is_email_verfied(&self, email: &str) -> Option<bool> {
         let config = self.get_config();
         let client = SesClient::new(config);
-
-        let client = client
-            .get_email_identity()
-            .email_identity(email)
-            .send()
-            .await
-            .expect("Error while Creating Email Identity\n");
-        if client.verified_for_sending_status() {
-            true
+        let email_identies = self.retrieve_emails_from_list_email_identities().await;
+        if !email_identies.contains(email) {
+            let client = client
+                .get_email_identity()
+                .email_identity(email)
+                .send()
+                .await
+                .expect("Error while Creating Email Identity\n");
+            if client.verified_for_sending_status() {
+                Some(true)
+            } else {
+                Some(false)
+            }
         } else {
-            false
+            None
         }
     }
     /// This helper function retrieves the emails from the provided contact list name,
@@ -860,28 +917,41 @@ impl SesOps {
                 'go: for email in emails.iter() {
                     if email_identies.contains(email) {
                         let is_email_verified = self.is_email_verfied(&email).await;
-                        if is_email_verified {
-                            let name = email.chars().take(9).collect::<String>();
-                            let data = load_json.replace("email", email);
-                            let data = data.replace("name", &name);
-                            let template =
-                                TemplateMail::builder(self.get_template_name().as_str(), &data)
+                        match is_email_verified {
+                            Some(status) => {
+                                if status {
+                                    let name = email.chars().take(9).collect::<String>();
+                                    let data = load_json.replace("email", email);
+                                    let data = data.replace("name", &name);
+                                    let template = TemplateMail::builder(
+                                        self.get_template_name().as_str(),
+                                        &data,
+                                    )
                                     .build();
-                            self.send_mono_email(
-                                email,
-                                Template_(template),
-                                Some(&self.get_from_address()),
-                            )
-                            .await
-                            .send()
-                            .await
-                            .expect("Error while executing Send_bulk_templated_emails\n");
-                            let colored_email = email.green().bold();
-                            let colored_template_data = data.green().bold();
-                            println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n");
-                        } else {
-                            println!("The email address '{}' in the list hasn't been verified, yet it continues to send templated emails to other verified email addresses in the list\n",email.bright_red().bold());
-                            continue 'go;
+                                    self.send_mono_email(
+                                        email,
+                                        Template_(template),
+                                        Some(&self.get_from_address()),
+                                    )
+                                    .await
+                                    .send()
+                                    .await
+                                    .expect("Error while executing Send_bulk_templated_emails\n");
+                                    let colored_email = email.green().bold();
+                                    let colored_template_data = data.green().bold();
+                                    println!("The template mail is send to: {colored_email} \nand the template data is: {colored_template_data}\n");
+                                } else {
+                                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send templated emails to other verified email addresses in the list\n",email.bright_red().bold());
+                                    continue 'go;
+                                }
+                            }
+                            None => {
+                                println!(
+                                    "The email identity for '{}' does not exist",
+                                    email.red().bold()
+                                );
+                                println!("{}\n","Please use the 'Create Email Identity' option or function to establish an identity for this email".yellow().bold());
+                            }
                         }
                     } else {
                         println!("The email address '{}' in this list doesn't have an identity; therefore, it creates an identity by executing the 'Create Email Identity' option on your behalf\n",email.yellow().bold());
@@ -918,22 +988,33 @@ impl SesOps {
                 'go: for email in emails.into_iter() {
                     if email_identies.contains(&email) {
                         let is_email_verified = self.is_email_verfied(&email).await;
-                        if is_email_verified {
-                            let email_content_ = email_content.clone();
-                            self.send_mono_email(&email, Simple_(email_content_), from_address)
-                                .await
-                                .send()
-                                .await
-                                .map(|_| {
-                                    let colored_email = email.green().bold();
-                                    println!(
-                                        "Simple Email Content is send to {colored_email} successfully\n"
-                                    )
-                                })
-                                .expect(&colored_error);
-                        } else {
-                            println!("The email address '{}' in the list hasn't been verified, yet it continues to send Simple Emails to other verified email addresses in the list\n",email.bright_red().bold());
-                            continue 'go;
+                        match is_email_verified {
+                            Some(status) => {
+                                if status {
+                                    let email_content_ = email_content.clone();
+                                    self.send_mono_email(&email, Simple_(email_content_), from_address)
+                                        .await
+                                        .send()
+                                        .await
+                                        .map(|_| {
+                                            let colored_email = email.green().bold();
+                                            println!(
+                                                "Simple Email Content is send to {colored_email} successfully\n"
+                                            )
+                                        })
+                                        .expect(&colored_error);
+                                } else {
+                                    println!("The email address '{}' in the list hasn't been verified, yet it continues to send Simple Emails to other verified email addresses in the list\n",email.bright_red().bold());
+                                    continue 'go;
+                                }
+                            }
+                            None => {
+                                println!(
+                                    "The email identity for '{}' does not exist",
+                                    email.red().bold()
+                                );
+                                println!("{}\n","Please use the 'Create Email Identity' option or function to establish an identity for this email".yellow().bold());
+                            }
                         }
                     } else {
                         println!("The email address '{}' in this list doesn't have an identity; therefore, it creates an identity by executing the 'Create Email Identity' option on your behalf\n",email.yellow().bold());
