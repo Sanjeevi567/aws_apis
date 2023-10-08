@@ -94,7 +94,7 @@ impl SesOps {
                     .red()
                     .bold()
             );
-            println!("1) You may not have the proper credentials to execute this operation.\nYou need the following permissions: '{}' and '{}'","ses:CreateContactList".yellow().bold(),"ses:ListContactLists".yellow().bold());
+            println!("1) You may not have the proper credentials or region to execute this operation.\nYou need the following permissions: '{}' and '{}'","ses:CreateContactList".yellow().bold(),"ses:ListContactLists".yellow().bold());
             println!("{}\n","2) Only one contact list name per account or region can be created.\nHere is the contact list name in your account and region, if there is any".yellow().bold());
             let lists = self.list_contact_lists().await;
             for list in lists {
@@ -535,7 +535,7 @@ impl SesOps {
             let available_list_names = self.list_contact_lists().await;
             println!(
                 "{}\n",
-                "Only the contact list names below are available on your credentials"
+                "Only the contact list names below are available on your credentials or region"
                     .yellow()
                     .bold()
             );
@@ -670,7 +670,7 @@ impl SesOps {
             println!("{}", "Try using different template name".yellow().bold());
             println!(
                 "{}\n",
-                "Below are the available template names in your credentials and region"
+                "Below are the available template names in your credentials or region"
                     .yellow()
                     .bold()
             );
@@ -734,7 +734,7 @@ impl SesOps {
             );
             println!(
                 "{}\n",
-                "Here are the available template names in your credentials and region"
+                "Here are the available template names in your credentials or region"
                     .yellow()
                     .bold()
             );
@@ -784,7 +784,7 @@ impl SesOps {
             );
             println!(
                 "{}\n",
-                "Here are the available template names in your credentials and region"
+                "Here are the available template names in your credentials or region"
                     .yellow()
                     .bold()
             );
