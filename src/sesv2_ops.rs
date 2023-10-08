@@ -474,7 +474,7 @@ impl SesOps {
         let config = self.get_config();
         let client = SesClient::new(config);
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
-        if !email_identies.contains(email) {
+        if email_identies.contains(email) {
             let client = client
                 .get_email_identity()
                 .email_identity(email)
