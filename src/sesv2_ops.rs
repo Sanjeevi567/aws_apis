@@ -100,6 +100,9 @@ impl SesOps {
             for list in lists {
                 println!("    {}", list.green().bold());
             }
+            println!("");
+            println!("{}","If you see anything, you must delete it before creating a new contact list name".yellow().bold());
+            println!("{}\n","Please note that deleting a contact list name will also delete all the emails in that list".red().bold());
         }
     }
     pub async fn list_contact_lists(&self) -> Vec<String> {
