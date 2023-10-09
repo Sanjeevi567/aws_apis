@@ -157,7 +157,7 @@ impl SesOps {
                     vec_of_identity_info.push(identity_name);
                 }
                 let sending_enabled = format!("{}", info.sending_enabled);
-                let buf = format!("Is Sending Enables: {sending_enabled}");
+                let buf = format!("Is Sending Enabled: {sending_enabled}");
                 file.write_all(buf.as_bytes()).unwrap();
                 vec_of_identity_info.push(sending_enabled);
                 if let Some(status) = info.verification_status {
@@ -174,21 +174,7 @@ impl SesOps {
         }
         vec_of_identity_info
     }
-    pub async fn writing_email_identies_details_as_text_pdf(&self) {
-        let headers = vec![
-            "Identity Type",
-            "Identity Name",
-            "Is Sending Enabled",
-            "Verification Status",
-        ];
-        let identities = self.list_email_identity().await;
-        let region_name = self
-            .get_config()
-            .region()
-            .map(|region| region.as_ref())
-            .unwrap_or("No Region is found");
-        create_email_identities_pdf(&headers, identities, region_name);
-    }
+
     pub async fn delete_contact_list_name(&self, contact_list_name: &str) {
         let config = self.get_config();
         let client = SesClient::new(config);
@@ -577,23 +563,65 @@ impl SesOps {
         let emails = self.retrieve_emails_from_provided_list(list_name).await;
         match emails {
             Some(emails) => {
+                let email_identities = self.retrieve_emails_from_list_email_identities().await;
                 let mut file = OpenOptions::new()
                     .create(true)
                     .write(true)
                     .read(true)
                     .open("./emails.txt")
                     .unwrap();
-                let mut vector_of_email = Vec::new();
+                let headers = vec![
+                    "Identity Type",
+                    "Identity Name",
+                    "Is Sending Enabled",
+                    "Verification Status",
+                ];
+                let mut vector_of_email_with_status = Vec::new();
                 writeln!(file, "Emails\n").unwrap();
-                emails.iter().for_each(|email| {
+                for email in emails {
                     writeln!(file, "{email}\n").unwrap();
-                    let data = format!("{email}");
-                    vector_of_email.push(data);
-                });
-                println!(
-                "{}\n",
-                "Emails are written to a file called 'emails.txt'\n To view the emails, please check the current directory".green().bold()
-            );
+                    if email_identities.contains(&email) {
+                        let client = SesClient::new(self.get_config());
+                        let info = client
+                            .get_email_identity()
+                            .email_identity(&email)
+                            .send()
+                            .await
+                            .expect("Error while getting email identity\n");
+
+                        if let Some(identity_type) = info.identity_type {
+                            let type_ = identity_type.as_str().to_string();
+                            let buf = format!("Identity Type: {type_}");
+                            file.write_all(buf.as_bytes()).unwrap();
+                            vector_of_email_with_status.push(type_);
+                        }
+                        vector_of_email_with_status.push(email);
+                        let sending_enabled = format!("{}", info.verified_for_sending_status);
+                        let buf = format!("Is Sending Enabled: {sending_enabled}");
+                        file.write_all(buf.as_bytes()).unwrap();
+                        vector_of_email_with_status.push(sending_enabled);
+
+                        if let Some(status) = info.verification_status {
+                            let status = status.as_str().to_string();
+                            let buf = format!("Verification Status: {status}\n\n");
+                            file.write_all(buf.as_bytes()).unwrap();
+                            vector_of_email_with_status.push(status);
+                        }
+                    } else {
+                        vector_of_email_with_status.push("No Identity Exists".into());
+                        vector_of_email_with_status.push(email);
+                        vector_of_email_with_status.push("No Identity Exists".into());
+                        vector_of_email_with_status.push("No Identity Exists".into());
+                    }
+                }
+                match File::open("emails.txt") {
+                    Ok(_) => println!(
+                        "{}\n",
+                        "Emails are written to a file called 'emails.txt'\n To view the emails, please check the current directory".green().bold()
+                    ),
+                    Err(_) => println!("{}\n", "Error while writing file".red().bold()),
+                }
+
                 let get_list_name =
                     var("LIST_NAME").unwrap_or("No 'LIST_NAME' environment variable found".into());
                 let list_name = list_name.unwrap_or(&get_list_name);
@@ -602,10 +630,25 @@ impl SesOps {
                     .region()
                     .map(|region| region.as_ref())
                     .unwrap_or("No region is found in the Credential");
-                create_email_pdf(vector_of_email, list_name, region_name);
+                create_email_pdf(&headers,vector_of_email_with_status, list_name, region_name);
             }
             None => {}
         }
+    }
+    pub async fn writing_email_identies_details_as_text_pdf(&self) {
+        let headers = vec![
+            "Identity Type",
+            "Identity Name",
+            "Is Sending Enabled",
+            "Verification Status",
+        ];
+        let identities = self.list_email_identity().await;
+        let region_name = self
+            .get_config()
+            .region()
+            .map(|region| region.as_ref())
+            .unwrap_or("No Region is found");
+        create_email_identities_pdf(&headers, identities, region_name);
     }
 
     /// This only works when production access is enabled, i.e., in a paid AWS service, instead of a trial version that has not been tested.

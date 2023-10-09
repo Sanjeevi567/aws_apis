@@ -88,9 +88,9 @@ fn create_table_with_one_column(header: &str) -> TableLayout {
     table.row().element(Break::new(1.0)).push().unwrap();
     table
 }
-pub fn create_email_pdf(emails: Vec<String>, contact_list_name: &str, region_name: &str) {
-    let mut table = create_table_with_one_column("Emails");
-    push_table_data_emails(emails, &mut table);
+pub fn create_email_pdf(headers: &Vec<&str>,emails_with_status: Vec<String>, contact_list_name: &str, region_name: &str) {
+    let mut table = create_table("Identity Info", "Identity Values");
+    push_table_data_emails(headers,emails_with_status, &mut table);
     let mut document = build_document();
     document_configuration(&mut document, "Email List", "Emails in the Specified List");
     document.push(Break::new(1.0));
@@ -106,26 +106,35 @@ pub fn create_email_pdf(emails: Vec<String>, contact_list_name: &str, region_nam
     );
     document.push(Break::new(1.0));
     document.push(table);
-    match document.render_to_file("Emails.pdf") {
+    match document.render_to_file("EmailsList.pdf") {
         Ok(_) => println!(
             "The '{}' is also generated with the name {} in the current directory\n",
             "PDF".green().bold(),
-            "'Emails.pdf'".green().bold()
+            "'EmailsList.pdf'".green().bold()
         ),
         Err(_) => println!(
             "{}\n",
-            "Error while generating Email 'PDF'".bright_red().bold()
+            "Error while generating Email List 'PDF'".bright_red().bold()
         ),
     }
 }
-fn push_table_data_emails(emails: Vec<String>, table: &mut TableLayout) {
-    for email in emails.iter() {
+fn push_table_data_emails(
+    headers: &Vec<&str>,
+    emails_with_status: Vec<String>,
+    table: &mut TableLayout,
+) {
+    for (header,email_with_status) in emails_with_status.into_iter().zip(headers.into_iter().cycle()) {
         table
             .row()
             .element(
-                Paragraph::new(format!("{}", email))
+                Paragraph::new(format!("{}", header))
                     .aligned(Alignment::Center)
                     .styled(Style::new().with_color(Color::Rgb(34, 91, 247)).bold()),
+            )
+            .element(
+                Paragraph::new(format!("{}", email_with_status))
+                    .aligned(Alignment::Center)
+                    .styled(Style::new().with_color(Color::Rgb(208, 97, 0)).bold()),
             )
             .push()
             .unwrap();
