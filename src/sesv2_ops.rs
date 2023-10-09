@@ -212,7 +212,7 @@ impl SesOps {
         let config = self.get_config();
         let client = SesClient::new(config);
         let available_email_identities = self.retrieve_emails_from_list_email_identities().await;
-        if !available_email_identities.is_empty() && !available_email_identities.contains(email) {
+        if !available_email_identities.contains(email) {
             client
                 .create_email_identity()
                 .email_identity(email)
@@ -455,7 +455,6 @@ impl SesOps {
             None => self.get_list_name(),
         };
         let available_contacts = self.get_contacts_in_the_list(list_name).await;
-        if !available_contacts.is_empty() {
             if !available_contacts.contains(email) {
                 let client = client
                     .create_contact()
@@ -497,9 +496,6 @@ impl SesOps {
                 );
                 println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
             }
-        } else {
-            println!("{}\n", "the contact is empty".red().bold())
-        }
     }
 
     /// Sometimes, we may not want to verify it immediately; instead, we simply want
@@ -518,7 +514,6 @@ impl SesOps {
             None => self.get_list_name(),
         };
         let contacts = self.get_contacts_in_the_list(list_name).await;
-        if !contacts.is_empty() {
             if !contacts.contains(email) {
                 let client = client
                     .create_contact()
@@ -543,16 +538,13 @@ impl SesOps {
                 );
                 println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
             }
-        } else {
-            println!("{}\n", "The contact is empty".red().bold())
-        }
     }
     /// Returns Some of true or false if the identity is exist otherwise returns None.
     pub async fn is_email_verfied(&self, email: &str) -> Option<bool> {
         let config = self.get_config();
         let client = SesClient::new(config);
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
-        if !email_identies.is_empty() && email_identies.contains(email) {
+        if email_identies.contains(email) {
             let client = client
                 .get_email_identity()
                 .email_identity(email)
@@ -683,7 +675,7 @@ impl SesOps {
                 writeln!(file, "Emails\n").unwrap();
                 for email in emails {
                     writeln!(file, "{email}\n").unwrap();
-                    if !email_identities.is_empty() && email_identities.contains(&email) {
+                    if email_identities.contains(&email) {
                         let client = SesClient::new(self.get_config());
                         let info = client
                             .get_email_identity()
@@ -1050,7 +1042,7 @@ impl SesOps {
     ) -> Result<SendEmailFluentBuilder, String> {
         let client = SesClient::new(self.get_config());
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
-        if !email_identies.is_empty() && email_identies.contains(email) {
+        if email_identies.contains(email) {
             let is_email_verified = self.is_email_verfied(&email).await;
             match is_email_verified {
                 Some(status) => {
@@ -1112,7 +1104,7 @@ impl SesOps {
                 let email_identies = self.retrieve_emails_from_list_email_identities().await;
                 let load_json = include_str!("./assets/template_data.json").to_string();
                 'go: for email in emails.iter() {
-                    if !email_identies.is_empty() && email_identies.contains(email) {
+                    if email_identies.contains(email) {
                         let is_email_verified = self.is_email_verfied(&email).await;
                         match is_email_verified {
                             Some(status) => {
@@ -1190,7 +1182,7 @@ impl SesOps {
                 let email_content = data.build();
                 let email_identies = self.retrieve_emails_from_list_email_identities().await;
                 'go: for email in emails.into_iter() {
-                    if !email_identies.is_empty() && email_identies.contains(&email) {
+                    if email_identies.contains(&email) {
                         let is_email_verified = self.is_email_verfied(&email).await;
                         match is_email_verified {
                             Some(status) => {
