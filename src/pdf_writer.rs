@@ -88,9 +88,14 @@ fn create_table_with_one_column(header: &str) -> TableLayout {
     table.row().element(Break::new(1.0)).push().unwrap();
     table
 }
-pub fn create_email_pdf(headers: &Vec<&str>,emails_with_status: Vec<String>, contact_list_name: &str, region_name: &str) {
+pub fn create_email_pdf(
+    headers: &Vec<&str>,
+    emails_with_status: Vec<String>,
+    contact_list_name: &str,
+    region_name: &str,
+) {
     let mut table = create_table("Identity Info", "Identity Values");
-    push_table_data_emails(headers,emails_with_status, &mut table);
+    push_table_data_emails(headers, emails_with_status, &mut table);
     let mut document = build_document();
     document_configuration(&mut document, "Email List", "Emails in the Specified List");
     document.push(Break::new(1.0));
@@ -114,7 +119,9 @@ pub fn create_email_pdf(headers: &Vec<&str>,emails_with_status: Vec<String>, con
         ),
         Err(_) => println!(
             "{}\n",
-            "Error while generating Email List 'PDF'".bright_red().bold()
+            "Error while generating Email List 'PDF'"
+                .bright_red()
+                .bold()
         ),
     }
 }
@@ -123,7 +130,11 @@ fn push_table_data_emails(
     emails_with_status: Vec<String>,
     table: &mut TableLayout,
 ) {
-    for (header,email_with_status) in emails_with_status.into_iter().zip(headers.into_iter().cycle()) {
+    let mut count = 0;
+    for (email_with_status, header) in emails_with_status
+        .into_iter()
+        .zip(headers.into_iter().cycle())
+    {
         table
             .row()
             .element(
@@ -138,6 +149,15 @@ fn push_table_data_emails(
             )
             .push()
             .unwrap();
+        count += 1;
+        if count % 4 == 0 {
+            table
+                .row()
+                .element(Break::new(1.0))
+                .element(Break::new(1.0))
+                .push()
+                .unwrap();
+        }
     }
 }
 //create tempdir/ before calling this function.

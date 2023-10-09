@@ -420,7 +420,7 @@ impl SesOps {
             None => self.get_list_name(),
         };
         let contacts = self.get_contacts_in_the_list(list_name).await;
-        if contacts.contains(email) {
+        if !contacts.contains(email) {
             let client = client
                 .create_contact()
                 .contact_list_name(&default_list_name)
@@ -630,7 +630,12 @@ impl SesOps {
                     .region()
                     .map(|region| region.as_ref())
                     .unwrap_or("No region is found in the Credential");
-                create_email_pdf(&headers,vector_of_email_with_status, list_name, region_name);
+                create_email_pdf(
+                    &headers,
+                    vector_of_email_with_status,
+                    list_name,
+                    region_name,
+                );
             }
             None => {}
         }
