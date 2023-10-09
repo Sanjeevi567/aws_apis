@@ -52,3 +52,6 @@ aws-sdk-translate = "0.31.1"
 # This is particularly useful for providing information about the template during updates. It is also utilized in 
 #the utility function called get_template_variables within S3 operations
 regex ="1.9.5"
+
+
+inquire ="0.6.2"

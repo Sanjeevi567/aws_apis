@@ -1,7 +1,7 @@
 use crate::{create_email_identities_pdf, create_email_pdf};
 
 use self::SimpleOrTemplate::{Simple_, Template_};
-use aws_config::SdkConfig;
+use aws_config::{imds::client, SdkConfig};
 use aws_sdk_sesv2 as sesv2;
 use colored::Colorize;
 use dotenv::dotenv;
@@ -111,7 +111,7 @@ impl SesOps {
         }
     }
     pub async fn list_contact_lists(&self) -> Vec<String> {
-        let config = self.get_config();
+        let config: &SdkConfig = self.get_config();
         let client = SesClient::new(config);
         let outputs = client
             .list_contact_lists()
@@ -212,7 +212,7 @@ impl SesOps {
         let config = self.get_config();
         let client = SesClient::new(config);
         let available_email_identities = self.retrieve_emails_from_list_email_identities().await;
-        if !available_email_identities.contains(email) {
+        if !available_email_identities.is_empty() && !available_email_identities.contains(email) {
             client
                 .create_email_identity()
                 .email_identity(email)
@@ -271,21 +271,114 @@ impl SesOps {
             self.create_email_identity(identity).await;
         }
     }
-    pub async fn delete_contact(&self, email: &str, list_name: Option<String>) {
+    pub async fn delete_contact(&self, email: &str, list_name: Option<&str>, write_info: bool) {
         let config = self.get_config();
         let client = SesClient::new(config);
-        let list_name = list_name.unwrap_or(self.get_list_name());
-        client
-            .delete_contact()
-            .contact_list_name(&list_name)
-            .email_address(email)
-            .send()
+        if self
+            .is_contact_list_name_exist(list_name.unwrap_or(&self.get_list_name()))
             .await
-            .expect("Error while deleting Email Contact\n");
-        println!(
-            "The provided contact '{}' has been deleted successfully\n",
-            email.green().bold()
-        );
+        {
+            let available_contacts = self.get_contacts_in_the_list(list_name).await;
+            if !available_contacts.is_empty() {
+                if available_contacts.contains(email) {
+                    client
+                        .delete_contact()
+                        .contact_list_name(list_name.unwrap_or(&self.get_list_name()))
+                        .email_address(email)
+                        .send()
+                        .await
+                        .expect("Error while deleting Email Contact\n");
+                    if write_info {
+                        println!(
+                            "The provided contact '{}' has been deleted successfully\n",
+                            email.green().bold()
+                        );
+                    }
+                } else {
+                    println!(
+                        "There is no contact named '{}' existing in the Contact List named '{}'",
+                        email.red().bold(),
+                        list_name.unwrap_or(&self.get_list_name()).yellow().bold()
+                    );
+                    println!("{}\n","Please execute the 'Retrieve emails from the provided list' option to identify the emails in your list".yellow().bold());
+                }
+            } else {
+                println!(
+                    "{}",
+                    "There are no contact to delete because none are available"
+                        .red()
+                        .bold()
+                );
+                println!("{}\n","Please add emails using the 'Add an email to the list' option and then execute this task".yellow().bold());
+            }
+        } else {
+            println!(
+                "The provided Contact List Name '{}' doesn't exist",
+                list_name.unwrap_or(&self.get_list_name()).red().bold()
+            );
+            println!(
+                "{}\n",
+                "The contact list name below is available in your credentials or region if any"
+                    .yellow()
+                    .bold()
+            );
+            let contact_lists = self.list_contact_lists().await;
+            for contact_list in contact_lists {
+                println!("    {}", contact_list.green().bold());
+            }
+            println!("");
+        }
+    }
+    pub async fn delete_contacts(&self, list_name: Option<&str>) {
+        if self
+            .is_contact_list_name_exist(list_name.unwrap_or(&self.get_list_name()))
+            .await
+        {
+            let avaialble_contacts = self.get_contacts_in_the_list(list_name).await;
+            if !avaialble_contacts.is_empty() {
+                for contact in avaialble_contacts.split(" ") {
+                    if !contact.is_empty() {
+                        let client = SesClient::new(self.get_config());
+                        client
+                            .delete_contact()
+                            .contact_list_name(list_name.unwrap_or(&self.get_list_name()))
+                            .email_address(contact)
+                            .send()
+                            .await
+                            .expect("Error while deleting contacts\n");
+                    }
+                }
+                println!(
+                    "All the contacts have been deleted from the contact list named '{}'",
+                    list_name.unwrap_or(&self.get_list_name()).green().bold()
+                );
+                println!("{}\n","You can verify this by executing 'Retrieve emails from the provided list' where you should receive an empty text or PDF file if you see this message".yellow().bold());
+            } else {
+                println!(
+                    "{}",
+                    "There are no contacts to delete because none are available"
+                        .red()
+                        .bold()
+                );
+                println!("{}\n","Please add emails using the 'Add an email to the list' option and then execute this task".yellow().bold());
+            }
+        } else {
+            println!(
+                "The provided Contact List Name '{}' doesn't exist",
+                list_name.unwrap_or(&self.get_list_name()).red().bold()
+            );
+            println!(
+                "{}\n",
+                "The contact list name below is available in your credentials or region if any"
+                    .yellow()
+                    .bold()
+            );
+            let contact_lists = self.list_contact_lists().await;
+            for contact_list in contact_lists {
+                println!("    {}", contact_list.green().bold());
+            }
+            println!("");
+        }
     }
 
     pub async fn get_emails_given_list_name(&self, list_name: Option<&str>) -> Option<String> {
@@ -319,7 +412,7 @@ impl SesOps {
             Some(emails)
         } else {
             println!(
-                "The provided list name '{}' doesn't exist",
+                "The provided Contact List Name '{}' doesn't exist",
                 list_name
                     .unwrap_or(self.get_list_name().as_str())
                     .red()
@@ -362,46 +455,50 @@ impl SesOps {
             None => self.get_list_name(),
         };
         let available_contacts = self.get_contacts_in_the_list(list_name).await;
-        if !available_contacts.contains(email) {
-            let client = client
-                .create_contact()
-                .contact_list_name(&default_list_name)
-                .email_address(email);
-            let colored_error_outside = "Error from create_email_contact_with_verification"
-                .red()
-                .bold();
+        if !available_contacts.is_empty() {
+            if !available_contacts.contains(email) {
+                let client = client
+                    .create_contact()
+                    .contact_list_name(&default_list_name)
+                    .email_address(email);
+                let colored_error_outside = "Error from create_email_contact_with_verification"
+                    .red()
+                    .bold();
 
-            client
-            .send()
-            .await
-            .map(|_| async {
-                let colored_email = email.green().bold();
-                let colored_list_name = default_list_name.green().bold();
+                client
+                .send()
+                .await
+                .map(|_| async {
+                    let colored_email = email.green().bold();
+                    let colored_list_name = default_list_name.green().bold();
+                    println!(
+                        "The email address {colored_email} has been added to the contact list named: {}\n",
+                        colored_list_name
+                    );
+                    let email_identies = self.retrieve_emails_from_list_email_identities().await;
+                    if !email_identies.contains(email){
+                        self.create_email_identity(email).await;
+                    }else {
+                        println!("The email '{}' already has an email identity",email.yellow().bold());
+                        println!("But we are sending a verification email again for this email\n");
+                        let client = SesClient::new(self.get_config());
+                        client.delete_email_identity().email_identity(email).send().await.expect("Error while deleting email identity\n");
+                        client.create_email_identity().email_identity(email).send().await.expect("Error while creating email identity\n");
+                        println!("The verification email has been sent to: {}",email.green().bold());
+                    }
+                })
+                .expect(&colored_error_outside)
+                .await;
+            } else {
                 println!(
-                    "The email address {colored_email} has been added to the contact list named: {}\n",
-                    colored_list_name
+                    "The email contact '{}' already exists in the given list '{}'",
+                    email.yellow().bold(),
+                    default_list_name.yellow().bold()
                 );
-                let email_identies = self.retrieve_emails_from_list_email_identities().await;
-                if !email_identies.contains(email){
-                    self.create_email_identity(email).await;
-                }else {
-                    println!("The email '{}' already has an email identity",email.yellow().bold());
-                    println!("But we are sending a verification email again for this email\n");
-                    let client = SesClient::new(self.get_config());
-                    client.delete_email_identity().email_identity(email).send().await.expect("Error while deleting email identity\n");
-                    client.create_email_identity().email_identity(email).send().await.expect("Error while creating email identity\n");
-                    println!("The verification email has been sent to: {}",email.green().bold());
-                }
-            })
-            .expect(&colored_error_outside)
-            .await;
+                println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
+            }
         } else {
-            println!(
-                "The email contact '{}' already exists in the given list '{}'",
-                email.yellow().bold(),
-                default_list_name.yellow().bold()
-            );
-            println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
+            println!("{}\n", "the contact is empty".red().bold())
         }
     }
 
@@ -421,29 +518,33 @@ impl SesOps {
             None => self.get_list_name(),
         };
         let contacts = self.get_contacts_in_the_list(list_name).await;
-        if !contacts.contains(email) {
-            let client = client
-                .create_contact()
-                .contact_list_name(&default_list_name)
-                .email_address(email);
+        if !contacts.is_empty() {
+            if !contacts.contains(email) {
+                let client = client
+                    .create_contact()
+                    .contact_list_name(&default_list_name)
+                    .email_address(email);
 
-            let colored_error = "Error from create_email_contact_without_verification\n"
-                .red()
-                .bold();
+                let colored_error = "Error from create_email_contact_without_verification\n"
+                    .red()
+                    .bold();
 
-            client.send().await.expect(&colored_error);
+                client.send().await.expect(&colored_error);
 
-            let colored_email = email.green().bold();
-            let colored_list_name = default_list_name.green().bold();
-            println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n");
-            println!("You must pass the email '{}' to the 'Create Email Identity' option before sending an email to this address",email.yellow().bold());
+                let colored_email = email.green().bold();
+                let colored_list_name = default_list_name.green().bold();
+                println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n");
+                println!("You must pass the email '{}' to the 'Create Email Identity' option before sending an email to this address\n",email.yellow().bold());
+            } else {
+                println!(
+                    "The email contact '{}' already exists in the given list '{}'",
+                    email.yellow().bold(),
+                    default_list_name.yellow().bold()
+                );
+                println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
+            }
         } else {
-            println!(
-                "The email contact '{}' already exists in the given list '{}'",
-                email.yellow().bold(),
-                default_list_name.yellow().bold()
-            );
-            println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
+            println!("{}\n", "The contact is empty".red().bold())
         }
     }
     /// Returns Some of true or false if the identity is exist otherwise returns None.
@@ -451,7 +552,7 @@ impl SesOps {
         let config = self.get_config();
         let client = SesClient::new(config);
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
-        if email_identies.contains(email) {
+        if !email_identies.is_empty() && email_identies.contains(email) {
             let client = client
                 .get_email_identity()
                 .email_identity(email)
@@ -582,7 +683,7 @@ impl SesOps {
                 writeln!(file, "Emails\n").unwrap();
                 for email in emails {
                     writeln!(file, "{email}\n").unwrap();
-                    if email_identities.contains(&email) {
+                    if !email_identities.is_empty() && email_identities.contains(&email) {
                         let client = SesClient::new(self.get_config());
                         let info = client
                             .get_email_identity()
@@ -949,7 +1050,7 @@ impl SesOps {
     ) -> Result<SendEmailFluentBuilder, String> {
         let client = SesClient::new(self.get_config());
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
-        if email_identies.contains(email) {
+        if !email_identies.is_empty() && email_identies.contains(email) {
             let is_email_verified = self.is_email_verfied(&email).await;
             match is_email_verified {
                 Some(status) => {
@@ -1011,7 +1112,7 @@ impl SesOps {
                 let email_identies = self.retrieve_emails_from_list_email_identities().await;
                 let load_json = include_str!("./assets/template_data.json").to_string();
                 'go: for email in emails.iter() {
-                    if email_identies.contains(email) {
+                    if !email_identies.is_empty() && email_identies.contains(email) {
                         let is_email_verified = self.is_email_verfied(&email).await;
                         match is_email_verified {
                             Some(status) => {
@@ -1089,7 +1190,7 @@ impl SesOps {
                 let email_content = data.build();
                 let email_identies = self.retrieve_emails_from_list_email_identities().await;
                 'go: for email in emails.into_iter() {
-                    if email_identies.contains(&email) {
+                    if !email_identies.is_empty() && email_identies.contains(&email) {
                         let is_email_verified = self.is_email_verfied(&email).await;
                         match is_email_verified {
                             Some(status) => {
