@@ -401,6 +401,7 @@ impl SesOps {
                 email.yellow().bold(),
                 default_list_name.yellow().bold()
             );
+            println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
         }
     }
 
@@ -442,6 +443,7 @@ impl SesOps {
                 email.yellow().bold(),
                 default_list_name.yellow().bold()
             );
+            println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
         }
     }
     /// Returns Some of true or false if the identity is exist otherwise returns None.
