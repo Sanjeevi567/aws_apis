@@ -1082,9 +1082,9 @@ impl SesOps {
                         let template_variables = subject_variables + &html_variables;
                         for variable in keys {
                             if template_variables.contains(&variable) {
-                                println!("The template data variable {} in the specified JSON document matches the template variable of template {}", variable.green().bold(),template_name.unwrap_or(&self.get_template_name()).green().bold());
+                                println!("The template data variable {} in the specified JSON document matches the template variable of template {}\n", variable.green().bold(),template_name.unwrap_or(&self.get_template_name()).green().bold());
                             } else {
-                                println!("The variable in the template {} in the given JSON document does not match the variable in the template named {}",variable.red().bold(),template_name.unwrap_or(&self.get_template_name()).red().bold());
+                                println!("The variable in the template {} in the given JSON document does not match the variable in the template named {}\n",variable.red().bold(),template_name.unwrap_or(&self.get_template_name()).red().bold());
                             }
                         }
                         println!("");
