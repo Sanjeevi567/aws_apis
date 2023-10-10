@@ -13,7 +13,7 @@ use sesv2::{
 };
 use std::{
     env::var,
-    fs::{File, OpenOptions},
+    fs::{self, File, OpenOptions},
     io::Write,
 };
 
@@ -455,16 +455,16 @@ impl SesOps {
             None => self.get_list_name(),
         };
         let available_contacts = self.get_contacts_in_the_list(list_name).await;
-            if !available_contacts.contains(email) {
-                let client = client
-                    .create_contact()
-                    .contact_list_name(&default_list_name)
-                    .email_address(email);
-                let colored_error_outside = "Error from create_email_contact_with_verification"
-                    .red()
-                    .bold();
+        if !available_contacts.contains(email) {
+            let client = client
+                .create_contact()
+                .contact_list_name(&default_list_name)
+                .email_address(email);
+            let colored_error_outside = "Error from create_email_contact_with_verification"
+                .red()
+                .bold();
 
-                client
+            client
                 .send()
                 .await
                 .map(|_| async {
@@ -488,14 +488,14 @@ impl SesOps {
                 })
                 .expect(&colored_error_outside)
                 .await;
-            } else {
-                println!(
-                    "The email contact '{}' already exists in the given list '{}'",
-                    email.yellow().bold(),
-                    default_list_name.yellow().bold()
-                );
-                println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
-            }
+        } else {
+            println!(
+                "The email contact '{}' already exists in the given list '{}'",
+                email.yellow().bold(),
+                default_list_name.yellow().bold()
+            );
+            println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
+        }
     }
 
     /// Sometimes, we may not want to verify it immediately; instead, we simply want
@@ -514,30 +514,30 @@ impl SesOps {
             None => self.get_list_name(),
         };
         let contacts = self.get_contacts_in_the_list(list_name).await;
-            if !contacts.contains(email) {
-                let client = client
-                    .create_contact()
-                    .contact_list_name(&default_list_name)
-                    .email_address(email);
+        if !contacts.contains(email) {
+            let client = client
+                .create_contact()
+                .contact_list_name(&default_list_name)
+                .email_address(email);
 
-                let colored_error = "Error from create_email_contact_without_verification\n"
-                    .red()
-                    .bold();
+            let colored_error = "Error from create_email_contact_without_verification\n"
+                .red()
+                .bold();
 
-                client.send().await.expect(&colored_error);
+            client.send().await.expect(&colored_error);
 
-                let colored_email = email.green().bold();
-                let colored_list_name = default_list_name.green().bold();
-                println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n");
-                println!("You must pass the email '{}' to the 'Create Email Identity' option before sending an email to this address\n",email.yellow().bold());
-            } else {
-                println!(
-                    "The email contact '{}' already exists in the given list '{}'",
-                    email.yellow().bold(),
-                    default_list_name.yellow().bold()
-                );
-                println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
-            }
+            let colored_email = email.green().bold();
+            let colored_list_name = default_list_name.green().bold();
+            println!("The email address {colored_email} has been added to the contact list named: {colored_list_name}\n");
+            println!("You must pass the email '{}' to the 'Create Email Identity' option before sending an email to this address\n",email.yellow().bold());
+        } else {
+            println!(
+                "The email contact '{}' already exists in the given list '{}'",
+                email.yellow().bold(),
+                default_list_name.yellow().bold()
+            );
+            println!("{}\n","Use the 'Create Email Identity' option to send a verification email to this address if that's what you want".yellow().bold());
+        }
     }
     /// Returns Some of true or false if the identity is exist otherwise returns None.
     pub async fn is_email_verfied(&self, email: &str) -> Option<bool> {
@@ -1032,6 +1032,73 @@ impl SesOps {
                 .map(|data| data.as_str().to_string())
                 .collect(),
         )
+    }
+    pub async fn match_template_data_with_template(
+        &self,
+        template_name: Option<&str>,
+        template_data_path: &str,
+    ) {
+        let json_keys_pattern = regex::Regex::new(r#""(\w+)"\s*:"#);
+        let template_josn_data = fs::read_to_string(template_data_path)
+            .expect("Error while opening the template data path you specified\n");
+        match json_keys_pattern {
+            Ok(regex) => {
+                let keys = regex
+                    .find_iter(&template_josn_data)
+                    .map(|to_str| {
+                        let remove_quotes = to_str.as_str().to_string();
+                        // println!("{}\n",remove_quotes);
+                        let matches: &[_] = &['"', ':', ' '];
+                        remove_quotes.trim_matches(matches).to_string()
+                    })
+                    .collect::<Vec<String>>();
+                //println!("Template Data Json Keys:\n{}\n", keys.join("\n"));
+                let get_template = self
+                    .get_template_subject_html_and_text(
+                        template_name.unwrap_or(&self.get_template_name()),
+                        false,
+                    )
+                    .await;
+                match get_template {
+                    Some((subject, html, _)) => {
+                        let (subject_variables, html_variables) =
+                            self.get_template_variables_of_subject_and_html_body(&subject, &html);
+                        let subject_variables = subject_variables
+                            .into_iter()
+                            .map(|to_string| {
+                                let mut add_space = to_string;
+                                add_space.push(' ');
+                                add_space
+                            })
+                            .collect::<String>();
+                        let html_variables = html_variables
+                            .into_iter()
+                            .map(|to_string| {
+                                let mut add_space = to_string;
+                                add_space.push(' ');
+                                add_space
+                            })
+                            .collect::<String>();
+                        let template_variables = subject_variables + &html_variables;
+                        for variable in keys {
+                            if template_variables.contains(&variable) {
+                                println!("The template data variable {} in the specified JSON document matches the template variable of template {}", variable.green().bold(),template_name.unwrap_or(&self.get_template_name()).yellow().bold());
+                            } else {
+                                println!("The variable in the template {} in the given JSON document does not match the variable in the template named {}\n",variable.red().bold(),template_name.unwrap_or(&self.get_template_name()).yellow().bold());
+                            }
+                        }
+                        println!("{}\n","This option will not match the spaces around the keys. Execute the 'Get Email Template Variables' option to see the template variables".yellow().bold());
+                    }
+                    None => {}
+                }
+            }
+            Err(_) => println!(
+                "{}\n",
+                "Error while parsing the template json you specified"
+                    .red()
+                    .bold()
+            ),
+        }
     }
     /// Create a helper function for sending single emails, allowing other parts of the code or users to customize it for sending bulk emails
     pub async fn send_mono_email(
