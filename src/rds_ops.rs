@@ -7,10 +7,10 @@ use colored::Colorize;
 use dotenv::dotenv;
 use std::env::var;
 #[derive(Debug)]
-pub struct RdsOps<'a>{
+pub struct RdsOps<'a> {
     config: &'a SdkConfig,
 }
-impl<'a> RdsOps<'a>{
+impl<'a> RdsOps<'a> {
     pub fn build(config: &'a SdkConfig) -> Self {
         Self { config: config }
     }

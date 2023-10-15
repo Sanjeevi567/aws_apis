@@ -25,7 +25,7 @@ use crate::{
     pdf_writer::{create_face_result_pdf, create_text_only_pdf, create_text_result_pdf},
 };
 
-pub struct RekognitionOps<'a>{
+pub struct RekognitionOps<'a> {
     config: &'a SdkConfig,
 }
 impl<'a> RekognitionOps<'a> {

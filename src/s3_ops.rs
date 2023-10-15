@@ -26,7 +26,6 @@ pub struct S3Ops<'a> {
     config: &'a SdkConfig,
 }
 impl<'a> S3Ops<'a> {
-
     /// This function accepts an [`SdkConfig`](https://docs.rs/aws-config/latest/aws_config/struct.SdkConfig.html), retrieves the region name from it if
     /// available; otherwise, it sets it to an empty string and then constructs a S3Ops instance   
     pub fn build(config: &'a SdkConfig) -> Self {

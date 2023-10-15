@@ -2,7 +2,7 @@ use aws_config::SdkConfig;
 use aws_sdk_route53::Client as Route53Client;
 use colored::Colorize;
 
-pub struct Route53Ops<'a>{
+pub struct Route53Ops<'a> {
     config: &'a SdkConfig,
 }
 impl<'a> Route53Ops<'a> {

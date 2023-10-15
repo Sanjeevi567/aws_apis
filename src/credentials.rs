@@ -19,7 +19,6 @@ pub struct CredentInitialize {
 /// them later.
 impl CredentInitialize {
     pub fn update(&mut self, access_id: &str, secret_key: &str, region: Option<&str>) {
-        //Hardcoding the credential information
         self.access_id = Some(access_id.into());
         self.secret_key = Some(secret_key.into());
         self.region = match region {
@@ -52,38 +51,18 @@ impl CredentInitialize {
     pub fn build(&mut self) -> SdkConfig {
         self.credential()
     }
-    pub fn get_credentials(&self) -> Vec<String> {
-        let access_key = self
-            .access_id
-            // Clone the data because we cannot move it out from the shared reference,
-            // and we also do not want to invalidate the credential just to view it.
-            .clone()
-            .and_then(|mut access_key| {
-                access_key.push_str(" Access Key");
-                Some(access_key)
-            })
-            .expect("The access key must be exist , try to verfify credential first\n");
-
-        let secret_key = self
-            .secret_key
-            .clone()
-            .and_then(|mut secret_key| {
-                secret_key.push_str(" Secret Access Key");
-                Some(secret_key)
-            })
-            .expect("The Secret key must be exist, try to verfiy credential\n");
-
-        let region = self
-            .region
-            .clone()
-            .and_then(|mut region| {
-                region.push_str(" Region");
-                Some(region)
-            })
-            .expect("To use the services, you must set the region.\n");
-        vec![access_key, secret_key, region]
+    pub fn print_credentials(&self) {
+        match (self.access_id.as_deref(), self.secret_key.as_deref()) {
+            (Some(access_id), Some(secret_key)) => {
+                println!("Access Key Id: {}", access_id.green().bold());
+                println!("Secret AccessKey Id: {}", secret_key.green().bold());
+            }
+            _ => {}
+        }
+        if let Some(region) = self.region.as_deref() {
+            println!("Region: {}\n", region.green().bold());
+        }
     }
-
     pub fn get_region_name(&self) -> String {
         dotenv().ok();
         var("REGION").unwrap_or("The region value is read from the .env file in the current directory if it is not provided in the credential file.".into())

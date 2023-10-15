@@ -282,7 +282,6 @@ impl<'a> MemDbOps<'a> {
     }
 
     pub async fn delete_acl(&self, acl_name: &str) -> AclInfo {
-
         let client = MemDbClient::new(self.config);
 
         let delete_acl = client

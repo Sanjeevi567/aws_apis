@@ -12,7 +12,7 @@ use std::{
 };
 
 use crate::{create_translated_text_pdf, create_translation_language_details_pdf};
-pub struct TranslateOps<'a>{
+pub struct TranslateOps<'a> {
     config: &'a SdkConfig,
 }
 impl<'a> TranslateOps<'a> {
