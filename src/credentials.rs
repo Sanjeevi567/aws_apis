@@ -57,10 +57,24 @@ impl CredentInitialize {
                 println!("Access Key Id: {}", access_id.green().bold());
                 println!("Secret AccessKey Id: {}", secret_key.green().bold());
             }
-            _ => {}
+            _ => {
+                println!(
+                    "{}",
+                    "No Access key and Secret Access Key found".red().bold()
+                );
+                println!(
+                    "{}\n",
+                    "Please try the 'Verify Credentials' option first"
+                        .yellow()
+                        .bold()
+                );
+            }
         }
         if let Some(region) = self.region.as_deref() {
             println!("Region: {}\n", region.green().bold());
+        } else {
+            println!("{}", "No region is found".red().bold());
+            println!("{}\n","Please try the 'Verify Credentials' option first, and ensure that the credentials include the 'region' environment variable".yellow().bold());
         }
     }
     pub fn get_region_name(&self) -> String {
