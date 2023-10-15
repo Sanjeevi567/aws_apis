@@ -7,15 +7,12 @@ use colored::Colorize;
 use dotenv::dotenv;
 use std::env::var;
 #[derive(Debug)]
-pub struct RdsOps {
-    config: SdkConfig,
+pub struct RdsOps<'a>{
+    config: &'a SdkConfig,
 }
-impl RdsOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> RdsOps<'a>{
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config: config }
-    }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
     }
 
     /// Operations trigger panics prematurely when default error messages are absent
@@ -39,8 +36,7 @@ impl RdsOps {
         allocated_storage: i32,
         storage_type: &str,
     ) {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let status = client.create_db_instance()
                     .db_name(db_name)
@@ -82,8 +78,7 @@ impl RdsOps {
         &self,
         db_instance_identifier: Option<&str>,
     ) -> DbInstanceInfo {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
@@ -119,8 +114,7 @@ impl RdsOps {
         &self,
         db_instance_identifier: Option<&str>,
     ) -> Option<String> {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
@@ -147,8 +141,7 @@ impl RdsOps {
 
     /// Returns the status of db instance if it successfully start the db_instance
     pub async fn start_db_instance(&self, db_instance_identifier: Option<&str>) {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
@@ -187,8 +180,7 @@ impl RdsOps {
     }
 
     pub async fn stop_db_instance(&self, db_instance_identifier: Option<&str>) {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
@@ -232,8 +224,7 @@ impl RdsOps {
         master_password_to_replace: &str,
         apply_immediately: bool,
     ) {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
         let ouput = client
             .modify_db_instance()
             .set_master_user_password(Some(master_password_to_replace.into()))
@@ -258,8 +249,7 @@ impl RdsOps {
     }
 
     pub async fn delete_db_instance(&self, db_instance_identifier: Option<&str>) {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let default_db_instance_id = match db_instance_identifier {
             Some(id) => id.to_string(),
@@ -301,8 +291,7 @@ impl RdsOps {
         &self,
         db_cluster_identifier: Option<&str>,
     ) -> Vec<DbClusterInfo> {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let default_cluster_id = match db_cluster_identifier {
             Some(id) => id.to_string(),
@@ -345,8 +334,7 @@ impl RdsOps {
     /// have to specify the final snapshot ID. If that's not what you want, set it to 'false' and provide
     /// the final snapshot ID.
     pub async fn delete_db_cluster(&self, db_cluster_identifier: Option<&str>) -> DbClusterInfo {
-        let config = self.get_config();
-        let client = RdsClient::new(config);
+        let client = RdsClient::new(self.config);
 
         let default_cluster_id = match db_cluster_identifier {
             Some(id) => id.to_string(),

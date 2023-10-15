@@ -1,7 +1,7 @@
 use crate::{create_email_identities_pdf, create_email_pdf};
 
 use self::SimpleOrTemplate::{Simple_, Template_};
-use aws_config::{imds::client, SdkConfig};
+use aws_config::SdkConfig;
 use aws_sdk_sesv2 as sesv2;
 use colored::Colorize;
 use dotenv::dotenv;
@@ -22,13 +22,13 @@ use std::{
 /// time they use the service. Instead, these credentials are abstracted by this
 /// structure along with its inherent functions and methods.
 #[derive(Debug)]
-pub struct SesOps {
-    config: SdkConfig,
+pub struct SesOps<'a> {
+    config: &'a SdkConfig,
 }
 
-impl SesOps {
+impl<'a> SesOps<'a> {
     ///When calling this function, it builds the credentials and the SesOps struct.
-    pub fn build(config: SdkConfig) -> Self {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config: config }
     }
 
@@ -51,18 +51,10 @@ impl SesOps {
         dotenv().ok();
         var("LIST_NAME").unwrap_or("It appears that you haven't set the 'LIST_NAME' environment variable. You can only skip this input if you have configured the variable".into())
     }
-
-    /// This is a private function used internally to verify service credentials.
-    /// By doing so, users of the API are spared from having to repeatedly specify
-    /// their credentials whenever they use the service
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
-    }
     /// These operations are asynchronous functions, so be sure to await them;
     /// otherwise, no computation will occur at all
     pub async fn create_contact_list_name(&self, list_name: &str, description: Option<String>) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let available_list_names = self
             .list_contact_lists()
             .await
@@ -111,8 +103,7 @@ impl SesOps {
         }
     }
     pub async fn list_contact_lists(&self) -> Vec<String> {
-        let config: &SdkConfig = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let outputs = client
             .list_contact_lists()
             .send()
@@ -129,8 +120,7 @@ impl SesOps {
         list_names
     }
     pub async fn list_email_identity(&self) -> Vec<String> {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let outputs = client
             .list_email_identities()
             .send()
@@ -176,8 +166,7 @@ impl SesOps {
     }
 
     pub async fn delete_contact_list_name(&self, contact_list_name: &str) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         if self.is_contact_list_name_exist(contact_list_name).await {
             client
                 .delete_contact_list()
@@ -209,8 +198,7 @@ impl SesOps {
     }
 
     pub async fn create_email_identity(&self, email: &str) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let available_email_identities = self.retrieve_emails_from_list_email_identities().await;
         if !available_email_identities.contains(email) {
             client
@@ -243,8 +231,7 @@ impl SesOps {
         }
     }
     pub async fn delete_email_identity(&self, identity: &str) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let available_email_identities = self.retrieve_emails_from_list_email_identities().await;
         if available_email_identities.contains(identity) {
             client
@@ -272,8 +259,7 @@ impl SesOps {
         }
     }
     pub async fn delete_contact(&self, email: &str, list_name: Option<&str>, write_info: bool) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         if self
             .is_contact_list_name_exist(list_name.unwrap_or(&self.get_list_name()))
             .await
@@ -338,7 +324,7 @@ impl SesOps {
             if !avaialble_contacts.is_empty() {
                 for contact in avaialble_contacts.split(" ") {
                     if !contact.is_empty() {
-                        let client = SesClient::new(self.get_config());
+                        let client = SesClient::new(self.config);
                         client
                             .delete_contact()
                             .contact_list_name(list_name.unwrap_or(&self.get_list_name()))
@@ -382,8 +368,7 @@ impl SesOps {
     }
 
     pub async fn get_emails_given_list_name(&self, list_name: Option<&str>) -> Option<String> {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
 
         if self
             .is_contact_list_name_exist(list_name.unwrap_or(&self.get_list_name().as_str()))
@@ -422,8 +407,7 @@ impl SesOps {
         }
     }
     pub async fn get_contacts_in_the_list(&self, list_name: Option<&str>) -> String {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let output = client
             .list_contacts()
             .contact_list_name(list_name.unwrap_or(&self.get_list_name()))
@@ -448,8 +432,7 @@ impl SesOps {
         email: &str,
         list_name: Option<&str>,
     ) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let default_list_name = match list_name {
             Some(list_name) => list_name.to_string(),
             None => self.get_list_name(),
@@ -480,7 +463,7 @@ impl SesOps {
                     }else {
                         println!("The email '{}' already has an email identity",email.yellow().bold());
                         println!("But we are sending a verification email again for this email\n");
-                        let client = SesClient::new(self.get_config());
+                        let client = SesClient::new(self.config);
                         client.delete_email_identity().email_identity(email).send().await.expect("Error while deleting email identity\n");
                         client.create_email_identity().email_identity(email).send().await.expect("Error while creating email identity\n");
                         println!("The verification email has been sent to: {}",email.green().bold());
@@ -506,8 +489,7 @@ impl SesOps {
         email: &str,
         list_name: Option<&str>,
     ) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
 
         let default_list_name = match list_name {
             Some(list_name) => list_name.to_string(),
@@ -541,8 +523,7 @@ impl SesOps {
     }
     /// Returns Some of true or false if the identity is exist otherwise returns None.
     pub async fn is_email_verfied(&self, email: &str) -> Option<bool> {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
         if email_identies.contains(email) {
             let client = client
@@ -583,8 +564,7 @@ impl SesOps {
         &self,
         list_name: Option<&str>,
     ) -> Option<Vec<String>> {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
 
         let default_list_name = match list_name {
             Some(list_name) => list_name.to_string(),
@@ -631,8 +611,7 @@ impl SesOps {
         }
     }
     pub async fn retrieve_emails_from_list_email_identities(&self) -> String {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let outputs = client
             .list_email_identities()
             .send()
@@ -676,7 +655,7 @@ impl SesOps {
                 for email in emails {
                     writeln!(file, "{email}\n").unwrap();
                     if email_identities.contains(&email) {
-                        let client = SesClient::new(self.get_config());
+                        let client = SesClient::new(self.config);
                         let info = client
                             .get_email_identity()
                             .email_identity(&email)
@@ -744,7 +723,7 @@ impl SesOps {
         ];
         let identities = self.list_email_identity().await;
         let region_name = self
-            .get_config()
+            .config
             .region()
             .map(|region| region.as_ref())
             .unwrap_or("No Region is found");
@@ -753,8 +732,7 @@ impl SesOps {
 
     /// This only works when production access is enabled, i.e., in a paid AWS service, instead of a trial version that has not been tested.
     pub async fn send_custom_verification(&self, email: &str, template_name: &str) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
 
         let send = client
             .send_custom_verification_email()
@@ -778,8 +756,7 @@ impl SesOps {
         template: &str,
         text: Option<String>,
     ) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         if !self.is_email_template_exist(template_name).await {
             let email_template_builder = EmailTemplateContent::builder()
                 .subject(subject)
@@ -820,8 +797,7 @@ impl SesOps {
         }
     }
     pub async fn list_email_templates(&self) -> Vec<String> {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         let outputs = client
             .list_email_templates()
             .send()
@@ -855,8 +831,7 @@ impl SesOps {
         }
     }
     pub async fn delete_template(&self, template_name: &str) {
-        let config = self.get_config();
-        let client = SesClient::new(config);
+        let client = SesClient::new(self.config);
         if self.is_email_template_exist(template_name).await {
             client
                 .delete_email_template()
@@ -891,8 +866,7 @@ impl SesOps {
         text: Option<String>,
     ) {
         if self.is_email_template_exist(template_name).await {
-            let config = self.get_config();
-            let client = SesClient::new(config);
+            let client = SesClient::new(self.config);
             let text_str = text
                 .as_ref()
                 .map(|to_string| to_string.to_string())
@@ -942,8 +916,7 @@ impl SesOps {
             let mut subject = String::new();
             let mut html = String::new();
             let mut text = String::new();
-            let config = self.get_config();
-            let client = SesClient::new(config);
+            let client = SesClient::new(self.config);
             let outputs = client
                 .get_email_template()
                 .template_name(template_name)
@@ -1108,7 +1081,7 @@ impl SesOps {
         simple_or_template: SimpleOrTemplate,
         from_address: Option<&str>,
     ) -> Result<SendEmailFluentBuilder, String> {
-        let client = SesClient::new(self.get_config());
+        let client = SesClient::new(self.config);
         let email_identies = self.retrieve_emails_from_list_email_identities().await;
         if email_identies.contains(email) {
             let is_email_verified = self.is_email_verfied(&email).await;

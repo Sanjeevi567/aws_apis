@@ -4,17 +4,13 @@ use aws_sdk_memorydb::{
     Client as MemDbClient,
 };
 use colored::Colorize;
-pub struct MemDbOps {
-    config: SdkConfig,
+pub struct MemDbOps<'a> {
+    config: &'a SdkConfig,
 }
-impl MemDbOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> MemDbOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
     }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
-    }
-
     //node type =The compute and memory capacity of the nodes in the cluster
     //possible node values = vec!["db.t4g.small","db.r6g.large","db.r6g.xlarge,"db.r6g.2xlarge]
     //
@@ -24,8 +20,7 @@ impl MemDbOps {
         cluster_name: &str,
         access_control_list_name: &str,
     ) {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
         client.create_cluster()
                     .acl_name(access_control_list_name)
                     .cluster_name(cluster_name)
@@ -60,8 +55,7 @@ impl MemDbOps {
         authenticate_type: &str,
         authenticate_passwords: &str,
     ) {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
 
         let authenticate_type = match authenticate_type {
             "iam" | "Iam" => InputAuthenticationType::Iam,
@@ -98,8 +92,7 @@ impl MemDbOps {
     }
 
     pub async fn create_acl(&self, acl_name: &str) {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
         let output = client
             .create_acl()
             .acl_name(acl_name)
@@ -117,8 +110,7 @@ impl MemDbOps {
     }
 
     pub async fn describe_memdb_cluster(&self, cluster_name: &str) -> Vec<MemDbClusterInfo> {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
 
         let cluster_info = client
             .describe_clusters()
@@ -150,8 +142,7 @@ impl MemDbOps {
 
     ///Only returns the single insatnce of user instead of vector of user.
     pub async fn describe_memdb_user(&self, username: &str) -> Vec<MemDBUser> {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
 
         let output = client
             .describe_users()
@@ -181,8 +172,7 @@ impl MemDbOps {
     }
 
     pub async fn describe_acl(&self, acl_name: &str) -> AclInfo {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
 
         let output = client
             .describe_ac_ls()
@@ -204,8 +194,7 @@ impl MemDbOps {
     }
 
     pub async fn describe_acls(&self) -> Vec<AclInfo> {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
         let ouput = client
             .describe_ac_ls()
             .send()
@@ -228,8 +217,7 @@ impl MemDbOps {
     }
 
     pub async fn describe_snapshots(&self, cluster_name: &str) -> Vec<Snapshot> {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
 
         let snapshots = client
             .describe_snapshots()
@@ -249,8 +237,7 @@ impl MemDbOps {
     }
 
     pub async fn delete_memdb_cluster(&self, cluster_name: &str, final_snapshot_name: &str) {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
 
         client.delete_cluster()
                 .cluster_name(cluster_name)
@@ -277,8 +264,7 @@ impl MemDbOps {
     }
 
     pub async fn delete_memdb_user(&self, username: &str) {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+        let client = MemDbClient::new(self.config);
 
         let ouput = client
             .delete_user()
@@ -296,8 +282,8 @@ impl MemDbOps {
     }
 
     pub async fn delete_acl(&self, acl_name: &str) -> AclInfo {
-        let config = self.get_config();
-        let client = MemDbClient::new(config);
+
+        let client = MemDbClient::new(self.config);
 
         let delete_acl = client
             .delete_acl()

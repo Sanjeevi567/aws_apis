@@ -6,15 +6,12 @@ use aws_sdk_transcribe::{
 };
 use colored::Colorize;
 
-pub struct TranscribeOps {
-    config: SdkConfig,
+pub struct TranscribeOps<'a> {
+    config: &'a SdkConfig,
 }
-impl TranscribeOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> TranscribeOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
-    }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
     }
     pub async fn start_transcribe_task(
         &self,
@@ -23,8 +20,7 @@ impl TranscribeOps {
         media_format: &str,
         job_name: &str,
     ) {
-        let config = self.get_config();
-        let client = TranscribeClient::new(config);
+        let client = TranscribeClient::new(self.config);
         let media_builder = Media::builder().media_file_uri(s3_media_uri).build();
         let media_format_builder = MediaFormat::from(media_format);
         let srt_format = SubtitleFormat::Srt;
@@ -64,8 +60,7 @@ impl TranscribeOps {
         );
     }
     pub async fn get_transcribe_results(&self, job_name: &str) -> Option<TranscriptionOutput> {
-        let config = self.get_config();
-        let client = TranscribeClient::new(config);
+        let client = TranscribeClient::new(self.config);
 
         let output = client
             .get_transcription_job()

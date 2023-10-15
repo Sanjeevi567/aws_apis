@@ -74,20 +74,6 @@ pub fn create_table(key: &str, value: &str) -> TableLayout {
         .unwrap();
     table
 }
-fn create_table_with_one_column(header: &str) -> TableLayout {
-    let mut table = TableLayout::new(vec![1]);
-    table.set_cell_decorator(FrameCellDecorator::new(true, true, false));
-    let row = table.row();
-    row.element(
-        Paragraph::new(header)
-            .aligned(Alignment::Center)
-            .styled(Style::new().bold().with_color(Color::Rgb(34, 91, 247))),
-    )
-    .push()
-    .unwrap();
-    table.row().element(Break::new(1.0)).push().unwrap();
-    table
-}
 pub fn create_email_pdf(
     headers: &Vec<&str>,
     emails_with_status: Vec<String>,

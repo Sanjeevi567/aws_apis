@@ -26,9 +26,6 @@ pub struct S3Ops<'a> {
     config: &'a SdkConfig,
 }
 impl<'a> S3Ops<'a> {
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
-    }
 
     /// This function accepts an [`SdkConfig`](https://docs.rs/aws-config/latest/aws_config/struct.SdkConfig.html), retrieves the region name from it if
     /// available; otherwise, it sets it to an empty string and then constructs a S3Ops instance   
@@ -40,9 +37,8 @@ impl<'a> S3Ops<'a> {
     /// name; otherwise, you may receive a panic message from AWS APIs
     pub async fn create_bucket(&self, bucket_name: &str) {
         dotenv().ok();
-        let config = self.get_config();
-        let client = S3Client::new(config);
-        let region_name = match self.get_config().region(){
+        let client = S3Client::new(self.config);
+        let region_name = match self.config.region(){
              Some(region) => region.to_string(),
              None => var("REGION").unwrap_or("The region value is read from the .env file in the current directory if it is not provided in the credential file".into())
         };
@@ -70,8 +66,7 @@ impl<'a> S3Ops<'a> {
 
     /// Return the available buckets in your account as a vector of strings
     pub async fn get_buckets(&self) -> Vec<String> {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
 
         let mut bucket_lists = Vec::new();
         let colored_msg = "Error from get_buckets function\n".red().bold();
@@ -90,8 +85,7 @@ impl<'a> S3Ops<'a> {
     /// Delete the bucket from your AWS services if the specified bucket is
     ///  available and the credentials have the necessary rights.
     pub async fn delete_bucket(&self, bucket_name: &str) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
 
         let client = client.delete_bucket().bucket(bucket_name);
         let colored_msg = "Error from delete_bucket function\n".red().bold();
@@ -112,8 +106,7 @@ impl<'a> S3Ops<'a> {
 
     /// Retrieve the objects/keys from a specified bucket.
     pub async fn retrieve_keys_in_a_bucket(&self, bucket_name: &str) -> Vec<String> {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
 
         let mut objects_in_bucket = Vec::new();
         let outputs = client
@@ -138,8 +131,7 @@ impl<'a> S3Ops<'a> {
         bucket_name: &str,
         path_prefix: &str,
     ) -> Vec<String> {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
         let mut keys_in_the_prefix = Vec::new();
         let outputs = client
             .list_objects_v2()
@@ -169,8 +161,7 @@ impl<'a> S3Ops<'a> {
         data_path: &str,
         name_of_object: &str,
     ) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
 
         let build_body_data = ByteStream::read_from()
             .path(data_path)
@@ -266,8 +257,7 @@ impl<'a> S3Ops<'a> {
         name_of_object: &str,
         acl_permission: &str,
     ) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
         let acl_permission_build = ObjectCannedAcl::from(acl_permission);
         let acl_permission_str = acl_permission_build.as_str().to_owned();
         client
@@ -300,8 +290,7 @@ impl<'a> S3Ops<'a> {
     ///Upload large files using chunks instead of uploading the entire file, while
     /// accepting the same parameters as the method above.
     pub async fn mulitpart_upload(&self, bucket_name: &str, object_name: &str, data_path: &str) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
 
         let colored_msg = "Error from multipart_upload function\n".red().bold();
         let mulit_part = client
@@ -359,8 +348,7 @@ impl<'a> S3Ops<'a> {
         path_prefix: Option<&str>,
         print_info: bool,
     ) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
 
         let client = client.get_object().bucket(bucket_name).key(object_name);
 
@@ -452,8 +440,7 @@ impl<'a> S3Ops<'a> {
         }
     }
     pub async fn download_transcription_results(&self, bucket_name: &str) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
         let keys = self
             .list_objects_given_prefix(bucket_name, "transcribe_outputs/")
             .await;
@@ -515,8 +502,7 @@ impl<'a> S3Ops<'a> {
         use fast_qr::convert::{image::ImageBuilder, Builder, Shape};
         use fast_qr::qr::QRBuilder;
 
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
 
         let start_time = SystemTime::now();
         let utc: DateTime<Utc> = Utc::now();
@@ -600,8 +586,7 @@ impl<'a> S3Ops<'a> {
     /// Delete the content or key in the provided bucket. Please be cautious, as
     /// this action will permanently remove the content from the service
     pub async fn delete_content_in_a_bucket(&self, bucket_name: &str, object_name: &str) {
-        let config = self.get_config();
-        let client = S3Client::new(config);
+        let client = S3Client::new(self.config);
         let colored_msg = "Error from delete_content_in_a_bucket function\n"
             .red()
             .bold();

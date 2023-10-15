@@ -25,20 +25,16 @@ use crate::{
     pdf_writer::{create_face_result_pdf, create_text_only_pdf, create_text_result_pdf},
 };
 
-pub struct RekognitionOps {
-    config: SdkConfig,
+pub struct RekognitionOps<'a>{
+    config: &'a SdkConfig,
 }
-impl RekognitionOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> RekognitionOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
-    }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
     }
     /// [`Attribute`](https://docs.rs/aws-sdk-rekognition/latest/aws_sdk_rekognition/types/enum.Attribute.html)
     pub async fn detect_faces(&self, key_name: &str, bucket_name: &str) -> Vec<FaceDetails> {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
         let s3_object_builder = S3Object::builder()
             .name(key_name)
             .bucket(bucket_name)
@@ -70,8 +66,7 @@ impl RekognitionOps {
     }
 
     pub async fn create_collection(&self, collection_id: &str) {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
         let outputs = client
             .create_collection()
             .collection_id(collection_id)
@@ -90,8 +85,7 @@ impl RekognitionOps {
         }
     }
     pub async fn index_faces(&self, bucket_name: &str, key_image_name: &str, collection_id: &str) {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
         let s3_object_builder = S3Object::builder()
             .bucket(bucket_name)
             .name(key_image_name)
@@ -118,8 +112,7 @@ impl RekognitionOps {
         }
     }
     pub async fn search_faces(&self, collection_id: &str, face_id: &str) {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
         let outputs = client
             .search_faces()
             .collection_id(collection_id)
@@ -136,8 +129,7 @@ impl RekognitionOps {
         }
     }
     pub async fn detect_texts(&self, bucket_name: &str, key_name: &str) -> Vec<TextDetect> {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
 
         let s3_object_builder = S3Object::builder()
             .bucket(bucket_name)
@@ -166,8 +158,7 @@ impl RekognitionOps {
         bucket_name: &str,
         key_video_name: &str,
     ) -> Option<String> {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
 
         let s3_object_builder = S3Object::builder()
             .bucket(bucket_name)
@@ -218,8 +209,7 @@ impl RekognitionOps {
         job_id
     }
     pub async fn get_text_detection_results(&self, text_job_id: &str) -> GetTextInfo {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
         let get_text_detection_ouput = client
             .get_text_detection()
             .job_id(text_job_id)
@@ -233,8 +223,7 @@ impl RekognitionOps {
         bucket_name: &str,
         key_video_name: &str,
     ) -> Option<String> {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
 
         let s3_object_builder = S3Object::builder()
             .bucket(bucket_name)
@@ -288,8 +277,7 @@ impl RekognitionOps {
     }
 
     pub async fn get_face_detection_results(&self, face_job_id: &str) -> GetFaceInfo {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
         let get_face_detection_output = client
             .get_face_detection()
             .job_id(face_job_id)
@@ -305,8 +293,7 @@ impl RekognitionOps {
         bucket_name: Option<&str>,
         image_key_name: Option<&str>,
     ) {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
         let image = match local_image_path {
             Some(local_image_path_) => {
                 let mut file = std::fs::File::open(local_image_path_)
@@ -443,8 +430,7 @@ impl RekognitionOps {
         }
     }
     pub async fn create_face_liveness(&self, bucket_name: &str) {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
 
         let s3_object_builder = LivenessOutputConfig::builder()
             .s3_bucket(bucket_name)
@@ -484,8 +470,7 @@ impl RekognitionOps {
         }
     }
     pub async fn get_face_liveness_session_results(&self, session_id: &str) -> LivenessOutput {
-        let config = self.get_config();
-        let client = RekogClient::new(config);
+        let client = RekogClient::new(self.config);
 
         let get_faceliveness_session_results_ouput = client
             .get_face_liveness_session_results()

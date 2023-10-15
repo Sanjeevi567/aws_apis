@@ -4,19 +4,15 @@ use aws_sdk_pinpoint::{
     Client as PinPointClient,
 };
 
-pub struct PinPointOps {
-    config: SdkConfig,
+pub struct PinPointOps<'a> {
+    config: &'a SdkConfig,
 }
-impl PinPointOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> PinPointOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
     }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
-    }
     pub async fn create_app(&self, app_name: &str) -> ApplicationResponse {
-        let config = self.get_config();
-        let client = PinPointClient::new(config);
+        let client = PinPointClient::new(self.config);
 
         let create_request_builder = CreateApplicationRequest::builder().name(app_name).build();
 
@@ -48,8 +44,7 @@ impl PinPointOps {
         subject: &str,
         template_description: &str,
     ) -> (Option<String>, Option<String>) {
-        let config = self.get_config();
-        let client = PinPointClient::new(config);
+        let client = PinPointClient::new(self.config);
 
         let email_template_builder = EmailTemplateRequest::builder()
             .default_substitutions(default_values)
@@ -74,8 +69,7 @@ impl PinPointOps {
         (message, arn)
     }
     pub async fn phone_number_validate(&self, phone_number: &str, iso_code: &str) {
-        let config = self.get_config();
-        let client = PinPointClient::new(config);
+        let client = PinPointClient::new(self.config);
 
         let phone_number_builder = NumberValidateRequest::builder()
             .phone_number(phone_number)

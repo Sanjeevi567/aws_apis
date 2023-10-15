@@ -12,19 +12,15 @@ use std::{
 };
 
 use crate::{create_translated_text_pdf, create_translation_language_details_pdf};
-pub struct TranslateOps {
-    config: SdkConfig,
+pub struct TranslateOps<'a>{
+    config: &'a SdkConfig,
 }
-impl TranslateOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> TranslateOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
     }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
-    }
     pub async fn list_languages(&self, write_info: bool) -> (Vec<String>, Vec<String>) {
-        let sdk_config = self.get_config();
-        let client = TranslateClient::new(sdk_config);
+        let client = TranslateClient::new(self.config);
         let outputs = client
             .list_languages()
             .send()
@@ -63,8 +59,7 @@ impl TranslateOps {
         (lang_names, lang_codes)
     }
     pub async fn translate_text(&self, text_path: &str, target_lang_code: &str) {
-        let sdk_config = self.get_config();
-        let client = TranslateClient::new(sdk_config);
+        let client = TranslateClient::new(self.config);
         let text_data =
             fs::read_to_string(text_path).expect("Error opening the file you specified\n");
         let outputs = client
@@ -100,8 +95,7 @@ impl TranslateOps {
         document_path: &str,
         target_lang_code: &str,
     ) {
-        let sdk_config = self.get_config();
-        let client = TranslateClient::new(sdk_config);
+        let client = TranslateClient::new(self.config);
         let document_type_ = match document_type {
             "html" | "HTML" | "Html" => Some("text/html"),
             "plain" | "Plain" | "PLAIN" => Some("text/plain"),
@@ -178,8 +172,7 @@ impl TranslateOps {
         output_s3_uri: &str,
         role_arn: &str,
     ) {
-        let sdk_config = self.get_config();
-        let client = TranslateClient::new(sdk_config);
+        let client = TranslateClient::new(self.config);
         let document_type_ = match document_type {
             "html" | "HTML" | "Html" => Some("text/html"),
             "plain" | "Plain" | "PLAIN" => Some("text/plain"),
@@ -201,7 +194,7 @@ impl TranslateOps {
                     Ok(access_key) => access_key,
                     Err(_) => {
                         println!("The '{}' environment variable is not found, so I am attempting to retrieve the access key from the credentials file","aws_access_key_id\n".yellow().bold());
-                        let shared_credential = sdk_config.credentials_provider().unwrap();
+                        let shared_credential = self.config.credentials_provider().unwrap();
                         let credentials = shared_credential.provide_credentials().await.unwrap();
                         credentials.access_key_id().to_string()
                     }
@@ -268,8 +261,7 @@ impl TranslateOps {
     }
 
     pub async fn describe_text_translation_job(&self, job_id: &str) {
-        let sdk_config = self.get_config();
-        let client = TranslateClient::new(sdk_config);
+        let client = TranslateClient::new(self.config);
         let outputs = client
             .describe_text_translation_job()
             .job_id(job_id)
@@ -351,8 +343,7 @@ impl TranslateOps {
         }
     }
     pub async fn list_translation_jobs(&self) {
-        let sdk_config = self.get_config();
-        let client = TranslateClient::new(sdk_config);
+        let client = TranslateClient::new(self.config);
         let outputs = client
             .list_text_translation_jobs()
             .send()

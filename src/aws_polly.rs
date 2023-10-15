@@ -13,15 +13,12 @@ use std::ops::Deref;
 
 use colored::Colorize;
 
-pub struct PollyOps {
-    config: SdkConfig,
+pub struct PollyOps<'a> {
+    config: &'a SdkConfig,
 }
-impl PollyOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> PollyOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
-    }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
     }
     pub async fn synthesize_speech(
         &self,
@@ -32,8 +29,7 @@ impl PollyOps {
         language_code: &str,
         text_type: &str,
     ) -> SpeechOuputInfo {
-        let config = self.get_config();
-        let client = PollyClient::new(config);
+        let client = PollyClient::new(self.config);
 
         let engine_builder = Engine::from(engine);
 
@@ -80,8 +76,7 @@ impl PollyOps {
         output_format: &str,
         bucket_name: &str,
     ) {
-        let config = self.get_config();
-        let client = PollyClient::new(config);
+        let client = PollyClient::new(self.config);
 
         let engine_builder = Engine::from(engine);
 
@@ -135,8 +130,7 @@ impl PollyOps {
         }
     }
     pub async fn get_speech_synthesis_result(&self, task_id: &str) -> Option<SynthesizeTask> {
-        let config = self.get_config();
-        let client = PollyClient::new(config);
+        let client = PollyClient::new(self.config);
         let output = client
             .get_speech_synthesis_task()
             .task_id(task_id)
@@ -157,8 +151,7 @@ impl PollyOps {
         &self,
         engine_name: &str,
     ) -> (Vec<Option<VoiceId>>, Vec<Option<LanguageCode>>) {
-        let config = self.get_config();
-        let client = PollyClient::new(config);
+        let client = PollyClient::new(self.config);
 
         let output = client
             .describe_voices()
@@ -207,8 +200,7 @@ impl PollyOps {
     }
     /// List the synthesis tasks. The status is hardcoded as 'Completed,' meaning it only returns tasks that are in the 'Completed' state. However, for other states, you need to obtain input from the caller and construct the [`TaskStatus`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/enum.TaskStatus.html) using the [`from`](https://docs.rs/aws-sdk-polly/latest/aws_sdk_polly/types/enum.TaskStatus.html#impl-From%3C%26str%3E-for-TaskStatus) method
     pub async fn list_synthesise_speech(&self) {
-        let config = self.get_config();
-        let client = PollyClient::new(config);
+        let client = PollyClient::new(self.config);
 
         let status_builder = TaskStatus::Completed;
 
@@ -249,8 +241,7 @@ impl PollyOps {
         }
     }
     pub async fn describe_voices(&self) -> Vec<DescribeVoices> {
-        let config = self.get_config();
-        let client = PollyClient::new(config);
+        let client = PollyClient::new(self.config);
 
         let output = client
             .describe_voices()

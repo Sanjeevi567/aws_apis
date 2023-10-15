@@ -4,19 +4,15 @@ use aws_config::SdkConfig;
 use aws_sdk_sns::Client as SnsClient;
 use colored::Colorize;
 
-pub struct SnsOps {
-    config: SdkConfig,
+pub struct SnsOps<'a> {
+    config: &'a SdkConfig,
 }
-impl SnsOps {
-    pub fn build(config: SdkConfig) -> Self {
+impl<'a> SnsOps<'a> {
+    pub fn build(config: &'a SdkConfig) -> Self {
         Self { config }
     }
-    fn get_config(&self) -> &SdkConfig {
-        &self.config
-    }
     pub async fn create_sandbox_phone_number(&self, phone_number: &str) {
-        let config = self.get_config();
-        let client = SnsClient::new(config);
+        let client = SnsClient::new(self.config);
 
         client
             .create_sms_sandbox_phone_number()
@@ -27,8 +23,7 @@ impl SnsOps {
         println!("{}\n", "Phone Number has been added".green().bold());
     }
     pub async fn list_sms_sandbox_numbers(&self) -> String {
-        let config = self.get_config();
-        let client = SnsClient::new(config);
+        let client = SnsClient::new(self.config);
 
         let output = client
             .list_sms_sandbox_phone_numbers()
@@ -49,8 +44,7 @@ impl SnsOps {
         phonenumber_with_status.join("\n")
     }
     pub async fn verify_phone_number(&self, phone_number: &str, otp: &str) {
-        let config = self.get_config();
-        let client = SnsClient::new(config);
+        let client = SnsClient::new(self.config);
 
         client
             .verify_sms_sandbox_phone_number()
@@ -62,8 +56,7 @@ impl SnsOps {
         println!("{}\n", "SMS has been verified successfully".green().bold());
     }
     pub async fn create_topic(&self, topic_name: &str) {
-        let config = self.get_config();
-        let client = SnsClient::new(config);
+        let client = SnsClient::new(self.config);
 
         let output = client
             .create_topic()
@@ -94,8 +87,7 @@ impl SnsOps {
         }
     }
     pub async fn subscription(&self, topic_arn: &str, protocol: &str, phone_number: &str) {
-        let config = self.get_config();
-        let client = SnsClient::new(config);
+        let client = SnsClient::new(self.config);
 
         let output = client
             .subscribe()
@@ -128,8 +120,7 @@ impl SnsOps {
         }
     }
     pub async fn publish(&self, message: &str, topic_arn: &str) {
-        let config = self.get_config();
-        let client = SnsClient::new(config);
+        let client = SnsClient::new(self.config);
 
         client
             .publish()
