@@ -18,7 +18,8 @@ colored={version = "2.0.4"}
 aws-credential-types = {version = "0.56.1"}
 aws-config = {version ="0.56.0"}
 aws-types = {version ="0.56.1"}
-tokio = {package = "tokio",version ="1.32.0",features = ["macros","rt-multi-thread"]}
+#tokio = {package = "tokio",version ="1.32.0",features = ["macros","rt-multi-thread"]}
+tokio_wasi = { version = "1.25.1", features = ["macros", "rt"] }
 tokio-stream = {version = "0.1.14"}
 filesize = "0.2.0"
 
