@@ -67,6 +67,6 @@ Furthermore, SES service operations leverage environment variables to streamline
 ## Service Isolation
    - Each service can use different credentials, but credentials cannot be mixed within services. Each service abstracts credentials so that you can provide them once and use them for all operations within that service without explicitly passing credentials for each operation.
 
-For services like Rekognition, Polly, and Transcribe, refer to the accompanying [repository](https://github.com/Sanjuvi/DLearningClient) and [blog post](https://sanjuvi.github.io/Blog/posts/Deep-Learning-Rust/) for detailed information on how to run the application.
+For services like Rekognition, Polly, and Transcribe, refer to the accompanying [repository](https://github.com/Sanjuvi/DLearningClient) to learn more.
 
-To facilitate IAM user management and policy assignment, you can use the [IAM Client CLI](https://sanjuvi.github.io/Blog/posts/Aws-Iam/) application provided in [this repository](https://github.com/Sanjuvi/aws_iam_client_cli).
+To facilitate IAM user management and policy assignment, you can use the IAM Client CLI application provided in [this repository](https://github.com/Sanjuvi/aws_iam_client_cli).
