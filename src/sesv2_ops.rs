@@ -1082,10 +1082,12 @@ impl<'a> SesOps<'a> {
         from_address: Option<&str>,
     ) -> Result<SendEmailFluentBuilder, String> {
         let client = SesClient::new(self.config);
-        let email_identies = self.retrieve_emails_from_list_email_identities().await;
+        //let email_identies = self.retrieve_emails_from_list_email_identities().await;
+
+        /*
         if email_identies.contains(email) {
             let is_email_verified = self.is_email_verfied(&email).await;
-            match is_email_verified {
+           /* */ match is_email_verified {
                 Some(status) => {
                     if status {
                         let destination = Destination::builder().to_addresses(email).build();
@@ -1103,23 +1105,8 @@ impl<'a> SesOps<'a> {
                                 .from_email_address(from_address)
                                 .destination(destination)),
                         }
-                    }else if !status{
-                        let destination = Destination::builder().to_addresses(email).build();
-                        let default_from_address = self.get_from_address();
-                        let from_address = from_address.unwrap_or(&default_from_address);
-                        match simple_or_template {
-                            Simple_(simple) => Ok(client
-                                .send_email()
-                                .content(simple)
-                                .from_email_address(from_address)
-                                .destination(destination)),
-                            Template_(template) => Ok(client
-                                .send_email()
-                                .content(template)
-                                .from_email_address(from_address)
-                                .destination(destination)),
-                        }
                     }
+
                      else {
                         let why_failed = format!("The email ---{}--- has not been verified; we have re-sent the verification email",email);
                         client
@@ -1146,6 +1133,21 @@ impl<'a> SesOps<'a> {
         } else {
             let why_failed = format!("The email identity '{}' doesn't exist.\nThis email should be verified through 'create email identity' option before sending an email",email);
             Err(why_failed)
+        } */
+        let destination = Destination::builder().to_addresses(email).build();
+        let default_from_address = self.get_from_address();
+        let from_address = from_address.unwrap_or(&default_from_address);
+        match simple_or_template {
+            Simple_(simple) => Ok(client
+                .send_email()
+                .content(simple)
+                .from_email_address(from_address)
+                .destination(destination)),
+            Template_(template) => Ok(client
+                .send_email()
+                .content(template)
+                .from_email_address(from_address)
+                .destination(destination)),
         }
     }
 
