@@ -1103,7 +1103,7 @@ impl<'a> SesOps<'a> {
                                 .from_email_address(from_address)
                                 .destination(destination)),
                         }
-                    }else if{
+                    }else if !status{
                         let destination = Destination::builder().to_addresses(email).build();
                         let default_from_address = self.get_from_address();
                         let from_address = from_address.unwrap_or(&default_from_address);
