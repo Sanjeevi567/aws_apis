@@ -1103,7 +1103,24 @@ impl<'a> SesOps<'a> {
                                 .from_email_address(from_address)
                                 .destination(destination)),
                         }
-                    } else {
+                    }else if{
+                        let destination = Destination::builder().to_addresses(email).build();
+                        let default_from_address = self.get_from_address();
+                        let from_address = from_address.unwrap_or(&default_from_address);
+                        match simple_or_template {
+                            Simple_(simple) => Ok(client
+                                .send_email()
+                                .content(simple)
+                                .from_email_address(from_address)
+                                .destination(destination)),
+                            Template_(template) => Ok(client
+                                .send_email()
+                                .content(template)
+                                .from_email_address(from_address)
+                                .destination(destination)),
+                        }
+                    }
+                     else {
                         let why_failed = format!("The email ---{}--- has not been verified; we have re-sent the verification email",email);
                         client
                             .delete_email_identity()
